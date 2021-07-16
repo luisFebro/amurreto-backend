@@ -54,7 +54,7 @@ async function createOrderBySignal(signalData, options = {}) {
     // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
     // if got some buying position and WAIT is current sign, it is Sell sign.
     const gotBuyPosition = priorBuyingPerc > 0;
-    const isWaitWithBuyingPosition = signal === "WAIT" && gotBuyPosition;
+    const isWaitWithBuyingPosition = false; //signal === "WAIT" && gotBuyPosition;
 
     // in order to use HOLD, it should be only a BUY if there is no prior SELL transaction in the current trade. That's because the robot will buy again after a SELL back to HOLD during an uptrend.
     const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const collectionName = "amurreto-orders";
+const collectionName = "altrabot";
 
 const transactionData = {
     type: {
