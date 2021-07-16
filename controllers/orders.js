@@ -49,10 +49,7 @@ async function createOrderBySignal(signalData, options = {}) {
         findTransactionSellPerc({ symbol, includesBuy: true }),
     ]);
 
-    const {
-        priorSellingPerc,
-        priorBuyingPerc,
-    } = priorSidePerc;
+    const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
 
     // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
     // if got some buying position and WAIT is current sign, it is Sell sign.
@@ -78,7 +75,8 @@ async function createOrderBySignal(signalData, options = {}) {
         });
     }
 
-    const condSell = defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
+    const condSell =
+        defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
     if (condSell) {
         return await createOrderBack({
             symbol,
@@ -289,10 +287,13 @@ async function checkOpeningOrder({ symbol, maxIterateCount }) {
         }
 
         const dataToUpdate = { $inc: { checkPendingOrderCount: 1 } };
-        await AmurretoOrders.findOneAndUpdate({
-            symbol,
-            [`${list}.timestamp`]: timestamp,
-        }, dataToUpdate)
+        await AmurretoOrders.findOneAndUpdate(
+            {
+                symbol,
+                [`${list}.timestamp`]: timestamp,
+            },
+            dataToUpdate
+        );
     }
 
     return gotOpenOrder;
@@ -325,7 +326,7 @@ async function getPrice({
     // quote money to invest / last price
     const lastAskPrice = Number(priceInfo.ask);
     const lastBidPrice = Number(priceInfo.bid);
-
+    // const test = Boolean(true);
     // if buy I want a price that other buyers are willing to buy and offsetPrice is distance below this price.The same with selling
     const isNormalPrice = !forcePrice;
     const buyBid = isNormalPrice ? lastBidPrice : lastAskPrice;
