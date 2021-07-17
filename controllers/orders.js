@@ -61,13 +61,12 @@ async function createOrderBySignal(signalData, options = {}) {
     // if strategy already ran, then ignore it.
     // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
     const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
-    const condBuy = false;
-    //defaultCond && (signal === "BUY" || isHoldWithoutPriorSell);
+    const condBuy = defaultCond && (signal === "BUY" || isHoldWithoutPriorSell);
 
     if (condBuy) {
         return await createOrderBack({
             side: "BUY",
-            type: "MARKET",
+            type,
             symbol,
             strategy,
             capitalPositionPerc,
@@ -76,8 +75,8 @@ async function createOrderBySignal(signalData, options = {}) {
         });
     }
 
-    const condSell = false;
-    // defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
+    const condSell =
+        defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
     if (condSell) {
         return await createOrderBack({
             side: "SELL",
@@ -151,21 +150,21 @@ async function createOrderBack(payload = {}) {
     };
 
     const orderPrice = isMarket ? "0" : price;
-    const data = true;
-    // const data = await novadax
-    //     .createOrder(symbol, type, side, amount, orderPrice, params)
-    //     .catch((response) => {
-    //         const error = response.toString();
-    //         console.log("error", error);
-    //         if (error.includes("A30007"))
-    //             Promise.reject("Insufficient balance");
-    //         if (error.includes("A30004")) Promise.reject("Value is too small");
-    //         if (error.includes("A30002"))
-    //             Promise.reject(
-    //                 "Balance not enough or order amount is too small"
-    //             );
-    //     });
-    // if (!data) return null;
+    // const data = true;
+    const data = await novadax
+        .createOrder(symbol, type, side, amount, orderPrice, params)
+        .catch((response) => {
+            const error = response.toString();
+            console.log("error", error);
+            if (error.includes("A30007"))
+                Promise.reject("Insufficient balance");
+            if (error.includes("A30004")) Promise.reject("Value is too small");
+            if (error.includes("A30002"))
+                Promise.reject(
+                    "Balance not enough or order amount is too small"
+                );
+        });
+    if (!data) return null;
 
     const moreData = {
         symbol,
@@ -179,7 +178,6 @@ async function createOrderBack(payload = {}) {
         quote: quoteCurrencyAmount,
         price,
     };
-    console.log("fallback", fallback);
 
     const mostRecentData = await getOrdersList({
         symbol,
@@ -229,11 +227,8 @@ async function getOrdersList(payload = {}) {
         mostRecent = false, // get either open or close order right after order request
         fallback = {}, // // fallback is used as the last value in case of the exchange did not process the order. need to register the value in DB.
     } = payload;
-    console.log("fallback", fallback);
     const fallbackPrice = !fallback.price ? 0 : Number(fallback.price);
-    console.log("fallbackPrice", fallbackPrice);
     const fallbackQuote = !fallback.quote ? 0 : Number(fallback.quote);
-    console.log("fallbackQuote", fallbackQuote);
 
     const params = {};
     let data = [];

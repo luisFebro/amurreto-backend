@@ -137,13 +137,10 @@ async function cancelDbOrderBack(timestamp, options = {}) {
 // HELPERS
 async function getTransactionStatus({ symbol, transactionPerc, side }) {
     // search by symbol, timestamp and pending status so that we can check to create a new transaction or update one
-    const { priorSellingPerc: doneSellPerc, priorBuyingPerc } =
-        await findTransactionSidePerc({ symbol });
+    const { priorSellingPerc: doneSellPerc, isNewOrder } =
+        await findTransactionSidePerc({ symbol, side });
 
-    // need to update order instead of a new order if there is not buying data which means it was cancelled by algo
-    const wasBuyingCancelledRecent = priorBuyingPerc === 0;
-    if (!wasBuyingCancelledRecent && !doneSellPerc && side === "BUY")
-        return "new";
+    if (isNewOrder) return "new";
 
     const isSell = side === "SELL";
 
@@ -155,7 +152,7 @@ async function getTransactionStatus({ symbol, transactionPerc, side }) {
     return isTransationDone ? "done" : "pending";
 }
 
-async function findTransactionSidePerc({ symbol }) {
+async function findTransactionSidePerc({ symbol, side }) {
     const projectQuery = {
         $project: {
             _id: 0,
@@ -185,9 +182,24 @@ async function findTransactionSidePerc({ symbol }) {
             : 0;
     };
 
+    const checkNewOrder = () => {
+        const buyPerc = getPerc("buy");
+        const sellPerc = getPerc("sell");
+
+        const isBuy = !sellPerc && side === "BUY";
+        if (isBuy && !ordersData.length) return true;
+
+        // if found a doc without buying data, need to update order instead of a new order if there is not buying data which means it was cancelled by algo
+        const wasBuyingCancelledRecent = ordersData.length && buyPerc === 0;
+        if (wasBuyingCancelledRecent) false;
+
+        return false;
+    };
+
     return {
         priorSellingPerc: getPerc("sell"),
         priorBuyingPerc: getPerc("buy"),
+        isNewOrder: checkNewOrder(),
     };
 }
 
