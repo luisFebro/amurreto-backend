@@ -1,6 +1,6 @@
 const {
     getCandlesticksData,
-} = require("../../controllers/amurreto/klines/candlesticks");
+} = require("../../controllers/klines/candlesticks");
 const { isCancelled, setDone } = require("../defaults");
 
 (async () => {

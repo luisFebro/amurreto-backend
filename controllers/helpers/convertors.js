@@ -2,9 +2,9 @@ const { getTradingSymbolBack } = require("../basicInfo");
 
 async function getConvertedMarketPrice(symbol = "BTC/BRL", options = {}) {
     // BTC (1st currency - base) / BRL (2nd currency - quote)
-    const { base, quote, side = "buy" } = options;
+    const { base, quote, side = "BUY" } = options;
     const toBase = Boolean(quote);
-    const isBuySide = side === "buy";
+    const isBuySide = side && side.toUpperCase() === "BUY";
 
     const priceInfo = await getTradingSymbolBack({ symbol });
     // quote money to invest / last price

@@ -29,12 +29,14 @@ c) each strategy should be executed only ONE TIME per trade. The algo will verif
 function analyseSignals({ emaTrend, isOverbought }) {
     if (!emaTrend) return "?";
 
-    if (isOverbought)
-        return {
-            signal: "SELL",
-            strategy: "rsiOverbought",
-            transactionPerc: 50,
-        };
+    if (isOverbought) null;
+    // it is temporary disable to watch out only EMA at first, then implement it
+    // if (isOverbought)
+    //     return {
+    //         signal: "SELL",
+    //         strategy: "rsiOverbought",
+    //         transactionPerc: 50,
+    //     };
 
     if (emaTrend === "bullReversal")
         return {

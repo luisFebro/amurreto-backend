@@ -40,10 +40,15 @@ async function getCandlesticksData(payload = {}) {
         onlyLiveCandle = false,
     } = payload;
 
-    const since = handleSinceDate({ unit, sinceType, customDate, sinceCount: onlyLiveCandle ? 1 : sinceCount });
+    const since = handleSinceDate({
+        unit,
+        sinceType,
+        customDate,
+        sinceCount: onlyLiveCandle ? 1 : sinceCount,
+    });
     const mainData = await novadax.fetchOHLCV(symbol, unit, since, limit);
 
-    if(onlyLiveCandle) {
+    if (onlyLiveCandle) {
         return {
             symbol,
             liveCandleClose: mainData[0][4],
@@ -171,13 +176,8 @@ async function getCandlesticksData(payload = {}) {
     const currPrice = candlestickData.slice(-1)[0]
         ? candlestickData.slice(-1)[0].close
         : 0;
-    const {
-        threads,
-        nextResistence,
-        nextSupport,
-        keyResistence,
-        keySupport,
-    } = detectBullishThreads(candlesThread, { currPrice });
+    const { threads, nextResistence, nextSupport, keyResistence, keySupport } =
+        detectBullishThreads(candlesThread, { currPrice });
 
     // INDICATORS CALCULATION
     const closingPrices = dataForIndicators.map((candle) => candle[4]);
@@ -327,17 +327,17 @@ async function getCandlesticksData(payload = {}) {
         }),
     };
 }
-// const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
-// getCandlesticksData({
-//     symbol: "BTC/BRL",
-//     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-//     sinceType: "count", // count, date
-//     customDate: "2021-07-07T02:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 250, // default 250 last candles
-//     noList: true, // default true
-//     reverseData: false,
-//     onlyBuySignals: false,
-// }).then(console.log);
+const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
+getCandlesticksData({
+    symbol: "BTC/BRL",
+    limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
+    sinceType: "count", // count, date
+    customDate: "2021-07-07T02:00:00.000Z", // if hour less than 9, put 0 in front
+    sinceCount: 250, // default 250 last candles
+    noList: true, // default true
+    reverseData: false,
+    onlyBuySignals: false,
+}).then(console.log);
 
 // HELPERS
 function handleListData(list, { noList, reverseData, onlyBuySignals }) {
@@ -347,7 +347,8 @@ function handleListData(list, { noList, reverseData, onlyBuySignals }) {
     if (onlyBuySignals)
         list = list.filter(
             (candle) =>
-                candle.finalSignal === "buy" || candle.finalSignal === "hold"
+                candle.finalSignal.toUpperCase() === "BUY" ||
+                candle.finalSignal.toUpperCase() === "HOLD"
         );
     if (reverseData) list = list.reverse();
 

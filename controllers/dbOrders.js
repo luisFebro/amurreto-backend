@@ -1,7 +1,6 @@
 const AmurretoOrders = require("../models/Orders");
-const getPercentage = require("../utils/number/perc/getPercentage");
-const { getConvertedPrice } = require("./helpers/convertors");
 const { pushFIFO } = require("../utils/mongodb/fifo");
+// const getPercentage = require("../utils/number/perc/getPercentage");
 
 async function verifyLastStrategy(symbol, options = {}) {
     const { side, strategy } = options;
@@ -20,29 +19,24 @@ async function verifyLastStrategy(symbol, options = {}) {
         : false;
 }
 
-async function setDbOrderBack({ side, exchangeRes, moreData }) {
-    if (!exchangeRes) return null;
+async function setDbOrderBack({ side, mostRecentData, moreData }) {
+    if (!mostRecentData) return null;
 
     const {
-        price,
-        averagePrice,
-        filledAmount,
+        quote,
+        base,
+        price, // market price
         filledFee,
+        feePerc,
         type,
         timestamp,
-        value,
         status: statusExchange,
-    } = exchangeRes;
+    } = mostRecentData;
 
     const isBuy = side === "BUY";
 
-    const {
-        capitalPositionPerc,
-        strategy,
-        transactionPositionPerc,
-        symbol,
-        TAKER_MARKET_FEE,
-    } = moreData;
+    const { capitalPositionPerc, strategy, transactionPositionPerc, symbol } =
+        moreData;
 
     const status = await getTransactionStatus({
         symbol,
@@ -50,30 +44,19 @@ async function setDbOrderBack({ side, exchangeRes, moreData }) {
         side,
     });
 
-    const amountFee = isBuy // buy fee is in the base currency in cases of crypto market: BTC, ETH, etc
-        ? getConvertedPrice(price, {
-              base: filledFee,
-          })
-        : Number(filledFee);
-
-    const capital = Number(value);
-
     const defaultTransaction = {
         strategy,
         type,
         timestamp: timestamp,
         transactionPositionPerc,
         amounts: {
-            base: Number(filledAmount),
-            quote: capital,
-            market: Number(averagePrice),
+            base,
+            quote,
+            market: price,
         },
         fee: {
-            perc:
-                price === "0"
-                    ? TAKER_MARKET_FEE
-                    : Number(getPercentage(value, amountFee)),
-            amount: amountFee,
+            perc: feePerc,
+            amount: filledFee,
         },
     };
 
@@ -83,9 +66,7 @@ async function setDbOrderBack({ side, exchangeRes, moreData }) {
         status: status === "new" ? "pending" : status,
         capitalPosition: {
             totalPerc: capitalPositionPerc,
-            amount: getPercentage(capital, capitalPositionPerc, {
-                mode: "value",
-            }),
+            amount: quote,
         },
         // need to be pushed since it is an array
         buyPrices: [defaultTransaction],
@@ -156,8 +137,13 @@ async function cancelDbOrderBack(timestamp, options = {}) {
 // HELPERS
 async function getTransactionStatus({ symbol, transactionPerc, side }) {
     // search by symbol, timestamp and pending status so that we can check to create a new transaction or update one
-    const doneSellPerc = await findTransactionSellPerc({ symbol });
-    if (!doneSellPerc && side === "BUY") return "new";
+    const { priorSellingPerc: doneSellPerc, priorBuyingPerc } =
+        await findTransactionSidePerc({ symbol });
+
+    // need to update order instead of a new order if there is not buying data which means it was cancelled by algo
+    const wasBuyingCancelledRecent = priorBuyingPerc === 0;
+    if (!wasBuyingCancelledRecent && !doneSellPerc && side === "BUY")
+        return "new";
 
     const isSell = side === "SELL";
 
@@ -169,7 +155,7 @@ async function getTransactionStatus({ symbol, transactionPerc, side }) {
     return isTransationDone ? "done" : "pending";
 }
 
-async function findTransactionSellPerc({ symbol, includesBuy = false }) {
+async function findTransactionSidePerc({ symbol }) {
     const projectQuery = {
         $project: {
             _id: 0,
@@ -178,7 +164,7 @@ async function findTransactionSellPerc({ symbol, includesBuy = false }) {
         },
     };
 
-    if(!includesBuy) delete projectQuery["$project"].buyPrices;
+    // if(!includesBuy) delete projectQuery["$project"].buyPrices;
 
     const ordersData = await AmurretoOrders.aggregate([
         {
@@ -197,16 +183,12 @@ async function findTransactionSellPerc({ symbol, includesBuy = false }) {
                   0
               )
             : 0;
-    }
+    };
 
-    if(includesBuy) {
-        return {
-            priorSellingPerc: getPerc("sell"),
-            priorBuyingPerc:  getPerc("buy"),
-        }
-    }
-
-    return getPerc("sell");
+    return {
+        priorSellingPerc: getPerc("sell"),
+        priorBuyingPerc: getPerc("buy"),
+    };
 }
 
 async function getOrderTransactionPerc({ symbol, side, defaultPerc }) {
@@ -255,5 +237,5 @@ module.exports = {
     setDbOrderBack,
     cancelDbOrderBack,
     getOrderTransactionPerc,
-    findTransactionSellPerc,
+    findTransactionSidePerc,
 };

@@ -10,7 +10,7 @@ const {
 const { getTradingSymbolBack } = require("./basicInfo");
 const {
     getOrderTransactionPerc,
-    findTransactionSellPerc,
+    findTransactionSidePerc,
     setDbOrderBack,
     cancelDbOrderBack,
     verifyLastStrategy,
@@ -46,7 +46,7 @@ async function createOrderBySignal(signalData, options = {}) {
         verifyLastStrategy(symbol, { status: "pending", side, strategy }),
         checkOpeningOrder({ symbol, maxIterateCount: 0 }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
-        findTransactionSellPerc({ symbol, includesBuy: true }),
+        findTransactionSidePerc({ symbol }),
     ]);
 
     const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
@@ -54,34 +54,35 @@ async function createOrderBySignal(signalData, options = {}) {
     // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
     // if got some buying position and WAIT is current sign, it is Sell sign.
     const gotBuyPosition = priorBuyingPerc > 0;
-    const isWaitWithBuyingPosition = false; //signal === "WAIT" && gotBuyPosition;
+    const isWaitWithBuyingPosition = signal === "WAIT" && gotBuyPosition;
 
     // in order to use HOLD, it should be only a BUY if there is no prior SELL transaction in the current trade. That's because the robot will buy again after a SELL back to HOLD during an uptrend.
     const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
     // if strategy already ran, then ignore it.
     // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
     const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
-    const condBuy = defaultCond && (signal === "BUY" || isHoldWithoutPriorSell);
+    const condBuy = false;
+    //defaultCond && (signal === "BUY" || isHoldWithoutPriorSell);
 
     if (condBuy) {
         return await createOrderBack({
+            side: "BUY",
+            type: "MARKET",
             symbol,
-            side,
             strategy,
-            type,
             capitalPositionPerc,
             transactionPositionPerc,
             forcePrice,
         });
     }
 
-    const condSell =
-        defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
+    const condSell = false;
+    // defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
     if (condSell) {
         return await createOrderBack({
-            symbol,
             side: "SELL",
             type: "MARKET",
+            symbol,
             strategy,
             capitalPositionPerc,
             transactionPositionPerc,
@@ -112,8 +113,9 @@ async function createOrderBack(payload = {}) {
         // accountId, // Sub account ID, if not informed, the order will be created under master account
     } = payload;
 
-    const isMarket = type.toLowerCase() === "market";
-    const isBuy = side.toLowerCase() === "buy";
+    const isMarket = type.toUpperCase() === "MARKET";
+    const isBuy = side.toUpperCase() === "BUY";
+
     const { baseCurrencyAmount, quoteCurrencyAmount } = await handleBalance({
         base: getBaseQuoteCurrencyFromSymbol(symbol, { select: "base" }),
         quote: getBaseQuoteCurrencyFromSymbol(symbol, { select: "quote" }),
@@ -132,6 +134,7 @@ async function createOrderBack(payload = {}) {
     // amount: The amount of base currency, like BTC amount for buy of BTC_BRL;
     const convertedBaseCurrAmount = await getConvertedMarketPrice(symbol, {
         quote: quoteCurrencyAmount,
+        side: "BUY",
     });
     const selectedAmount = isBuy ? convertedBaseCurrAmount : baseCurrencyAmount;
     const amount = getPercentage(selectedAmount, transactionPositionPerc, {
@@ -147,33 +150,46 @@ async function createOrderBack(payload = {}) {
         // type: isStopPrice ? "stopLimit" : undefined,
     };
 
-    const data = await novadax
-        .createOrder(symbol, type, side, amount, price, params)
-        .catch((response) => {
-            const error = response.toString();
-            console.log("error", error);
-            if (error.includes("A30007"))
-                Promise.reject("Insufficient balance");
-            if (error.includes("A30004")) Promise.reject("Value is too small");
-            if (error.includes("A30002"))
-                Promise.reject(
-                    "Balance not enough or order amount is too small"
-                );
-        });
-    if (!data) return null;
+    const orderPrice = isMarket ? "0" : price;
+    const data = true;
+    // const data = await novadax
+    //     .createOrder(symbol, type, side, amount, orderPrice, params)
+    //     .catch((response) => {
+    //         const error = response.toString();
+    //         console.log("error", error);
+    //         if (error.includes("A30007"))
+    //             Promise.reject("Insufficient balance");
+    //         if (error.includes("A30004")) Promise.reject("Value is too small");
+    //         if (error.includes("A30002"))
+    //             Promise.reject(
+    //                 "Balance not enough or order amount is too small"
+    //             );
+    //     });
+    // if (!data) return null;
 
     const moreData = {
         symbol,
         strategy,
-        TAKER_MARKET_FEE,
         transactionPositionPerc,
         capitalPositionPerc,
     };
 
-    const exchangeRes = data.info;
-    await setDbOrderBack({ side, exchangeRes, moreData });
+    // data either open or closed for LIMIT AND MARKET orders
+    const fallback = {
+        quote: quoteCurrencyAmount,
+        price,
+    };
+    console.log("fallback", fallback);
 
-    return exchangeRes;
+    const mostRecentData = await getOrdersList({
+        symbol,
+        mostRecent: true,
+        fallback,
+    });
+
+    await setDbOrderBack({ side, mostRecentData, moreData });
+
+    return mostRecentData;
 }
 // createOrderBack()
 // .then(console.log)
@@ -210,10 +226,85 @@ async function getOrdersList(payload = {}) {
         symbol = undefined, // "BRZ/BRL" if undefined includes all symbols;
         since = undefined,
         limit = 10,
+        mostRecent = false, // get either open or close order right after order request
+        fallback = {}, // // fallback is used as the last value in case of the exchange did not process the order. need to register the value in DB.
     } = payload;
+    console.log("fallback", fallback);
+    const fallbackPrice = !fallback.price ? 0 : Number(fallback.price);
+    console.log("fallbackPrice", fallbackPrice);
+    const fallbackQuote = !fallback.quote ? 0 : Number(fallback.quote);
+    console.log("fallbackQuote", fallbackQuote);
 
     const params = {};
     let data = [];
+
+    const treatListData = (data) => {
+        const includesCancel = mostRecent;
+        const neededCancel = includesCancel ? "CANCELED" : undefined;
+
+        const list = data
+            .filter(
+                (order) =>
+                    order.info.status === neededCancel ||
+                    order.info.status === "SUBMITTED" ||
+                    order.info.status === "FILLED" ||
+                    order.info.status === "PROCESSING" ||
+                    order.info.status === "PARTIAL_FILLED"
+            )
+            .map((each) => {
+                const info = each.info;
+                const timestamp = Number(info.timestamp);
+                const isBuy = info.side === "BUY";
+                const isMarket = info.type === "MARKET";
+
+                // market price
+                const price =
+                    Number(info.averagePrice) ||
+                    Number(info.price) ||
+                    fallbackPrice;
+                const base = Number(info.filledAmount) || Number(info.amount); // just to handle LIMIT order which is null for filled Data
+                const quote =
+                    Number(info.filledValue) ||
+                    Number(info.value) ||
+                    fallbackQuote;
+
+                const filledFee = isBuy
+                    ? getConvertedPrice(price, {
+                          base: info.filledFee,
+                      })
+                    : Number(info.filledFee);
+
+                const feePerc = isMarket
+                    ? TAKER_MARKET_FEE
+                    : getPercentage(quote, Number(filledFee));
+
+                return {
+                    ...info,
+                    timestamp,
+                    // convert buy crypto fee to quote currency so that it makes simple to calculate total buy-sell fees. Sell side doesn't require because it is already in quote currency
+                    price,
+                    filledFee,
+                    feePerc,
+                    quote,
+                    base,
+                };
+            });
+
+        return sortValue(list, { target: "timestamp" });
+    };
+
+    if (mostRecent) {
+        const thisLimit = 1;
+        const thisSince = undefined;
+        const [open, closed] = await Promise.all([
+            novadax.fetchOpenOrders(symbol, thisSince, thisLimit),
+            novadax.fetchClosedOrders(symbol, thisSince, thisLimit),
+        ]);
+
+        // return object if mostRecent
+        if (open.length) return treatListData(open)[0];
+        return treatListData(closed)[0];
+    }
 
     if (type === "open") {
         data = await novadax.fetchOpenOrders(symbol, since, limit, params);
@@ -221,41 +312,11 @@ async function getOrdersList(payload = {}) {
         data = await novadax.fetchClosedOrders(symbol, since, limit, params);
     }
 
-    const list = data
-        .filter(
-            (order) =>
-                order.info.status === "SUBMITTED" ||
-                order.info.status === "FILLED" ||
-                order.info.status === "PROCESSING" ||
-                order.info.status === "PARTIAL_FILLED"
-        )
-        .map((each) => {
-            const info = each.info;
-            const timestamp = Number(info.timestamp);
-            const isBuy = info.side === "BUY";
-            const filledFee = isBuy
-                ? getConvertedPrice(info.averagePrice, {
-                      base: info.filledFee,
-                  })
-                : info.filledFee;
-
-            const feePerc =
-                info.price === "0"
-                    ? TAKER_MARKET_FEE
-                    : getPercentage(info.value, Number(filledFee));
-
-            return {
-                ...info,
-                timestamp,
-                // convert buy crypto fee to quote currency so that it makes simple to calculate total buy-sell fees. Sell side doesn't require because it is already in quote currency
-                filledFee,
-                feePerc,
-            };
-        });
-
-    return sortValue(list, { target: "timestamp" });
+    return treatListData(data);
 }
-// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 3 })
+// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 5 })
+// .then(console.log)
+// getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
 // .then(console.log)
 
 async function checkOpeningOrder({ symbol, maxIterateCount }) {
@@ -278,8 +339,9 @@ async function checkOpeningOrder({ symbol, maxIterateCount }) {
             symbol,
             [`${list}.timestamp`]: timestamp,
         }).select("_id checkPendingOrderCount");
-        const priorMaxIterationCount =
-            dataMaxIterationCount.checkPendingOrderCount || 0;
+        const priorMaxIterationCount = !dataMaxIterationCount
+            ? 0
+            : dataMaxIterationCount.checkPendingOrderCount || 0;
         const needCancelOrder = maxIterateCount === priorMaxIterationCount;
         if (needCancelOrder) {
             await cancelOrderBack({ symbol, timestamp });
@@ -319,7 +381,6 @@ async function getPrice({
     offsetPrice = 0, // preço deslocado
     forcePrice,
 }) {
-    if (isMarket) return "0";
     if (payload.price) return payload.price;
 
     const priceInfo = await getTradingSymbolBack({ symbol });
