@@ -14,6 +14,7 @@ const {
     checkWingForCandle,
 } = require("./algo/candle/algo/findResistenceSupportWings");
 const { createOrderBySignal } = require("../orders");
+const { IS_PROD } = require("../../config");
 /*
 Candlestick Charts are also known as candlesticks, Japanese lines, yin and yang lines, and bar lines. The commonly used term is "K-line", which originated from the 18th century Tokugawa shogunate era in Japan. The rice market transaction (1603-1867) is used to calculate the daily rise and fall of rice prices.
 The K line graphically shows the increase and decrease of the strength of the buyers and sellers and the transformation process and actual results. After nearly a hundred years of use and improvement, the K-line theory has been widely accepted by investors.
@@ -275,7 +276,9 @@ async function getCandlesticksData(payload = {}) {
         isOverbought: lastIsOverbought,
     });
 
-    await createOrderBySignal(finalSignalData, { symbol });
+    if (IS_PROD) {
+        await createOrderBySignal(finalSignalData, { symbol });
+    }
 
     const indicators = {
         ema9: lastEma9,
@@ -327,17 +330,17 @@ async function getCandlesticksData(payload = {}) {
         }),
     };
 }
-// const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
-// getCandlesticksData({
-//     symbol: "BTC/BRL",
-//     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-//     sinceType: "count", // count, date
-//     customDate: "2021-07-07T02:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 250, // default 250 last candles
-//     noList: true, // default true
-//     reverseData: false,
-//     onlyBuySignals: false,
-// }).then(console.log);
+const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
+getCandlesticksData({
+    symbol: "BTC/BRL",
+    limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
+    sinceType: "count", // count, date
+    customDate: "2021-07-07T02:00:00.000Z", // if hour less than 9, put 0 in front
+    sinceCount: 250, // default 250 last candles
+    noList: true, // default true
+    reverseData: false,
+    onlyBuySignals: false,
+}).then(console.log);
 
 // HELPERS
 function handleListData(list, { noList, reverseData, onlyBuySignals }) {
