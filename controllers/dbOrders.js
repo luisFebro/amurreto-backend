@@ -20,7 +20,7 @@ async function verifyLastStrategy(symbol, options = {}) {
 }
 
 async function setDbOrderBack({ side, mostRecentData, moreData }) {
-    if (!mostRecentData) return null;
+    // if (!mostRecentData) return null;
 
     const {
         quote,
@@ -75,7 +75,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 
     const isNew = status === "new";
     if (isNew) {
-        // if status is "done" or "new", create new document,
+        // create new document,
         if (isBuy) delete dataOrder.sellPrices;
         else delete dataOrder.buyPrices;
 

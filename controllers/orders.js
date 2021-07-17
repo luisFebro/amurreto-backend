@@ -66,7 +66,7 @@ async function createOrderBySignal(signalData, options = {}) {
     if (condBuy) {
         return await createOrderBack({
             side: "BUY",
-            type,
+            type: "MARKET",
             symbol,
             strategy,
             capitalPositionPerc,
@@ -150,8 +150,8 @@ async function createOrderBack(payload = {}) {
     };
 
     const orderPrice = isMarket ? "0" : price;
-    // const data = true;
-    const data = await novadax
+
+    await novadax
         .createOrder(symbol, type, side, amount, orderPrice, params)
         .catch((response) => {
             const error = response.toString();
@@ -164,7 +164,7 @@ async function createOrderBack(payload = {}) {
                     "Balance not enough or order amount is too small"
                 );
         });
-    if (!data) return null;
+    // if (!data) return null;
 
     const moreData = {
         symbol,

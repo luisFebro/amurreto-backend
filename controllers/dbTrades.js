@@ -1,12 +1,13 @@
-const AmurretoOrders = require("../models/Orders");
 const {
     handleList,
     checkEmptyList,
 } = require("../utils/mongodb/skipLimitSort");
+const AmurretoOrders = require("../models/Orders");
 const reduceQuery = require("../utils/mongodb/reduceQuery");
-const { getCandlesticksData } = require("./klines/candlesticks");
 const { TAKER_MARKET_FEE } = require("./fees");
-const getPercentage = require("../utils/number/perc/getPercentage")
+const getPercentage = require("../utils/number/perc/getPercentage");
+const { getCandlesticksData } = require("./klines/candlesticks");
+const getTotalResults = require("./helpers/totalResults");
 
 exports.readTradesHistory = async (req, res) => {
     const data = await readTradesHistoryBack(req.query);
@@ -15,6 +16,12 @@ exports.readTradesHistory = async (req, res) => {
     if (emptyListRes) return res.json(emptyListRes);
 
     return res.json(data[0]);
+};
+
+exports.getTotalResults = async (req, res) => {
+    const result = await getTotalResults();
+
+    return res.json(result);
 };
 
 async function readTradesHistoryBack(payload = {}) {
@@ -69,12 +76,8 @@ async function readTradesHistoryBack(payload = {}) {
             $trunc: [
                 {
                     $add: [
-                        reduceQuery(
-                            "$$elem.buyPrices.fee.perc"
-                        ),
-                        reduceQuery(
-                            "$$elem.sellPrices.fee.perc"
-                        ),
+                        reduceQuery("$$elem.buyPrices.fee.perc"),
+                        reduceQuery("$$elem.sellPrices.fee.perc"),
                     ],
                 },
                 1,
@@ -85,31 +88,22 @@ async function readTradesHistoryBack(payload = {}) {
             $let: {
                 vars: {
                     basePrice: {
-                        $last:
-                            "$$elem.buyPrices.amounts.base",
+                        $last: "$$elem.buyPrices.amounts.base",
                     },
                     buyMarketPrice: {
-                        $last:
-                            "$$elem.buyPrices.amounts.market",
+                        $last: "$$elem.buyPrices.amounts.market",
                     },
                     sellMarketPrice: {
-                        $first:
-                            "$$elem.sellPrices.amounts.market",
+                        $first: "$$elem.sellPrices.amounts.market",
                     },
                 },
                 in: {
                     grossProfitAmount: {
-                        $subtract: [
-                            endQuotePrice,
-                            startQuotePrice,
-                        ],
+                        $subtract: [endQuotePrice, startQuotePrice],
                     },
                     netProfitAmount,
                     finalBalanceAmount: {
-                        $add: [
-                            startQuotePrice,
-                            netProfitAmount,
-                        ],
+                        $add: [startQuotePrice, netProfitAmount],
                     },
                 },
             },
@@ -117,7 +111,7 @@ async function readTradesHistoryBack(payload = {}) {
     };
 
     // remove unecessary data for DB query which requires selling data which live trades do not own it until an selling order
-    if(isPending) {
+    if (isPending) {
         delete allListData.sellMarketPrice;
         delete allListData.sellTableList;
         delete allListData.totalFeeAmount;
@@ -157,16 +151,26 @@ async function readTradesHistoryBack(payload = {}) {
         ...handleList({ skip, limit }),
     ]);
 
-    if(isPending) {
+    if (isPending) {
         // handle live candle need:
         const pendingList = data[0] && data[0].list;
-        if(!pendingList) return [{}];
+        const gotListData = Boolean(
+            pendingList &&
+                pendingList[0].buyTableList &&
+                pendingList[0].buyTableList.date.length
+        ); // if not date, it means no other data is available. This happens when an order is cancelled with LIMIT order
+        if (!pendingList || !gotListData)
+            return [{ list: [], listTotal: 0, chunksTotal: 0 }];
 
-        const symbolsList = [...new Set(pendingList.map(data => data.symbol))];
-        const requestList = symbolsList.map(symbol => getCandlesticksData({ symbol, onlyLiveCandle: true }))
+        const symbolsList = [
+            ...new Set(pendingList.map((data) => data.symbol)),
+        ];
+        const requestList = symbolsList.map((symbol) =>
+            getCandlesticksData({ symbol, onlyLiveCandle: true })
+        );
         const allLiveCandlesData = await Promise.all(requestList);
 
-        const updatedData = pendingList.map(tradeData => {
+        const updatedData = pendingList.map((tradeData) => {
             const {
                 symbol: currSymbol,
                 buyTableList,
@@ -174,32 +178,59 @@ async function readTradesHistoryBack(payload = {}) {
                 buyMarketPrice,
             } = tradeData;
 
-            const foundLiveCandle = allLiveCandlesData.find(d => d.symbol === currSymbol);
-            if(!foundLiveCandle) return tradeData;
+            const foundLiveCandle = allLiveCandlesData.find(
+                (d) => d.symbol === currSymbol
+            );
+            if (!foundLiveCandle) return tradeData;
 
-            const {
-                liveCandleClose,
-            } = foundLiveCandle;
+            const { liveCandleClose } = foundLiveCandle;
             const { fee } = buyTableList;
 
-            const liveEndQuotePrice = Number((basePrice * liveCandleClose).toFixed(2));
+            const liveEndQuotePrice = Number(
+                (basePrice * liveCandleClose).toFixed(2)
+            );
 
             // FEES
-            const totalFeeBuyAmount = fee.amount.reduce((acc, next) => acc + next, 0);
-            const totalFeeBuyPerc = fee.perc.reduce((acc, next) => acc + next, 0);
-            const totalFeeSellAmount = getPercentage(liveEndQuotePrice, TAKER_MARKET_FEE, { mode: "value" });
+            const totalFeeBuyAmount = fee.amount.reduce(
+                (acc, next) => acc + next,
+                0
+            );
+            const totalFeeBuyPerc = fee.perc.reduce(
+                (acc, next) => acc + next,
+                0
+            );
+            const totalFeeSellAmount = getPercentage(
+                liveEndQuotePrice,
+                TAKER_MARKET_FEE,
+                { mode: "value" }
+            );
 
-            const totalFeeAmount = Number((totalFeeBuyAmount + totalFeeSellAmount).toFixed(2));
-            const totalFeePerc = Number((totalFeeBuyPerc + TAKER_MARKET_FEE).toFixed(2));
+            const totalFeeAmount = Number(
+                (totalFeeBuyAmount + totalFeeSellAmount).toFixed(2)
+            );
+            const totalFeePerc = Number(
+                (totalFeeBuyPerc + TAKER_MARKET_FEE).toFixed(2)
+            );
             // END FEES
 
             // RESULT AND PROFITS
-            const startQuotePrice = Number((basePrice * buyMarketPrice).toFixed(2));
+            const startQuotePrice = Number(
+                (basePrice * buyMarketPrice).toFixed(2)
+            );
 
-            const liveGrossProfitAmount = Number((liveEndQuotePrice - startQuotePrice).toFixed(2))
-            const liveNetProfitAmount = Number((liveEndQuotePrice - (startQuotePrice + totalFeeAmount)).toFixed(2));
-            const liveFinalBalanceAmount = startQuotePrice + liveNetProfitAmount;
-            const liveFinalGrossBalanceAmount = startQuotePrice + liveGrossProfitAmount;
+            const liveGrossProfitAmount = Number(
+                (liveEndQuotePrice - startQuotePrice).toFixed(2)
+            );
+            const liveNetProfitAmount = Number(
+                (
+                    liveEndQuotePrice -
+                    (startQuotePrice + totalFeeAmount)
+                ).toFixed(2)
+            );
+            const liveFinalBalanceAmount =
+                startQuotePrice + liveNetProfitAmount;
+            const liveFinalGrossBalanceAmount =
+                startQuotePrice + liveGrossProfitAmount;
             // END RESULT AND PROFITS
             return {
                 ...tradeData,
@@ -212,22 +243,26 @@ async function readTradesHistoryBack(payload = {}) {
                     netProfitAmount: liveNetProfitAmount,
                     finalBalanceAmount: liveFinalBalanceAmount,
                     finalGrossBalanceAmount: liveFinalGrossBalanceAmount,
-                }
+                },
                 // sellTableList: { quoteAndTransPerc, fee: {}}
-            }
-        })
+            };
+        });
 
         data[0].list = updatedData;
     }
 
+    if (!data.length) return [{ list: [], listTotal: 0, chunksTotal: 0 }];
+
     return data;
 }
+// readTradesHistoryBack({ status: "pending" })
+// .then(res => console.log(JSON.stringify(res)))
 
 // HELPERS
 function getTableList(type) {
     const main = `$$elem.${type}Prices`;
 
-    return({
+    return {
         date: `${main}.timestamp`,
         quoteAndTransPerc: {
             amount: `${main}.amounts.quote`,
@@ -240,9 +275,7 @@ function getTableList(type) {
         fee: {
             perc: `${main}.fee.perc`,
             amount: `${main}.fee.amount`,
-        }
-    });
+        },
+    };
 }
 // END HELPERS
-// readTradesHistoryBack({ status: "done" })
-// .then(res => console.log(JSON.stringify(res)))
