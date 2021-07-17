@@ -46,7 +46,7 @@ function analyseEmaTrend({ ema9, ema20, ema50 }) {
     if (isDownTrend) return "downtrend";
 
     const diffEma9to20 = Math.abs(ema9 - ema20);
-    const isUpwardReversal = ema9 > ema20 && diffEma9to20 > 300;
+    const isUpwardReversal = ema9 > ema20 && diffEma9to20 > 200;
     if (isUpwardReversal) return "bullReversal";
 
     const isDownwardReversal = ema9 < ema20 && diffEma9to20;
