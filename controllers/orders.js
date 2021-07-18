@@ -61,7 +61,9 @@ async function createOrderBySignal(signalData, options = {}) {
     // if strategy already ran, then ignore it.
     // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
     const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
-    const condBuy = defaultCond && (signal === "BUY" || isHoldWithoutPriorSell);
+    const condBuy =
+        defaultCond &&
+        (signal === "BUY" || signal === "HOLD" || isHoldWithoutPriorSell);
 
     if (condBuy) {
         return await createOrderBack({

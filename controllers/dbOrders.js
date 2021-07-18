@@ -20,6 +20,7 @@ async function verifyLastStrategy(symbol, options = {}) {
 }
 
 async function setDbOrderBack({ side, mostRecentData, moreData }) {
+    console.log("side", side);
     // if (!mostRecentData) return null;
 
     const {
@@ -43,6 +44,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         transactionPerc: transactionPositionPerc,
         side,
     });
+    console.log("status", status);
 
     const defaultTransaction = {
         strategy,
@@ -59,6 +61,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
             amount: filledFee,
         },
     };
+    console.log("defaultTransaction", defaultTransaction);
 
     const dataOrder = {
         symbol,

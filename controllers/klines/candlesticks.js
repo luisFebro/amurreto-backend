@@ -340,8 +340,8 @@ async function getCandlesticksData(payload = {}) {
 //     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
 //     sinceType: "count", // count, date
 //     customDate: "2021-07-07T02:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 250, // default 250 last candles
-//     noList: true, // default true
+//     sinceCount: 50, // default 250 last candles
+//     noList: false, // default true
 //     reverseData: false,
 //     onlyBuySignals: false,
 // }).then(console.log);
