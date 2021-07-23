@@ -60,7 +60,7 @@ async function readTradesHistoryBack(payload = {}) {
         status: { $first: "$list.status" },
         statusExchange: { $first: "$list.statusExchange" },
         capitalPosition: {
-            $first: "$list.capitalPosition",
+            $first: "$list.capitalPosition", // this is returning the wrong value, only the first transaction, replace it with actullay buy history
         },
         buyMarketPrice: {
             $last: "$$elem.buyPrices.amounts.market",
