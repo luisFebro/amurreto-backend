@@ -8,7 +8,7 @@ const jobGallery = [
     setOptions({
         name: "amurreto candlesticks update",
         filePath: "/amurreto/updateCandlesticks",
-        interval: "16m",
+        interval: "11m",
     }),
 ];
 

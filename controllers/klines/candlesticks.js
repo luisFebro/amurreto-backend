@@ -334,6 +334,7 @@ async function getCandlesticksData(payload = {}) {
         }),
     };
 }
+
 // const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
 // getCandlesticksData({
 //     symbol: "BTC/BRL",
@@ -341,7 +342,7 @@ async function getCandlesticksData(payload = {}) {
 //     sinceType: "count", // count, date
 //     customDate: "2021-07-22T22:00:00.000Z", // if hour less than 9, put 0 in front
 //     sinceCount: 50, // default 250 last candles
-//     noList: false, // default true
+//     noList: true, // default true
 //     reverseData: false,
 //     onlyBuySignals: false,
 // }).then(console.log);
