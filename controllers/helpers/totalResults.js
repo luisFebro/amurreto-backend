@@ -56,6 +56,7 @@ function getAmountPriceResults(file = "totalResults") {
         grossProfitAmount,
         netProfitAmount,
         finalBalanceAmount,
+        startQuotePrice,
     };
 
     const finalData =
@@ -152,6 +153,7 @@ async function getTotalResults() {
         };
     });
 
+    console.log("finalTotalResult", finalTotalResult);
     const perc = finalTotalResult.reduce(
         (acc, next) => acc + next.netProfitPerc,
         0
