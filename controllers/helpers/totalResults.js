@@ -62,25 +62,23 @@ function getAmountPriceResults(file = "totalResults") {
         file === "totalResults" ? dataForTotalResults : dataForDbTrades;
 
     return {
-        results: {
-            $let: {
-                vars: {
-                    // $first is need here because we are looking in an array and to have the value use $first or $reduce if multiple in future updates.
-                    buyBasePrice: {
-                        $first: "$$elem.buyPrices.amounts.base",
-                    },
-                    buyMarketPrice: {
-                        $first: "$$elem.buyPrices.amounts.market",
-                    },
-                    sellBasePrice: {
-                        $first: "$$elem.sellPrices.amounts.base",
-                    },
-                    sellMarketPrice: {
-                        $first: "$$elem.sellPrices.amounts.market",
-                    },
+        $let: {
+            vars: {
+                // $first is need here because we are looking in an array and to have the value use $first or $reduce if multiple in future updates.
+                buyBasePrice: {
+                    $first: "$$elem.buyPrices.amounts.base",
                 },
-                in: finalData,
+                buyMarketPrice: {
+                    $first: "$$elem.buyPrices.amounts.market",
+                },
+                sellBasePrice: {
+                    $first: "$$elem.sellPrices.amounts.base",
+                },
+                sellMarketPrice: {
+                    $first: "$$elem.sellPrices.amounts.market",
+                },
             },
+            in: finalData,
         },
     };
 }
@@ -104,7 +102,9 @@ async function getTotalResults() {
                     $map: {
                         input: "$list",
                         as: "elem",
-                        in: getAmountPriceResults(),
+                        in: {
+                            results: getAmountPriceResults(),
+                        },
                     },
                 },
             },
@@ -167,6 +167,8 @@ async function getTotalResults() {
         totalNetProfitAmount: Number(amount.toFixed(2)),
     };
 }
+
+getTotalResults().then(console.log);
 
 module.exports = {
     getAmountPriceResults,
