@@ -23,8 +23,6 @@ Kline - https://www.programmersought.com/article/7775785243
  */
 
 const candleSizesRange = [];
-let bullsCount = 0;
-let bearsCount = 0;
 const candlesThread = [];
 const candlesHistory = [];
 async function getCandlesticksData(payload = {}) {
@@ -121,13 +119,13 @@ async function getCandlesticksData(payload = {}) {
             ? candlesHistory.slice(-1)[0].price.close
             : 0;
 
-        if (isBullish) bullsCount += 1;
-        else bearsCount += 1;
         candleSizesRange.push(volFullCandle);
         candlesHistory.push({ vol: allVolData, price: allPriceData });
 
         const {
-            candleTypes,
+            oneCandleType,
+            twoCandleType,
+            threeCandleType,
             closeHigherThanLastOpen,
             lastSequenceRange,
             pressure,
@@ -150,11 +148,13 @@ async function getCandlesticksData(payload = {}) {
             // candle
             timestamp,
             isBullish,
-            candleTypes,
+            oneCandleType,
+            twoCandleType,
+            threeCandleType,
             closeHigherThanLastOpen,
             pressure,
             candleBodySize,
-            priceInc: Number(getIncreasedPerc(lastClosePrice, close)),
+            priceInc: getIncreasedPerc(lastClosePrice, close),
             lastSequenceRange,
             // end candles
             // open,
@@ -199,23 +199,29 @@ async function getCandlesticksData(payload = {}) {
 
     const indicatorsPeriod = -9;
     // 14-lastPeriod maxVolat will be used to calcalate stop loss
-    const maxAtr9 =
-        dataAtr.slice(indicatorsPeriod)[0] &&
-        dataAtr.slice(indicatorsPeriod).sort((a, b) => b - a)[0].atr;
-    const maxVol9 =
-        candlestickData.slice(indicatorsPeriod) &&
-        candlestickData
-            .slice(indicatorsPeriod)
-            .map((candle) => candle.vol)
-            .sort((a, b) => b - a)[0];
+    // const maxAtr9 =
+    //     dataAtr.slice(indicatorsPeriod)[0] &&
+    //     dataAtr.slice(indicatorsPeriod).sort((a, b) => b - a)[0].atr;
+    // const maxVol9 =
+    //     candlestickData.slice(indicatorsPeriod) &&
+    //     candlestickData
+    //         .slice(indicatorsPeriod)
+    //         .map((candle) => candle.vol)
+    //         .sort((a, b) => b - a)[0];
     // END INDICATORS CALCULATION
 
     candlestickData = candlestickData.map((candle, ind) => {
+        // ema data only works with 100 candles or above.
         const ema9 = dataEma9[ind];
         const ema20 = dataEma20[ind];
         const ema50 = dataEma50[ind];
 
-        const atrData = dataAtr[ind];
+        const emaTrend =
+            ema9 && ema20 && ema50
+                ? analyseEmaTrend({ ema9, ema20, ema50 })
+                : null;
+
+        // const atrData = dataAtr[ind];
         const rsi = dataRsi[ind];
         const isOverbought = rsi >= 70;
         const isOversold = rsi <= 30;
@@ -224,40 +230,35 @@ async function getCandlesticksData(payload = {}) {
             threadsCount,
             isHigherWing,
             isLowerWing,
-            isKeySupport,
-            isKeyResistence,
+            // isKeySupport,
+            // isKeyResistence,
         } = checkWingForCandle(candle, threads);
-
-        const emaTrend =
-            ema9 && ema20 && ema50
-                ? analyseEmaTrend({ ema9, ema20, ema50 })
-                : null;
 
         const secondCheckData = {
             ...candle,
             emaTrend,
             isHigherWing,
             isLowerWing,
-            isKeySupport,
-            isKeyResistence,
             threadsCount: isHigherWing ? threadsCount : null, // only if isHigherWing is true
-            // atr: atrData && atrData.atr,
-            // rsi,
-            incAtr: atrData && atrData.incVolat,
-            // ALL DATA ANALYSED ABOVE SHOULD BE BOILED DOWN TO ANALYSE SIGNAL - Buy, Hold, Sell, Wait
-            isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
-            isMaxVolume9: maxVol9 === candle.vol,
             isOverbought,
             isOversold,
             finalSignal: analyseSignals({ emaTrend, isOverbought }).signal,
-            ema9,
-            ema20,
-            ema50,
+            // isKeySupport,
+            // isKeyResistence,
+            // atr: atrData && atrData.atr,
+            // rsi,
+            // incAtr: atrData && atrData.incVolat,
+            // ALL DATA ANALYSED ABOVE SHOULD BE BOILED DOWN TO ANALYSE SIGNAL - Buy, Hold, Sell, Wait
+            // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
+            // isMaxVolume9: maxVol9 === candle.vol,
+            // ema9,
+            // ema20,
+            // ema50,
         };
 
         if (!isHigherWing) delete secondCheckData.threadsCount;
-        if (!isKeySupport) delete secondCheckData.isKeySupport;
-        if (!isKeyResistence) delete secondCheckData.isKeyResistence;
+        // if (!isKeySupport) delete secondCheckData.isKeySupport;
+        // if (!isKeyResistence) delete secondCheckData.isKeyResistence;
 
         return secondCheckData;
     });
@@ -296,7 +297,7 @@ async function getCandlesticksData(payload = {}) {
         emaTrend: lastEmaTrend,
         isMaxAtr9: liveCandle.isMaxAtr9,
         isMaxVolume9: liveCandle.isMaxVolume9,
-        maxAtr9,
+        // maxAtr9,
         incAtr: liveCandle.incAtr,
     };
 
@@ -309,11 +310,11 @@ async function getCandlesticksData(payload = {}) {
             isBullish: liveCandle.isBullish,
             incPrice: lastIncPrice,
             bodySize: liveCandle.candleBodySize,
-            candleTypes: liveCandle.candleTypes,
+            oneCandleType: liveCandle.oneCandleType,
+            twoCandleType: liveCandle.twoCandleType,
+            threeCandleType: liveCandle.threeCandleType,
             closeHigherThanLastOpen: liveCandle.closeHigherThanLastOpen,
             pressure: liveCandle.pressure,
-            bearsCount,
-            bullsCount,
         },
         borders: {
             nextResistence,
@@ -341,8 +342,8 @@ async function getCandlesticksData(payload = {}) {
 //     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
 //     sinceType: "count", // count, date
 //     customDate: "2021-07-22T22:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 50, // default 250 last candles
-//     noList: true, // default true
+//     sinceCount: 100, // default 250 last candles
+//     noList: false, // default true
 //     reverseData: false,
 //     onlyBuySignals: false,
 // }).then(console.log);

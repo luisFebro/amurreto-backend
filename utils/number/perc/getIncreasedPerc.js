@@ -31,7 +31,7 @@ function getIncreasedPerc(startingVal, finalVal) {
         finalValue = Math.abs(finalValue);
     }
 
-    return finalValue;
+    return Number(finalValue);
 }
 
 module.exports = getIncreasedPerc;

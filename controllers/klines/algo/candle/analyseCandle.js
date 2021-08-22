@@ -26,7 +26,7 @@ function analyseCandle(candleData) {
     candlesDataAnalysis.push(candleData);
 
     const pressure = handleStrength(vol);
-    const candleTypes = findCandleTypes({
+    const { oneCandleType, twoCandleType, threeCandleType } = findCandleTypes({
         ...candleData,
         pressure,
         volRealBody,
@@ -36,7 +36,9 @@ function analyseCandle(candleData) {
     });
 
     return {
-        candleTypes: JSON.stringify(candleTypes),
+        oneCandleType,
+        twoCandleType,
+        threeCandleType,
         candleBodySize: findCandleBodySize(vol),
         closeHigherThanLastOpen,
         lastSequenceRange: JSON.stringify(sequenceSides.slice(-3)),

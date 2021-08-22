@@ -33,7 +33,7 @@ function calculateATR(array, options = {}) {
         const atr = Number(getATR({ currTR, period, priorATR }).toFixed(2));
         return atrList.push({
             atr,
-            incVolat: Number(getIncreasedPerc(priorATR, atr)) || 0,
+            incVolat: getIncreasedPerc(priorATR, atr) || 0,
         });
     });
 

@@ -1,4 +1,12 @@
 // CANDLE TYPES
+// single candle analysis
+const analyseHammer = (data) => {
+    const { pressure } = data;
+    const { part, perc } = pressure;
+    if (perc >= 50 && (part === "lower" || part === "upper")) return true;
+    return false;
+};
+
 const analyseDoji = (data) => {
     const { upper, body, lower, volRealBody } = data;
     const upperEqual3 = upper.toString().charAt(0) === "3";
@@ -11,16 +19,17 @@ const analyseDoji = (data) => {
 
     return upperEqual3 && bodyEqual3 && lowerEqual3;
 };
+// end single candle analysis
 
+// 2 candles analysis
 const analyseEngulfing = (data) => {};
-
 const analyseTweezers = (data) => {
     const {
         pressure,
         currOpen,
         lastClose,
-        closeHigherThanLastOpen,
         isLastCandleBullish,
+        // closeHigherThanLastOpen,
     } = data;
 
     // analyse like if the half of price (base without decimal) is equal like 178.532 and 178.900 is true
@@ -37,13 +46,7 @@ const analyseTweezers = (data) => {
         return true;
     return false;
 };
-
-const analyseHammer = (data) => {
-    const { pressure } = data;
-    const { part, perc } = pressure;
-    if (perc >= 50 && (part === "lower" || part === "upper")) return true;
-    return false;
-};
+// end 2 candles analysis
 // END CANDLE TYPES
 
 function findCandleTypes({
@@ -54,7 +57,10 @@ function findCandleTypes({
     closeHigherThanLastOpen,
     isLastCandleBullish,
 }) {
-    const candleTypes = [];
+    let oneCandleType = "";
+    let twoCandleType = "";
+    let threeCandleType = "";
+
     const defaultData = {
         upper: vol.upperPerc,
         body: vol.bodyPerc,
@@ -65,12 +71,16 @@ function findCandleTypes({
         lastClose,
     };
 
+    // single candle
     const volRealBody = vol.volRealBody;
     if (analyseDoji({ ...defaultData, volRealBody }) === "dojiHighWave")
-        candleTypes.push("dojiHighWave");
+        oneCandleType = "dojiHighWave";
     else if (analyseDoji({ ...defaultData, volRealBody }))
-        candleTypes.push("doji");
-    if (analyseHammer(defaultData)) candleTypes.push("hammer");
+        oneCandleType = "doji";
+    if (analyseHammer(defaultData)) oneCandleType = "hammer";
+    // end single candle
+
+    // 2 candles
     if (
         analyseTweezers({
             ...defaultData,
@@ -78,9 +88,14 @@ function findCandleTypes({
             isLastCandleBullish,
         })
     )
-        candleTypes.push("tweezers");
+        twoCandleType = "tweezers";
+    // end 2 candles
 
-    return JSON.stringify(candleTypes);
+    return {
+        oneCandleType,
+        twoCandleType,
+        threeCandleType,
+    };
 }
 
 module.exports = { findCandleTypes, analyseDoji };

@@ -1,66 +1,91 @@
 const AmurretoOrders = require("../../models/Orders");
 const reduceQuery = require("../../utils/mongodb/reduceQuery");
 // const { TAKER_MARKET_FEE } = require("../fees");
-const getPercentage = require("../../utils/number/perc/getPercentage");
+const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 
-async function getTotalResults() {
-    // payload = {}
+// LESSON: do not confuse the perc fee with actual perc amount when adding both buy/sell fees
+function getTotalFee(type = "amount") {
+    const allowedTypes = ["amount", "perc"];
+    if (!allowedTypes.includes(type)) throw new Error("Wrong type.");
 
-    const startQuotePrice = {
-        $trunc: [{ $multiply: ["$$basePrice", "$$buyMarketPrice"] }, 2],
-    };
-    const endQuotePrice = {
-        $trunc: [{ $multiply: ["$$basePrice", "$$sellMarketPrice"] }, 2],
-    };
-    const totalFeeAmount = {
+    const truncCount = type === "amount" ? 2 : 1;
+
+    return {
         $trunc: [
             {
                 $add: [
-                    reduceQuery("$$elem.buyPrices.fee.amount"),
-                    reduceQuery("$$elem.sellPrices.fee.amount"),
+                    reduceQuery(`$$elem.buyPrices.fee.${type}`),
+                    reduceQuery(`$$elem.sellPrices.fee.${type}`),
                 ],
             },
-            2,
+            truncCount,
         ],
     };
+}
 
+function getAmountPriceResults(file = "totalResults") {
+    const startQuotePrice = {
+        $trunc: [{ $multiply: ["$$buyBasePrice", "$$buyMarketPrice"] }, 2],
+    };
+
+    const endQuotePrice = {
+        $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
+    };
+
+    const totalFeeAmount = getTotalFee("amount");
+
+    const grossProfitAmount = { $subtract: [endQuotePrice, startQuotePrice] };
+    // if grossProfitAmount is NEGATIVE, then FEES is ADDED. e.g -1.00 - 0.40 (total fee) ==> - plus - equal +
+    // if grossProfitAmount is POSITIVE, then FEES is SUBTRACTED. e.g 1.00 - 0.40 (total fee) + plus - equal -
     const netProfitAmount = {
-        $subtract: [
-            { $subtract: [endQuotePrice, startQuotePrice] },
-            totalFeeAmount,
-        ],
+        $subtract: [grossProfitAmount, totalFeeAmount],
     };
 
-    const allListData = {
-        symbol: { $first: "$list.symbol" },
-        status: "$list.status",
-        buyList: "$$elem.buyPrices",
+    const finalBalanceAmount = {
+        $add: [startQuotePrice, netProfitAmount],
+    };
+
+    const dataForTotalResults = {
+        netProfitAmount,
+        startQuotePrice,
+        sellMarketPrice: "$$sellMarketPrice",
+        finalBalanceAmount,
+    };
+
+    const dataForDbTrades = {
+        grossProfitAmount,
+        netProfitAmount,
+        finalBalanceAmount,
+    };
+
+    const finalData =
+        file === "totalResults" ? dataForTotalResults : dataForDbTrades;
+
+    return {
         results: {
             $let: {
                 vars: {
-                    basePrice: {
-                        $last: "$$elem.buyPrices.amounts.base",
+                    // $first is need here because we are looking in an array and to have the value use $first or $reduce if multiple in future updates.
+                    buyBasePrice: {
+                        $first: "$$elem.buyPrices.amounts.base",
                     },
                     buyMarketPrice: {
-                        $last: "$$elem.buyPrices.amounts.market",
+                        $first: "$$elem.buyPrices.amounts.market",
+                    },
+                    sellBasePrice: {
+                        $first: "$$elem.sellPrices.amounts.base",
                     },
                     sellMarketPrice: {
                         $first: "$$elem.sellPrices.amounts.market",
                     },
                 },
-                in: {
-                    grossProfitAmount: {
-                        $subtract: [endQuotePrice, startQuotePrice],
-                    },
-                    netProfitAmount,
-                    finalBalanceAmount: {
-                        $add: [startQuotePrice, netProfitAmount],
-                    },
-                },
+                in: finalData,
             },
         },
     };
+}
 
+async function getTotalResults() {
     const mainAggr = [
         {
             $match: {},
@@ -79,46 +104,46 @@ async function getTotalResults() {
                     $map: {
                         input: "$list",
                         as: "elem",
-                        in: allListData,
+                        in: getAmountPriceResults(),
                     },
                 },
             },
         },
+        {
+            $unwind: "$list",
+        },
+        {
+            $replaceWith: { $ifNull: ["$list.results", {}] },
+        },
     ];
 
-    const data = await AmurretoOrders.aggregate([...mainAggr]);
+    const allOrdersList = await AmurretoOrders.aggregate([...mainAggr]);
 
-    const allOrdersList = data[0] && data[0].list;
-    if (!allOrdersList)
+    if (!allOrdersList.length)
         return {
             totalNetProfitPerc: 0,
             totalNetProfitAmount: 0,
         };
-    const statusList = allOrdersList && allOrdersList[0].status;
 
-    const finalTotalResult = statusList.map((status, ind) => {
-        const currResults = allOrdersList[ind];
-
-        const { finalBalanceAmount, netProfitAmount } = currResults.results;
-
-        if (status === "pending") {
-            const buyList = allOrdersList[ind].buyList;
-            const gotListData = buyList.length;
-
-            if (!gotListData || !finalBalanceAmount) {
-                return {
-                    netProfitPerc: 0,
-                    netProfitAmount: 0,
-                };
-            }
-        }
-
-        const netProfitPerc = getPercentage(
+    const finalTotalResult = allOrdersList.map((currResults) => {
+        const {
             finalBalanceAmount,
             netProfitAmount,
-            {
-                toFixed: 2,
-            }
+            startQuotePrice,
+            sellMarketPrice,
+        } = currResults;
+
+        const isCurrentTrading = !sellMarketPrice;
+        if (isCurrentTrading) {
+            return {
+                netProfitPerc: 0,
+                netProfitAmount: 0,
+            };
+        }
+
+        const netProfitPerc = getIncreasedPerc(
+            startQuotePrice,
+            finalBalanceAmount
         );
 
         return {
@@ -131,6 +156,7 @@ async function getTotalResults() {
         (acc, next) => acc + next.netProfitPerc,
         0
     );
+
     const amount = finalTotalResult.reduce(
         (acc, next) => acc + next.netProfitAmount,
         0
@@ -141,6 +167,12 @@ async function getTotalResults() {
         totalNetProfitAmount: Number(amount.toFixed(2)),
     };
 }
+
+module.exports = {
+    getAmountPriceResults,
+    getTotalResults,
+    getTotalFee,
+};
 
 // HELPERS
 // async function getLiveTotalData(data) {
@@ -224,5 +256,3 @@ async function getTotalResults() {
 //     });
 // }
 // END HELPERS
-
-module.exports = getTotalResults;

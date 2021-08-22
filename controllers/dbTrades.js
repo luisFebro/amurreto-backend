@@ -3,11 +3,17 @@ const {
     checkEmptyList,
 } = require("../utils/mongodb/skipLimitSort");
 const AmurretoOrders = require("../models/Orders");
-const reduceQuery = require("../utils/mongodb/reduceQuery");
 const { TAKER_MARKET_FEE } = require("./fees");
 const getPercentage = require("../utils/number/perc/getPercentage");
 const { getCandlesticksData } = require("./klines/candlesticks");
-const getTotalResults = require("./helpers/totalResults");
+const {
+    getTotalResults,
+    getTotalFee,
+    getAmountPriceResults,
+} = require("./helpers/totalResults");
+
+const totalFeeAmount = getTotalFee("amount");
+const totalFeePerc = getTotalFee("perc");
 
 exports.readTradesHistory = async (req, res) => {
     const data = await readTradesHistoryBack(req.query);
@@ -28,31 +34,6 @@ async function readTradesHistoryBack(payload = {}) {
     const { skip = 0, limit = 5, status } = payload;
     const isPending = status === "pending";
 
-    const startQuotePrice = {
-        $trunc: [{ $multiply: ["$$basePrice", "$$buyMarketPrice"] }, 2],
-    };
-    const endQuotePrice = {
-        $trunc: [{ $multiply: ["$$basePrice", "$$sellMarketPrice"] }, 2],
-    };
-    const totalFeeAmount = {
-        $trunc: [
-            {
-                $add: [
-                    reduceQuery("$$elem.buyPrices.fee.amount"),
-                    reduceQuery("$$elem.sellPrices.fee.amount"),
-                ],
-            },
-            2,
-        ],
-    };
-
-    const netProfitAmount = {
-        $subtract: [
-            { $subtract: [endQuotePrice, startQuotePrice] },
-            totalFeeAmount,
-        ],
-    };
-
     const allListData = {
         sellTableList: getTableList("sell"),
         buyTableList: getTableList("buy"),
@@ -72,42 +53,9 @@ async function readTradesHistoryBack(payload = {}) {
             $last: "$$elem.buyPrices.amounts.base",
         },
         createdAt: "$$elem.createdAt",
-        totalFeePerc: {
-            $trunc: [
-                {
-                    $add: [
-                        reduceQuery("$$elem.buyPrices.fee.perc"),
-                        reduceQuery("$$elem.sellPrices.fee.perc"),
-                    ],
-                },
-                1,
-            ],
-        },
+        totalFeePerc,
         totalFeeAmount,
-        results: {
-            $let: {
-                vars: {
-                    basePrice: {
-                        $last: "$$elem.buyPrices.amounts.base",
-                    },
-                    buyMarketPrice: {
-                        $last: "$$elem.buyPrices.amounts.market",
-                    },
-                    sellMarketPrice: {
-                        $first: "$$elem.sellPrices.amounts.market",
-                    },
-                },
-                in: {
-                    grossProfitAmount: {
-                        $subtract: [endQuotePrice, startQuotePrice],
-                    },
-                    netProfitAmount,
-                    finalBalanceAmount: {
-                        $add: [startQuotePrice, netProfitAmount],
-                    },
-                },
-            },
-        },
+        results: getAmountPriceResults("dbTrades"),
     };
 
     // remove unecessary data for DB query which requires selling data which live trades do not own it until an selling order
@@ -255,7 +203,7 @@ async function readTradesHistoryBack(payload = {}) {
 
     return data;
 }
-// readTradesHistoryBack({ status: "pending" })
+// readTradesHistoryBack({ status: "done" })
 // .then(res => console.log(JSON.stringify(res)))
 
 // HELPERS
