@@ -153,7 +153,6 @@ async function getTotalResults() {
         };
     });
 
-    console.log("finalTotalResult", finalTotalResult);
     const perc = finalTotalResult.reduce(
         (acc, next) => acc + next.netProfitPerc,
         0
@@ -170,93 +169,10 @@ async function getTotalResults() {
     };
 }
 
-getTotalResults().then(console.log);
+// getTotalResults().then(console.log);
 
 module.exports = {
     getAmountPriceResults,
     getTotalResults,
     getTotalFee,
 };
-
-// HELPERS
-// async function getLiveTotalData(data) {
-//     const pendingList = data[0] && data[0].list;
-//     const gotListData = Boolean(pendingList && pendingList[0].buyTableList && pendingList[0].buyTableList.date.length); // if not date, it means no other data is available. This happens when an order is cancelled with LIMIT order
-//     if(!pendingList || !gotListData) return [{ list: [{}], listTotal : 0, chunksTotal: 0 }];
-
-//     const symbolsList = [...new Set(pendingList.map(data => data.symbol))];
-//     const requestList = symbolsList.map(symbol => getCandlesticksData({ symbol, onlyLiveCandle: true }))
-//     const allLiveCandlesData = await Promise.all(requestList);
-
-//     const updatedData = pendingList.map(tradeData => {
-//         const {
-//             symbol: currSymbol,
-//             buyTableList,
-//             basePrice,
-//             buyMarketPrice,
-//         } = tradeData;
-
-//         const foundLiveCandle = allLiveCandlesData.find(d => d.symbol === currSymbol);
-//         if(!foundLiveCandle) return tradeData;
-
-//         const {
-//             liveCandleClose,
-//         } = foundLiveCandle;
-//         const { fee } = buyTableList;
-
-//         const liveEndQuotePrice = Number((basePrice * liveCandleClose).toFixed(2));
-
-//         // FEES
-//         const totalFeeBuyAmount = fee.amount.reduce((acc, next) => acc + next, 0);
-//         const totalFeeBuyPerc = fee.perc.reduce((acc, next) => acc + next, 0);
-//         const totalFeeSellAmount = getPercentage(liveEndQuotePrice, TAKER_MARKET_FEE, { mode: "value" });
-
-//         const totalFeeAmount = Number((totalFeeBuyAmount + totalFeeSellAmount).toFixed(2));
-//         const totalFeePerc = Number((totalFeeBuyPerc + TAKER_MARKET_FEE).toFixed(2));
-//         // END FEES
-
-//         // RESULT AND PROFITS
-//         const startQuotePrice = Number((basePrice * buyMarketPrice).toFixed(2));
-
-//         const liveGrossProfitAmount = Number((liveEndQuotePrice - startQuotePrice).toFixed(2))
-//         const liveNetProfitAmount = Number((liveEndQuotePrice - (startQuotePrice + totalFeeAmount)).toFixed(2));
-//         const liveFinalBalanceAmount = startQuotePrice + liveNetProfitAmount;
-//         const liveFinalGrossBalanceAmount = startQuotePrice + liveGrossProfitAmount;
-//         // END RESULT AND PROFITS
-//         return {
-//             ...tradeData,
-//             sellMarketPrice: liveCandleClose,
-//             totalFeeAmount,
-//             totalFeeSellAmount,
-//             totalFeePerc,
-//             results: {
-//                 netProfitAmount: liveNetProfitAmount,
-//                 finalBalanceAmount: liveFinalBalanceAmount,
-//             }
-//             // sellTableList: { quoteAndTransPerc, fee: {}}
-//         }
-//     })
-
-//     data[0].list = updatedData;
-// }
-
-// function getTableList(type) {
-//     const main = `$$elem.${type}Prices`;
-
-//     return({
-//         date: `${main}.timestamp`,
-//         quoteAndTransPerc: {
-//             amount: `${main}.amounts.quote`,
-//             transactionPositionPerc: `${main}.transactionPositionPerc`,
-//         },
-//         base: `${main}.amounts.base`,
-//         market: `${main}.amounts.market`,
-//         strategy: `${main}.strategy`,
-//         orderType: `${main}.type`,
-//         fee: {
-//             perc: `${main}.fee.perc`,
-//             amount: `${main}.fee.amount`,
-//         }
-//     });
-// }
-// END HELPERS

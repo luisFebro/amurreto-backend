@@ -3,14 +3,12 @@ const {
     checkEmptyList,
 } = require("../utils/mongodb/skipLimitSort");
 const AmurretoOrders = require("../models/Orders");
-const { TAKER_MARKET_FEE } = require("./fees");
-const getPercentage = require("../utils/number/perc/getPercentage");
-const { getCandlesticksData } = require("./klines/candlesticks");
 const {
     getTotalResults,
     getTotalFee,
     getAmountPriceResults,
 } = require("./helpers/totalResults");
+const getLiveCandle = require("./helpers/liveCandle");
 
 const totalFeeAmount = getTotalFee("amount");
 const totalFeePerc = getTotalFee("perc");
@@ -43,14 +41,14 @@ async function readTradesHistoryBack(payload = {}) {
         capitalPosition: {
             $first: "$list.capitalPosition", // this is returning the wrong value, only the first transaction, replace it with actullay buy history
         },
+        buyBasePrice: {
+            $last: "$$elem.buyPrices.amounts.base",
+        },
         buyMarketPrice: {
             $last: "$$elem.buyPrices.amounts.market",
         }, // by default, all items follows First In Algo, the most recent elem will be inserted first. So $last it will be the first buy value and $first will get the most recent selling price
         sellMarketPrice: {
             $first: "$$elem.sellPrices.amounts.market",
-        },
-        basePrice: {
-            $last: "$$elem.buyPrices.amounts.base",
         },
         createdAt: "$$elem.createdAt",
         totalFeePerc,
@@ -100,8 +98,9 @@ async function readTradesHistoryBack(payload = {}) {
     ]);
 
     if (isPending) {
-        // handle live candle need:
         const pendingList = data[0] && data[0].list;
+
+        // handle live candle need:
         const gotListData = Boolean(
             pendingList &&
                 pendingList[0].buyTableList &&
@@ -110,103 +109,81 @@ async function readTradesHistoryBack(payload = {}) {
         if (!pendingList || !gotListData)
             return [{ list: [], listTotal: 0, chunksTotal: 0 }];
 
-        const symbolsList = [
-            ...new Set(pendingList.map((data) => data.symbol)),
-        ];
-        const requestList = symbolsList.map((symbol) =>
-            getCandlesticksData({ symbol, onlyLiveCandle: true })
-        );
-        const allLiveCandlesData = await Promise.all(requestList);
-
-        const updatedData = pendingList.map((tradeData) => {
-            const {
-                symbol: currSymbol,
-                buyTableList,
-                basePrice,
-                buyMarketPrice,
-            } = tradeData;
-
-            const foundLiveCandle = allLiveCandlesData.find(
-                (d) => d.symbol === currSymbol
-            );
-            if (!foundLiveCandle) return tradeData;
-
-            const { liveCandleClose } = foundLiveCandle;
-            const { fee } = buyTableList;
-
-            const liveEndQuotePrice = Number(
-                (basePrice * liveCandleClose).toFixed(2)
-            );
-
-            // FEES
-            const totalFeeBuyAmount = fee.amount.reduce(
-                (acc, next) => acc + next,
-                0
-            );
-            const totalFeeBuyPerc = fee.perc.reduce(
-                (acc, next) => acc + next,
-                0
-            );
-            const totalFeeSellAmount = getPercentage(
-                liveEndQuotePrice,
-                TAKER_MARKET_FEE,
-                { mode: "value" }
-            );
-
-            const totalFeeAmount = Number(
-                (totalFeeBuyAmount + totalFeeSellAmount).toFixed(2)
-            );
-            const totalFeePerc = Number(
-                (totalFeeBuyPerc + TAKER_MARKET_FEE).toFixed(2)
-            );
-            // END FEES
-
-            // RESULT AND PROFITS
-            const startQuotePrice = Number(
-                (basePrice * buyMarketPrice).toFixed(2)
-            );
-
-            const liveGrossProfitAmount = Number(
-                (liveEndQuotePrice - startQuotePrice).toFixed(2)
-            );
-            const liveNetProfitAmount = Number(
-                (
-                    liveEndQuotePrice -
-                    (startQuotePrice + totalFeeAmount)
-                ).toFixed(2)
-            );
-            const liveFinalBalanceAmount =
-                startQuotePrice + liveNetProfitAmount;
-            const liveFinalGrossBalanceAmount =
-                startQuotePrice + liveGrossProfitAmount;
-            // END RESULT AND PROFITS
-            return {
-                ...tradeData,
-                sellMarketPrice: liveCandleClose,
-                totalFeeAmount,
-                totalFeeSellAmount,
-                totalFeePerc,
-                results: {
-                    grossProfitAmount: liveGrossProfitAmount,
-                    netProfitAmount: liveNetProfitAmount,
-                    finalBalanceAmount: liveFinalBalanceAmount,
-                    finalGrossBalanceAmount: liveFinalGrossBalanceAmount,
-                },
-                // sellTableList: { quoteAndTransPerc, fee: {}}
-            };
+        const updatedPendingData = await getPendingListData({
+            tradeData: pendingList[0],
         });
 
-        data[0].list = updatedData;
+        data[0].list = updatedPendingData;
     }
 
     if (!data.length) return [{ list: [], listTotal: 0, chunksTotal: 0 }];
 
     return data;
 }
-// readTradesHistoryBack({ status: "done" })
+// readTradesHistoryBack({ status: "pending" })
 // .then(res => console.log(JSON.stringify(res)))
 
 // HELPERS
+
+// in this version, only accepting BTC and one pending transaction
+// if eventually is required to manage multiple pending trnsactions, it is required to create an syncronous function to get live candle data later so that we can loop through the pending list
+async function getPendingListData({ tradeData }) {
+    const run = async (resolve, reject) => {
+        if (!tradeData) return reject("no pendingList");
+
+        const { symbol, buyBasePrice, buyMarketPrice, buyTableList } =
+            tradeData;
+        if (!symbol) return tradeData;
+
+        const { fee } = buyTableList;
+        const buyFeeAmount = fee && fee.amount[0];
+
+        const liveCandleData = await getLiveCandle({
+            symbol,
+            buyBasePrice,
+            buyMarketPrice,
+            buyFeeAmount,
+        });
+
+        const {
+            startQuotePrice,
+            liveCandleClose,
+            fee: liveFee,
+            liveResult,
+        } = liveCandleData;
+
+        const {
+            perc: totalFeePerc,
+            amount: totalFeeAmount,
+            sellFeeAmount,
+        } = liveFee;
+
+        const {
+            grossProfitAmount,
+            netProfitAmount,
+            balanceAmount,
+            grossBalanceAmount,
+        } = liveResult;
+
+        return resolve({
+            ...tradeData,
+            sellMarketPrice: liveCandleClose,
+            totalFeeAmount,
+            totalFeeSellAmount: sellFeeAmount,
+            totalFeePerc,
+            results: {
+                grossProfitAmount: grossProfitAmount,
+                netProfitAmount: netProfitAmount,
+                finalBalanceAmount: balanceAmount,
+                finalGrossBalanceAmount: grossBalanceAmount,
+                startQuotePrice,
+            },
+        });
+    };
+
+    return new Promise(run);
+}
+
 function getTableList(type) {
     const main = `$$elem.${type}Prices`;
 
