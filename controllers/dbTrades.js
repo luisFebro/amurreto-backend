@@ -113,7 +113,7 @@ async function readTradesHistoryBack(payload = {}) {
             tradeData: pendingList[0],
         });
 
-        data[0].list = [...updatedPendingData];
+        data[0].list = [updatedPendingData];
     }
 
     if (!data.length) return [{ list: [], listTotal: 0, chunksTotal: 0 }];
