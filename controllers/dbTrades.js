@@ -8,7 +8,7 @@ const {
     getTotalFee,
     getAmountPriceResults,
 } = require("./helpers/totalResults");
-const getLiveCandle = require("./helpers/liveCandle");
+const getLiveCandle = require("./live-candle/liveCandle");
 
 const totalFeeAmount = getTotalFee("amount");
 const totalFeePerc = getTotalFee("perc");
@@ -161,9 +161,11 @@ async function getPendingListData({ tradeData }) {
         const {
             grossProfitAmount,
             netProfitAmount,
+            netProfitPerc,
             balanceAmount,
             grossBalanceAmount,
         } = liveResult;
+        console.log("netProfitPerc", netProfitPerc);
 
         return resolve({
             ...tradeData,

@@ -2,6 +2,7 @@ const getMonth = require("date-fns/getMonth");
 const addDays = require("date-fns/addDays");
 const addHours = require("date-fns/addHours");
 const startOfMonth = require("date-fns/startOfMonth");
+const differenceInMinutes = require("date-fns/differenceInMinutes");
 
 const monthes = [
     "january",
@@ -25,11 +26,25 @@ const getCurrMonth = (date = new Date()) => {
     return monthes[indMonth];
 };
 
+const getDiffInMinutes = (date) => {
+    const targetDate = new Date(date);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    const day = targetDate.getDate();
+    const hour = targetDate.getHours();
+    const minute = targetDate.getMinutes();
+
+    const earlierDate = new Date(year, month, day, hour, minute, 0);
+    const laterDate = new Date();
+    return differenceInMinutes(laterDate, earlierDate);
+};
+
 module.exports = {
     getCurrMonth,
     addDays,
     addHours,
     lastMonth,
+    getDiffInMinutes,
 };
 
 // REFERENCE FROM FRONTEND:

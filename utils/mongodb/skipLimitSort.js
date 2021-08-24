@@ -43,7 +43,7 @@ function skipLimitSort({ skip, limit, list, sort, addListTotal }) {
 
 // for lists use skip, limit with mongodb
 function checkEmptyList(data = []) {
-    const listData = data.length && data[0].list || data && data.list;
+    const listData = (data.length && data[0].list) || (data && data.list);
 
     const isEmptyList = JSON.stringify(listData) === "[{}]" || !listData;
     if (isEmptyList) return { list: [], listTotal: 0, chunksTotal: 0 };
@@ -71,7 +71,7 @@ function handleList(options = {}) {
         unwind("$list"),
         replaceWith("$list"),
         {
-            $sort: sort,
+            $sort: sort, // e.g should be obj like { "updateAt": -1 }
         },
         {
             $group: {

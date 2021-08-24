@@ -17,6 +17,7 @@ const {
 } = require("./dbOrders");
 const AmurretoOrders = require("../models/Orders");
 const { TAKER_MARKET_FEE } = require("./fees");
+const needCircuitBreaker = require("./helpers/circuitBreaker");
 
 async function createOrderBySignal(signalData, options = {}) {
     const { signal, strategy, transactionPerc } = signalData;
@@ -42,12 +43,16 @@ async function createOrderBySignal(signalData, options = {}) {
         gotOpenOrder,
         transactionPositionPerc,
         priorSidePerc,
+        isBlockedByCurcuitBreak,
     ] = await Promise.all([
         verifyLastStrategy(symbol, { status: "pending", side, strategy }),
         checkOpeningOrder({ symbol, maxIterateCount: 0 }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
         findTransactionSidePerc({ symbol }),
+        needCircuitBreaker(),
     ]);
+
+    const blockTransactions = gotOpenOrder || isBlockedByCurcuitBreak;
 
     const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
 
@@ -60,7 +65,7 @@ async function createOrderBySignal(signalData, options = {}) {
     const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
     // if strategy already ran, then ignore it.
     // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
-    const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
+    const defaultCond = !blockTransactions && !alreadyRanStrategy;
     const condBuy =
         defaultCond &&
         (signal === "BUY" || signal === "HOLD" || isHoldWithoutPriorSell);

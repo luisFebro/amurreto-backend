@@ -1,7 +1,7 @@
 const { TAKER_MARKET_FEE } = require("../fees");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
-const { getCandlesticksData } = require("../klines/candlesticks");
+const getLivePrice = require("./getLivePrice");
 
 async function getLiveCandle({
     symbol, // e.g BTC/BRL
@@ -9,12 +9,7 @@ async function getLiveCandle({
     buyMarketPrice,
     buyFeeAmount,
 }) {
-    const livePricing = await getCandlesticksData({
-        symbol,
-        onlyLiveCandle: true,
-    });
-    // e.g data { symbol: 'BTC/BRL', liveCandleClose: 264841.25 },
-    const liveCandleClose = livePricing && livePricing.liveCandleClose;
+    const livePrice = getLivePrice("BTC/BRL");
 
     // base price is the same to calculate the live candle since the endQuotePrice should also take the base price into consideration to calculate the different in profit.
     const startQuotePrice = getQuotePrice({
@@ -23,7 +18,7 @@ async function getLiveCandle({
     });
     const endQuotePrice = getQuotePrice({
         basePrice: buyBasePrice,
-        marketPrice: liveCandleClose,
+        marketPrice: livePrice,
     });
 
     // FEE
@@ -59,8 +54,7 @@ async function getLiveCandle({
     const netProfitPerc = getIncreasedPerc(startQuotePrice, balanceAmount);
 
     return {
-        liveCandleClose,
-        netProfitPerc,
+        liveCandleClose: livePrice,
         startQuotePrice,
         fee: {
             perc: totalFeePerc,
@@ -70,6 +64,7 @@ async function getLiveCandle({
         liveResult: {
             grossProfitAmount,
             netProfitAmount,
+            netProfitPerc,
             balanceAmount,
             grossBalanceAmount,
         },
