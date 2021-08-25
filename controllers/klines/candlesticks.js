@@ -19,6 +19,8 @@ const watchStrategies = require("../strategies/strategies");
 const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
 // end strategies
 
+watchStrategies();
+
 /*
 Candlestick Charts are also known as candlesticks, Japanese lines, yin and yang lines, and bar lines. The commonly used term is "K-line", which originated from the 18th century Tokugawa shogunate era in Japan. The rice market transaction (1603-1867) is used to calculate the daily rise and fall of rice prices.
 The K line graphically shows the increase and decrease of the strength of the buyers and sellers and the transformation process and actual results. After nearly a hundred years of use and improvement, the K-line theory has been widely accepted by investors.

@@ -162,7 +162,7 @@ async function getPendingListData({ tradeData }) {
         const {
             grossProfitAmount,
             netProfitAmount,
-            netProfitPerc,
+            // netProfitPerc,
             balanceAmount,
             grossBalanceAmount,
         } = liveResult;

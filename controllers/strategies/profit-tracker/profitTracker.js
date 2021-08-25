@@ -50,12 +50,12 @@ async function getLiveProfitsPerc() {
     const { profitTracker, _id: transactionId } = list;
 
     const lastBuyData = list.buyPrices.slice(-1)[0];
-    const lastBuyMarketPrice = lastBuyData.amounts.market;
-    const lastBuyBaseAmount = lastBuyData.amounts.base;
+    const lastBuyPendingMarketPrice = lastBuyData.amounts.market;
+    const lastBuyPendingBaseAmount = lastBuyData.amounts.base;
 
     const defaultDataForLiveCandle = {
-        buyMarketPrice: lastBuyMarketPrice,
-        buyBaseAmount: lastBuyBaseAmount,
+        buyMarketPrice: lastBuyPendingMarketPrice,
+        buyBaseAmount: lastBuyPendingBaseAmount,
         buyFeeAmount: 0.3,
         onlyNetProfitPerc: true,
     };
@@ -110,12 +110,13 @@ function compareAndSetHigherPerc(data) {
         };
 
     function isCurrValHigher(curr, prior) {
-        const isPositive = curr >= 0;
-        return isPositive ? curr > prior : curr < prior;
+        return curr > prior;
     }
 
     const priorMaxPerc = priorPercs.maxPerc;
 
+    console.log("maxPerc", maxPerc);
+    console.log("priorMaxPerc", priorMaxPerc);
     return {
         maxPerc: isCurrValHigher(maxPerc, priorMaxPerc)
             ? maxPerc

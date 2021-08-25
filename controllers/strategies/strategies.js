@@ -10,7 +10,8 @@ const analyseEmaSignals = require("./ema/analyseEmaSignals");
 async function watchStrategies(options = {}) {
     const { lastEmaTrend } = options;
 
-    await watchProfitTracker();
+    const profitTracker = await watchProfitTracker();
+    console.log("profitTracker", profitTracker);
 
     // manage all strategies
     const emaSignal = analyseEmaSignals({
