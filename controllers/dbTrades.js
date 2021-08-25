@@ -120,6 +120,7 @@ async function readTradesHistoryBack(payload = {}) {
 
     return data;
 }
+
 // readTradesHistoryBack({ status: "pending" })
 // .then(res => console.log(JSON.stringify(res)))
 
@@ -140,7 +141,7 @@ async function getPendingListData({ tradeData }) {
 
         const liveCandleData = await getLiveCandle({
             symbol,
-            buyBasePrice,
+            buyBaseAmount: buyBasePrice,
             buyMarketPrice,
             buyFeeAmount,
         });
@@ -165,7 +166,6 @@ async function getPendingListData({ tradeData }) {
             balanceAmount,
             grossBalanceAmount,
         } = liveResult;
-        console.log("netProfitPerc", netProfitPerc);
 
         return resolve({
             ...tradeData,

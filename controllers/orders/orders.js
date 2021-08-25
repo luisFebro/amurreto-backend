@@ -1,13 +1,8 @@
-const novadax = require("./exchangeAPI");
-const { getBalance } = require("./account");
-const getPercentage = require("../utils/number/perc/getPercentage");
-const sortValue = require("../utils/number/sortNumbers");
-const {
-    getConvertedMarketPrice,
-    getConvertedPrice,
-    getBaseQuoteCurrencyFromSymbol,
-} = require("./helpers/convertors");
-const { getTradingSymbolBack } = require("./basicInfo");
+const novadax = require("../exchangeAPI");
+const getPercentage = require("../../utils/number/perc/getPercentage");
+const sortValue = require("../../utils/number/sortNumbers");
+const { getConvertedPrice } = require("../helpers/convertors");
+const { getTradingSymbolBack } = require("../basicInfo");
 const {
     getOrderTransactionPerc,
     findTransactionSidePerc,
@@ -15,9 +10,10 @@ const {
     cancelDbOrderBack,
     verifyLastStrategy,
 } = require("./dbOrders");
-const AmurretoOrders = require("../models/Orders");
-const { TAKER_MARKET_FEE } = require("./fees");
-const needCircuitBreaker = require("./helpers/circuitBreaker");
+const AmurretoOrders = require("../../models/Orders");
+const { TAKER_MARKET_FEE } = require("../fees");
+const needCircuitBreaker = require("../helpers/circuitBreaker");
+const getCurrencyAmount = require("./currencyAmounts");
 
 async function createOrderBySignal(signalData, options = {}) {
     const { signal, strategy, transactionPerc } = signalData;
@@ -52,8 +48,6 @@ async function createOrderBySignal(signalData, options = {}) {
         needCircuitBreaker(),
     ]);
 
-    const blockTransactions = gotOpenOrder || isBlockedByCurcuitBreak;
-
     const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
 
     // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
@@ -65,9 +59,10 @@ async function createOrderBySignal(signalData, options = {}) {
     const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
     // if strategy already ran, then ignore it.
     // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
-    const defaultCond = !blockTransactions && !alreadyRanStrategy;
+    const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
     const condBuy =
         defaultCond &&
+        !isBlockedByCurcuitBreak &&
         (signal === "BUY" || signal === "HOLD" || isHoldWithoutPriorSell);
 
     if (condBuy) {
@@ -122,13 +117,7 @@ async function createOrderBack(payload = {}) {
     const isMarket = type.toUpperCase() === "MARKET";
     const isBuy = side.toUpperCase() === "BUY";
 
-    const { baseCurrencyAmount, quoteCurrencyAmount } = await handleBalance({
-        base: getBaseQuoteCurrencyFromSymbol(symbol, { select: "base" }),
-        quote: getBaseQuoteCurrencyFromSymbol(symbol, { select: "quote" }),
-    });
-
-    const price = await getPrice({
-        isMarket,
+    const marketPrice = await getMarketPrice({
         isBuy,
         payload,
         symbol,
@@ -136,18 +125,9 @@ async function createOrderBack(payload = {}) {
         forcePrice,
     });
 
-    // AMOUNT
-    // amount: The amount of base currency, like BTC amount for buy of BTC_BRL;
-    const convertedBaseCurrAmount = await getConvertedMarketPrice(symbol, {
-        quote: quoteCurrencyAmount,
-        side: "BUY",
-    });
-    const selectedAmount = isBuy ? convertedBaseCurrAmount : baseCurrencyAmount;
-    const amount = getPercentage(selectedAmount, transactionPositionPerc, {
-        mode: "value",
-        noFormat: true,
-    }); // The amount of base currency, like BTC amount for sell of BTC_BRL
-    // END AMOUNT
+    const { baseCurrencyAmount, quoteCurrencyAmount } = await getCurrencyAmount(
+        { symbol, isBuy, transactionPositionPerc }
+    );
 
     const params = {
         value: isMarket && isBuy ? quoteCurrencyAmount : undefined,
@@ -156,10 +136,10 @@ async function createOrderBack(payload = {}) {
         // type: isStopPrice ? "stopLimit" : undefined,
     };
 
-    const orderPrice = isMarket ? "0" : price;
+    const orderPrice = isMarket ? "0" : marketPrice;
 
     await novadax
-        .createOrder(symbol, type, side, amount, orderPrice, params)
+        .createOrder(symbol, type, side, baseCurrencyAmount, orderPrice, params)
         .catch((response) => {
             const error = response.toString();
             console.log("error", error);
@@ -171,7 +151,7 @@ async function createOrderBack(payload = {}) {
                     "Balance not enough or order amount is too small"
                 );
         });
-    // if (!data) return null;
+    if (!data) return null;
 
     const moreData = {
         symbol,
@@ -183,7 +163,7 @@ async function createOrderBack(payload = {}) {
     // data either open or closed for LIMIT AND MARKET orders
     const fallback = {
         quote: quoteCurrencyAmount,
-        price,
+        price: marketPrice,
     };
 
     const mostRecentData = await getOrdersList({
@@ -363,20 +343,7 @@ async function checkOpeningOrder({ symbol, maxIterateCount }) {
     return gotOpenOrder;
 }
 
-// HELPERS
-async function handleBalance({ base, quote }) {
-    const balanceRes = await getBalance([base, quote]);
-    const baseCurrencyAmount = balanceRes[base].available;
-    const quoteCurrencyAmount = balanceRes[quote].available;
-
-    return {
-        baseCurrencyAmount,
-        quoteCurrencyAmount,
-    };
-}
-
-async function getPrice({
-    isMarket,
+async function getMarketPrice({
     isBuy,
     payload = {},
     symbol = "BTC/BRL",

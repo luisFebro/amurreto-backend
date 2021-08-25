@@ -1,3 +1,4 @@
+// STRATEGIES shoulb be moved to watchStrategies.
 /*
 SIGNALS
 BUY, HOLD, SELL, WAIT, ? (unknown)

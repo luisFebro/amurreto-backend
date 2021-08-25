@@ -3,21 +3,33 @@ const getPercentage = require("../../utils/number/perc/getPercentage");
 const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 const getLivePrice = require("./getLivePrice");
 
-async function getLiveCandle({
-    symbol, // e.g BTC/BRL
-    buyBasePrice,
-    buyMarketPrice,
-    buyFeeAmount,
-}) {
-    const livePrice = getLivePrice("BTC/BRL");
+async function getLiveCandle(options = {}) {
+    const {
+        symbol = "BTC/BRL", // e.g BTC/BRL
+        buyMarketPrice,
+        buyBaseAmount,
+        buyFeeAmount,
+        onlyNetProfitPerc = false,
+        candlePriceType = "close",
+    } = options;
+    const candlePriceTypes = ["close", "highest", "lowest"];
+    if (!candlePriceTypes.includes(candlePriceType))
+        throw new Error("invalid candle type price");
+
+    const { cPrice, hPrice, lPrice } = await getLivePrice(symbol, {
+        allCandleData: true,
+    });
+    let livePrice = cPrice;
+    if (candlePriceType === "highest") livePrice = hPrice;
+    if (candlePriceType === "lowest") livePrice = lPrice;
 
     // base price is the same to calculate the live candle since the endQuotePrice should also take the base price into consideration to calculate the different in profit.
     const startQuotePrice = getQuotePrice({
-        basePrice: buyBasePrice,
+        baseAmount: buyBaseAmount,
         marketPrice: buyMarketPrice,
     });
     const endQuotePrice = getQuotePrice({
-        basePrice: buyBasePrice,
+        baseAmount: buyBaseAmount,
         marketPrice: livePrice,
     });
 
@@ -53,6 +65,9 @@ async function getLiveCandle({
 
     const netProfitPerc = getIncreasedPerc(startQuotePrice, balanceAmount);
 
+    if (onlyNetProfitPerc)
+        return Number.isNaN(netProfitPerc) ? false : netProfitPerc; // sometimes it returns NaN
+
     return {
         liveCandleClose: livePrice,
         startQuotePrice,
@@ -72,8 +87,8 @@ async function getLiveCandle({
 }
 
 // HELPERS
-function getQuotePrice({ basePrice, marketPrice }) {
-    return Number((basePrice * marketPrice).toFixed(2));
+function getQuotePrice({ baseAmount, marketPrice }) {
+    return Number((baseAmount * marketPrice).toFixed(2));
 }
 
 function getFeeTotal({ buyVal, sellVal }) {

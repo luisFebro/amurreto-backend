@@ -9,12 +9,16 @@ const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const detectBullishThreads = require("./algo/candle/algo/detectBullishThreads");
 const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
-const analyseSignals = require("./algo/analyseSignals");
 const {
     checkWingForCandle,
 } = require("./algo/candle/algo/findResistenceSupportWings");
-const { createOrderBySignal } = require("../orders");
+const { createOrderBySignal } = require("../orders/orders");
 const { IS_PROD } = require("../../config");
+// strategies
+const watchStrategies = require("../strategies/strategies");
+const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
+// end strategies
+
 /*
 Candlestick Charts are also known as candlesticks, Japanese lines, yin and yang lines, and bar lines. The commonly used term is "K-line", which originated from the 18th century Tokugawa shogunate era in Japan. The rice market transaction (1603-1867) is used to calculate the daily rise and fall of rice prices.
 The K line graphically shows the increase and decrease of the strength of the buyers and sellers and the transformation process and actual results. After nearly a hundred years of use and improvement, the K-line theory has been widely accepted by investors.
@@ -242,7 +246,7 @@ async function getCandlesticksData(payload = {}) {
             threadsCount: isHigherWing ? threadsCount : null, // only if isHigherWing is true
             isOverbought,
             isOversold,
-            finalSignal: analyseSignals({ emaTrend, isOverbought }).signal,
+            finalSignal: analyseEmaSignals({ emaTrend, isOverbought }).signal,
             // isKeySupport,
             // isKeyResistence,
             // atr: atrData && atrData.atr,
@@ -276,12 +280,12 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
     const lastIsOverbought = lastRsi >= 70;
-    const finalSignalData = analyseSignals({
-        emaTrend: lastEmaTrend,
-        isOverbought: lastIsOverbought,
-    });
 
     if (IS_PROD) {
+        // this shoulbe inside IS_PROD after testing
+        const finalSignalData = await watchStrategies({
+            lastEmaTrend,
+        });
         await createOrderBySignal(finalSignalData, { symbol });
     }
 

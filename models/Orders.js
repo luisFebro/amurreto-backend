@@ -39,6 +39,12 @@ const data = {
     buyPrices: [TransactionSchema],
     sellPrices: [TransactionSchema],
     checkPendingOrderCount: Number,
+    profitTracker: {
+        diffMax: Number,
+        maxPerc: Number,
+        netPerc: Number,
+        minPerc: Number,
+    },
 };
 
 const orderSchema = new Schema(data, { timestamps: true });

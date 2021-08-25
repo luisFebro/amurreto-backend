@@ -1,5 +1,5 @@
-const AmurretoOrders = require("../models/Orders");
-const { pushFIFO } = require("../utils/mongodb/fifo");
+const AmurretoOrders = require("../../models/Orders");
+const { pushFIFO } = require("../../utils/mongodb/fifo");
 // const getPercentage = require("../utils/number/perc/getPercentage");
 
 async function verifyLastStrategy(symbol, options = {}) {
