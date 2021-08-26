@@ -1,7 +1,6 @@
 const novadax = require("../exchangeAPI");
 const { addDays, addHours } = require("../../utils/dates/dateFnsBack");
 const getWickVolume = require("./algo/getWickVolume");
-const analyseCandle = require("./algo/candle/analyseCandle");
 const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const calculateATR = require("../indicators/atr");
 const calculateRSI = require("../indicators/rsi");
@@ -14,12 +13,11 @@ const {
 } = require("./algo/candle/algo/findResistenceSupportWings");
 const { createOrderBySignal } = require("../orders/orders");
 const { IS_PROD } = require("../../config");
+const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
 // strategies
 const watchStrategies = require("../strategies/strategies");
 const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
 // end strategies
-
-watchStrategies();
 
 /*
 Candlestick Charts are also known as candlesticks, Japanese lines, yin and yang lines, and bar lines. The commonly used term is "K-line", which originated from the 18th century Tokugawa shogunate era in Japan. The rice market transaction (1603-1867) is used to calculate the daily rise and fall of rice prices.
@@ -98,6 +96,7 @@ async function getCandlesticksData(payload = {}) {
             min: lowest,
             close,
             isBullish,
+            timestamp,
         };
         const volUpperWick = getWickVolume("upper", allPriceData);
         const volLowerWick = getWickVolume("lower", allPriceData);
@@ -128,18 +127,11 @@ async function getCandlesticksData(payload = {}) {
         candleSizesRange.push(volFullCandle);
         candlesHistory.push({ vol: allVolData, price: allPriceData });
 
-        const {
-            oneCandleType,
-            twoCandleType,
-            threeCandleType,
-            closeHigherThanLastOpen,
-            lastSequenceRange,
-            pressure,
-            candleBodySize,
-        } = analyseCandle({
-            price: allPriceData,
-            vol: allVolData,
-        });
+        const { oneCandleType, twoCandleType, threeCandleType } =
+            analyseCandlePatterns({
+                price: allPriceData,
+                vol: allVolData,
+            });
 
         candlesThread.push({
             isBullish,
@@ -157,11 +149,7 @@ async function getCandlesticksData(payload = {}) {
             oneCandleType,
             twoCandleType,
             threeCandleType,
-            closeHigherThanLastOpen,
-            pressure,
-            candleBodySize,
             priceInc: getIncreasedPerc(lastClosePrice, close),
-            lastSequenceRange,
             // end candles
             // open,
             // highest,
@@ -311,16 +299,13 @@ async function getCandlesticksData(payload = {}) {
         symbol,
         candles: {
             count: candlesCount,
-            startTimestamp: candlestickData[0].timestamp,
+            startTimestamp: candlestickData[0] && candlestickData[0].timestamp,
             endTimestamp: liveCandle.timestamp,
             isBullish: liveCandle.isBullish,
             incPrice: lastIncPrice,
-            bodySize: liveCandle.candleBodySize,
             oneCandleType: liveCandle.oneCandleType,
             twoCandleType: liveCandle.twoCandleType,
             threeCandleType: liveCandle.threeCandleType,
-            closeHigherThanLastOpen: liveCandle.closeHigherThanLastOpen,
-            pressure: liveCandle.pressure,
         },
         borders: {
             nextResistence,
@@ -342,14 +327,14 @@ async function getCandlesticksData(payload = {}) {
     };
 }
 
-// const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
+// const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
 // getCandlesticksData({
 //     symbol: "BTC/BRL",
 //     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
 //     sinceType: "count", // count, date
-//     customDate: "2021-07-22T22:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 100, // default 250 last candles
-//     noList: false, // default true
+//     customDate: "2021-08-22T13:00:00.000Z", // if hour less than 9, put 0 in front
+//     sinceCount: 30, // default 250 last candles
+//     noList: true, // default true
 //     reverseData: false,
 //     onlyBuySignals: false,
 // }).then(console.log);
