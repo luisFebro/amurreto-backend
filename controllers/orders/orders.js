@@ -151,7 +151,6 @@ async function createOrderBack(payload = {}) {
                     "Balance not enough or order amount is too small"
                 );
         });
-    if (!data) return null;
 
     const moreData = {
         symbol,
