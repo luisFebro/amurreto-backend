@@ -203,7 +203,7 @@ async function getCandlesticksData(payload = {}) {
     }));
     const dataAtr = calculateATR(dataForAtr, { candlesCount });
 
-    const indicatorsPeriod = -9;
+    // const indicatorsPeriod = -9;
     // 14-lastPeriod maxVolat will be used to calcalate stop loss
     // const maxAtr9 =
     //     dataAtr.slice(indicatorsPeriod)[0] &&
@@ -283,11 +283,11 @@ async function getCandlesticksData(payload = {}) {
     });
     const lastIsOverbought = lastRsi >= 70;
 
+    const finalSignalData = await watchStrategies({
+        lastEmaTrend,
+    });
+
     if (IS_PROD) {
-        // this shoulbe inside IS_PROD after testing
-        const finalSignalData = await watchStrategies({
-            lastEmaTrend,
-        });
         await createOrderBySignal(finalSignalData, { symbol });
     }
 
@@ -342,17 +342,17 @@ async function getCandlesticksData(payload = {}) {
     };
 }
 
-// const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
-// getCandlesticksData({
-//     symbol: "BTC/BRL",
-//     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-//     sinceType: "count", // count, date
-//     customDate: "2021-07-22T22:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 100, // default 250 last candles
-//     noList: false, // default true
-//     reverseData: false,
-//     onlyBuySignals: false,
-// }).then(console.log);
+const LIMIT = undefined; // indicators may not work properly in this version if this is a number...
+getCandlesticksData({
+    symbol: "BTC/BRL",
+    limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
+    sinceType: "count", // count, date
+    customDate: "2021-07-22T22:00:00.000Z", // if hour less than 9, put 0 in front
+    sinceCount: 100, // default 250 last candles
+    noList: false, // default true
+    reverseData: false,
+    onlyBuySignals: false,
+}).then(console.log);
 
 // HELPERS
 function handleListData(list, { noList, reverseData, onlyBuySignals }) {
