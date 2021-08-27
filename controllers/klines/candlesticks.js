@@ -327,14 +327,14 @@ async function getCandlesticksData(payload = {}) {
     };
 }
 
-// const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
+// const LIMIT = 3; // undefined indicators may not work properly in this version if this is a number...
 // getCandlesticksData({
 //     symbol: "BTC/BRL",
 //     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-//     sinceType: "count", // count, date
-//     customDate: "2021-08-22T13:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 30, // default 250 last candles
-//     noList: true, // default true
+//     sinceType: "date", // count, date
+//     customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
+//     sinceCount: 50, // default 250 last candles
+//     noList: false, // default true
 //     reverseData: false,
 //     onlyBuySignals: false,
 // }).then(console.log);

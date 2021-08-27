@@ -1,5 +1,6 @@
+// auto patterns recognition
+
 const findCandleTypes = require("./allTypes");
-const isDoji = require("./one-candle/doji");
 const findCandleBodySize = require("./helpers/findCandleBodySize");
 const {
     keepSameSequence,
@@ -15,7 +16,7 @@ function analyseCandlePatterns(candleData) {
     const pressure = handleStrength(vol);
     const allData = {
         timestamp: price.timestamp, // for testing only
-        isBullish: price.isBullish,
+        side: price.isBullish ? "bull" : "bear",
         openPrice: price.open,
         closePrice: price.close,
         bodyPerc: vol.bodyPerc,
@@ -39,10 +40,14 @@ function analyseCandlePatterns(candleData) {
 
 // HELPERS
 function handleStrength(vol) {
-    const { upperPerc: upper, bodyPerc: body, lowerPerc: lower } = vol;
-    const isEqual = isDoji({ upper, body, lower });
+    const { upperPerc, bodyPerc, lowerPerc } = vol;
 
-    const maxPerc = Math.max(...[upper, body, lower]);
+    const isUpperEqual3 = upperPerc.toString().charAt(0) === "3";
+    const isBodyEqual3 = bodyPerc.toString().charAt(0) === "3";
+    const isLowerEqual3 = lowerPerc.toString().charAt(0) === "3";
+    const isEqual = isUpperEqual3 && isBodyEqual3 && isLowerEqual3;
+
+    const maxPerc = Math.max(...[upperPerc, bodyPerc, lowerPerc]);
 
     if (isEqual) {
         return {
@@ -52,9 +57,9 @@ function handleStrength(vol) {
     }
 
     const options = {
-        [upper]: "upper",
-        [body]: "body",
-        [lower]: "lower",
+        [upperPerc]: "upper",
+        [bodyPerc]: "body",
+        [lowerPerc]: "lower",
     };
 
     return {

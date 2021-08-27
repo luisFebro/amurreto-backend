@@ -21,7 +21,7 @@ const isHarami = (data) => {
         (candleA.side === "bull" || candleA.side === "bear");
     if (!matchSides) return false;
 
-    const sizesCandleA = ["tiny", "small"];
+    const sizesCandleA = ["tiny", "small", "medium"];
     const sizesCandleB = ["small", "medium", "big", "huge"];
     const matchSizes =
         sizesCandleA.includes(candleA.bodySize) &&
@@ -37,7 +37,10 @@ const isHarami = (data) => {
     const isCurrCandleInsidePrior = isCloseAInsideB && isOpenAInsideB;
     if (!isCurrCandleInsidePrior) return false;
 
-    return true;
+    return {
+        type: "harami",
+        pressureA: candleA.pressure,
+    };
 };
 
 module.exports = isHarami;

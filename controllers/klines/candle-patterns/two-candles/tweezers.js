@@ -1,4 +1,4 @@
-// tweezers bottom occurs when two candles, back to back, occur with very similar lows or lower real body. The pattern is more important when there is a strong shift in momentum between the first candle and the second.
+// tweezers bottom occurs when two candles, back to back, occur with very similar lows or lower real body. The pattern is more important when there is a strong shift in momentum between the first candle and the second.
 
 const areTweezers = (data) => {
     const { candleA, candleB } = data;
@@ -16,17 +16,19 @@ const areTweezers = (data) => {
         sizesCandleB.includes(candleB.bodySize);
     if (!matchSizes) return false;
 
-    const matchPressure =
-        candleB.pressure.part === "body" && candleA.pressure.part === "body";
+    const matchPressure = candleB.pressure.part === "body";
     if (!matchPressure) return false;
 
     const openA = candleA.openPrice;
     const closeB = candleB.closePrice;
-    const MAX_DIFF = 60;
+    const MAX_DIFF = 30;
     const matchSimilarPrices = Math.abs(openA - closeB) <= MAX_DIFF;
     if (!matchSimilarPrices) return false;
 
-    return true;
+    return {
+        type: "tweezers",
+        pressureA: candleA.pressure,
+    };
 };
 
 module.exports = areTweezers;

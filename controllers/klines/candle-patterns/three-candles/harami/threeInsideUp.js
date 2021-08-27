@@ -8,7 +8,14 @@ https://www.investing.com/crypto/bitcoin/btc-usd-candlestick
  */
 
 const isThreeInsideUp = (data) => {
+    const { candleA } = data;
+
     return false;
+
+    return {
+        type: "threeInsideUp",
+        pressureA: candleA.pressure,
+    };
 };
 
 module.exports = isThreeInsideUp;
