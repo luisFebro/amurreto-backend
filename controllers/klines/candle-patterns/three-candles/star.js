@@ -29,12 +29,23 @@ const isStar = (data) => {
     const matchSides = candleC.side !== candleA.side;
     if (!matchSides) return false;
 
-    const sizesCandleA = ["small", "medium", "big", "huge"];
-    const sizesCandleC = ["medium", "big", "huge"];
+    const sizesCandleA = ["tiny", "small", "medium", "big", "huge"];
+    const sizesCandleC = ["small", "medium", "big", "huge"];
     const matchSizes =
         sizesCandleA.includes(candleA.bodySize) &&
         sizesCandleC.includes(candleC.bodySize);
     if (!matchSizes) return false;
+
+    // EXCEPTIONS TO SIZE
+    // if tiny size, only if there is a high pressure from the upper.
+    const isExceptionalShootingStar =
+        candleA.side === "bear" && candleA.pressure.part === "upper";
+    if (candleA.bodySize === "tiny" && !isExceptionalShootingStar) return false;
+
+    const isExceptinalCandleC =
+        candleC.pressure.part === "lower" && candleC.side === "bull";
+    if (candleC.bodySize === "small" && !isExceptinalCandleC) return false;
+    // END EXCEPTIONS TO SIZE
 
     const matchCandleBAnyStarType =
         isHammer({ candleA: candleB }) || isDoji({ candleA: candleB });
@@ -44,8 +55,8 @@ const isStar = (data) => {
     const variant = isMorningStar ? "morning" : "shooting";
 
     // it requires to be bearish because still tend to be uptrend
-    const isBearishShootingStar = candleB.side === "bear";
-    if (!isMorningStar && !isBearishShootingStar) return false;
+    const isBearishShootingStarCandleB = candleB.side === "bear";
+    if (!isMorningStar && !isBearishShootingStarCandleB) return false;
 
     return {
         type: "star",

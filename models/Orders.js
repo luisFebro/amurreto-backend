@@ -40,7 +40,8 @@ const data = {
     sellPrices: [TransactionSchema],
     checkPendingOrderCount: Number,
     profitTracker: {
-        diffMax: Number,
+        diffMax: Number, // diff max and net and take profit after reach some limits
+        diffVolat: Number, // diff from max and minPerc so that we can measure risk and market sentiment
         maxPerc: Number,
         netPerc: Number,
         minPerc: Number,

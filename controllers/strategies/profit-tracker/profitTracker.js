@@ -61,7 +61,7 @@ async function getLiveProfitsPerc() {
         onlyNetProfitPerc: true,
     };
 
-    const [max, net] = await Promise.all([
+    const [max, net, min] = await Promise.all([
         getLiveCandle({
             ...defaultDataForLiveCandle,
             candlePriceType: "highest",
@@ -70,11 +70,16 @@ async function getLiveProfitsPerc() {
             ...defaultDataForLiveCandle,
             candlePriceType: "close",
         }),
+        getLiveCandle({
+            ...defaultDataForLiveCandle,
+            candlePriceType: "lowest",
+        }),
     ]);
 
-    const { maxPerc, netPerc } = compareAndSetHigherPerc({
+    const { maxPerc, minPerc, netPerc } = compareAndSetHigherPerc({
         maxPerc: max,
         netPerc: net,
+        minPerc: min,
         priorPercs: profitTracker,
     });
 
@@ -83,26 +88,29 @@ async function getLiveProfitsPerc() {
         isProfit: netPerc >= 0,
         maxPerc,
         netPerc,
+        minPerc,
         diffMax: Math.abs((maxPerc - netPerc).toFixed(2)),
-        // diffMin is simply netPerc if loss
+        diffVolat: Math.abs((maxPerc - minPerc).toFixed(2)),
     };
 }
 
 async function registerProfitTracker(data) {
-    const { transactionId, maxPerc, netPerc, diffMax } = data;
+    const { transactionId, maxPerc, netPerc, minPerc, diffMax, diffVolat } =
+        data;
 
     const updateData = {
+        "profitTracker.diffMax": diffMax,
         "profitTracker.maxPerc": maxPerc,
         "profitTracker.netPerc": netPerc,
-        "profitTracker.diffMax": diffMax,
-        // "profitTracker.minPerc": minPerc,
+        "profitTracker.minPerc": minPerc,
+        "profitTracker.diffVolat": diffVolat,
     };
 
     await AmurretoOrders.findByIdAndUpdate(transactionId, updateData);
 }
 
 function compareAndSetHigherPerc(data) {
-    const { maxPerc, netPerc, priorPercs } = data;
+    const { maxPerc, minPerc, netPerc, priorPercs } = data;
 
     if (!priorPercs)
         return {
@@ -111,10 +119,12 @@ function compareAndSetHigherPerc(data) {
         };
 
     const priorMaxPerc = priorPercs.maxPerc;
+    const priorMinPerc = priorPercs.minPerc;
 
     return {
         maxPerc: maxPerc > priorMaxPerc ? maxPerc : priorMaxPerc,
         netPerc, // it does not need to compare with prior because it should be always results in the live value instead of replace it with the prior oneisBlockedByCurcuitBreak
+        minPerc: minPerc < priorMinPerc ? minPerc : priorMinPerc,
     };
 }
 // END HELPERS

@@ -16,6 +16,10 @@ const isThreeInside = (data) => {
         candleA.openPrice && candleB.openPrice && candleC.openPrice;
     if (!gotAllCandlesData) return false;
 
+    const sizesCandleA = ["small", "medium", "big", "huge"];
+    const matchSizes = sizesCandleA.includes(candleA.bodySize);
+    if (!matchSizes) return false;
+
     const matchHarami = isHarami({ candleA: candleB, candleB: candleC });
     const variant = matchHarami.variant;
 
