@@ -2,6 +2,10 @@
 Indication: Bullish/Bearish reversal
 Reliability: Medium
 
+Bearish
+Occurring during an uptrend, this pattern characterized by a large black real body, which engulfs a white real body (it doesn't need to engulf the shadows). This signifies that the uptrend has been hurt and the bears may be gaining strength. The Engulfing indicator is also the first two candles of the Three Outside patterns.
+
+Bullish
 Description: During a downtrend, the Bullish Engulfing depicts an opening at a new low and closes at or above the previous candle's open. This signifies that the downtrend has lost momentum and the bulls may be gaining strength.
 Factors increasing the pattern's effectiveness are:
 
@@ -28,18 +32,23 @@ const isEngulfing = (data) => {
         sizesCandleB.includes(candleB.bodySize);
     if (!matchSizes) return false;
 
-    const isPriorCandleInsideCurr = handleCandleInsides({ candleA, candleB });
+    const { result: isPriorCandleInsideCurr, variant } = handleCandleInsides({
+        candleA,
+        candleB,
+    });
     if (!isPriorCandleInsideCurr) return false;
 
     return {
         type: "engulfing",
         pressureA: candleA.pressure,
+        variant,
     };
 };
 
 // HELPERS
 function handleCandleInsides({ candleA, candleB }) {
     const isBullishCandleA = candleA.side === "bull";
+    let variant = "bull";
 
     const closeA = candleA.closePrice;
     const openA = candleA.openPrice;
@@ -52,11 +61,14 @@ function handleCandleInsides({ candleA, candleB }) {
     if (!isBullishCandleA) {
         isCloseBInsideA = closeA < closeB && openA > closeB;
         isOpenBInsideA = closeA < openB && openA > openB;
+        variant = "bear";
     }
 
-    return isCloseBInsideA && isOpenBInsideA;
+    return {
+        result: isCloseBInsideA && isOpenBInsideA,
+        variant,
+    };
 }
-
 // END HELPERS
 
 module.exports = isEngulfing;

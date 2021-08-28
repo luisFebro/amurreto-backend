@@ -4,7 +4,11 @@ const {
     isHarami,
     isEngulfing,
 } = require("./two-candles/twoCandles");
-const { isThreeInsideUp } = require("./three-candles/threeCandles");
+const {
+    isThreeInside,
+    isThreeOutside,
+    isStar,
+} = require("./three-candles/threeCandles");
 
 function findCandleTypes({ candlesDataAnalysis = [] }) {
     let oneCandleType = "";
@@ -42,9 +46,14 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end 2 candles
 
     // 3 candles
-    const checkThreeInsideUp = isThreeInsideUp(defaultData);
-    if (checkThreeInsideUp)
-        threeCandleType = JSON.stringify(checkThreeInsideUp);
+    const checkThreeInside = isThreeInside(defaultData);
+    if (checkThreeInside) threeCandleType = JSON.stringify(checkThreeInside);
+
+    const checkThreeOutside = isThreeOutside(defaultData);
+    if (checkThreeOutside) threeCandleType = JSON.stringify(checkThreeOutside);
+
+    const checkStar = isStar(defaultData);
+    if (checkStar) threeCandleType = JSON.stringify(checkStar);
     // end 3 candles
 
     return {
