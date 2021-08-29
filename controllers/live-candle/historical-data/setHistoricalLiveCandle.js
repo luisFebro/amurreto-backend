@@ -51,14 +51,14 @@ async function handleSidesStreak({ currMin, side, timestamp }) {
     const hasLiveCandleChanged =
         new Date(timestamp).getHours() !== new Date(dbTimestamp).getHours();
     if (hasLiveCandleChanged) {
-        dbSidesStreak = [];
-        totalAllSides = 0;
-
         // save last-past-hour candle history
         const newHistory = [dbSidesStreak, ...dbHistory].slice(0, 100);
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, {
             history: newHistory,
         });
+
+        dbSidesStreak = [];
+        totalAllSides = 0;
     }
 
     const insertNewSide = needPushCurrSide({ currMin, totalAllSides });
