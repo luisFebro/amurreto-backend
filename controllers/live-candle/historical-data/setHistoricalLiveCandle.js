@@ -45,6 +45,7 @@ async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
 
     // data include: bullSidePerc, bearSidePerc, totalAllSides,
     let percData = getSidePercs(dbSidesStreak);
+    const { totalAllSides } = percData;
 
     // if change, save history and clean the current array
     const hasLiveCandleChanged =
