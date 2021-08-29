@@ -11,62 +11,65 @@ async function setHistoricalLiveCandle({ side, timestamp, emaTrend }) {
     const currMin = getDiffInMinutes(timestamp);
     console.log("currMin", currMin);
 
-    const { sidesStreak, totalAllSides } = await handleSidesStreak({
-        currMin,
-        side,
-        timestamp,
-    });
+    const moreHistory = {
+        emaTrend,
+    };
 
-    // PERC
-    const totalBulls = sidesStreak.filter((side) => side === "bull").length;
-    const totalBears = sidesStreak.filter((side) => side === "bear").length;
-
-    const bullSidePerc = getPercentage(totalAllSides, totalBulls);
-    const bearSidePerc = getPercentage(totalAllSides, totalBears);
-    // END PERC
+    const { sidesStreak, bullSidePerc, bearSidePerc, history } =
+        await handleSidesStreak({
+            currMin,
+            side,
+            timestamp,
+            moreHistory,
+        });
 
     const newData = {
         timestamp,
+        emaTrend,
         sidesStreak, // e.g ["bull", "bear"]
         bullSidePerc,
         bearSidePerc,
-        emaTrend,
-        history: [],
+        history,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
 }
 
 // HELPERS
-async function handleSidesStreak({ currMin, side, timestamp }) {
-    const data = await LiveCandleHistory.findById(LIVE_CANDLE_ID);
+async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
+    const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID);
 
-    let dbSidesStreak = data && data.sidesStreak;
-    const dbTimestamp = data && data.timestamp;
-    const dbHistory = data && data.history;
+    let dbSidesStreak = dbData && dbData.sidesStreak;
+    const dbTimestamp = dbData && dbData.timestamp;
+    let dbHistory = dbData && dbData.history;
 
-    let totalAllSides = dbSidesStreak ? dbSidesStreak.length : 0;
+    // data include: bullSidePerc, bearSidePerc, totalAllSides,
+    let percData = getSidePercs(dbSidesStreak);
 
     // if change, save history and clean the current array
     const hasLiveCandleChanged =
         new Date(timestamp).getHours() !== new Date(dbTimestamp).getHours();
 
-    const MAX_ITEMS = 10;
-    const newHistory = [
-        {
-            sidesStreak: dbSidesStreak,
-        },
-        ...dbHistory,
-    ].slice(0, MAX_ITEMS);
-    console.log("newHistory", newHistory);
     if (hasLiveCandleChanged) {
         // save last-past-hour candle history
-        await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, {
-            history: newHistory,
-        });
+        const MAX_ITEMS = 10;
+        const newHistory = [
+            {
+                timestamp,
+                sidesStreak: dbSidesStreak,
+                ...percData,
+                ...moreHistory,
+            },
+            ...dbHistory,
+        ].slice(0, MAX_ITEMS);
 
+        dbHistory = newHistory;
         dbSidesStreak = [];
-        totalAllSides = 0;
+        percData = {
+            bullSidePerc: 0,
+            bearSidePerc: 0,
+            totalAllSides: 0,
+        };
     }
 
     const insertNewSide = needPushCurrSide({ currMin, totalAllSides });
@@ -74,13 +77,15 @@ async function handleSidesStreak({ currMin, side, timestamp }) {
     if (insertNewSide) {
         return {
             sidesStreak: [side, ...dbSidesStreak],
-            totalAllSides: totalAllSides + 1,
+            history: dbHistory,
+            ...percData,
         };
     }
 
     return {
         sidesStreak: dbSidesStreak,
-        totalAllSides,
+        history: dbHistory,
+        ...percData,
     };
 }
 
@@ -96,6 +101,19 @@ function needPushCurrSide({ currMin, totalAllSides }) {
     if (totalAllSides === 5 && currMin >= 50) return true;
 
     return false;
+}
+
+function getSidePercs(dbSidesStreak) {
+    const totalAllSides = dbSidesStreak ? dbSidesStreak.length : 0;
+
+    const totalBulls = dbSidesStreak.filter((side) => side === "bull").length;
+    const totalBears = dbSidesStreak.filter((side) => side === "bear").length;
+
+    return {
+        bullSidePerc: getPercentage(totalAllSides, totalBulls),
+        bearSidePerc: getPercentage(totalAllSides, totalBears),
+        totalAllSides,
+    };
 }
 // END HELPERS
 
