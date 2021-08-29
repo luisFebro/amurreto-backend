@@ -18,9 +18,31 @@ const isThreeOutside = (data) => {
         candleA.openPrice && candleB.openPrice && candleC.openPrice;
     if (!gotAllCandlesData) return false;
 
+    // EAT-ALL VARIANT
+    const matchEatAllSequence =
+        candleC.side === candleB.side && candleB.side !== candleA.side;
+
+    const sizesEatAllCandleA = ["medium", "big", "huge"];
+    const matchEatAllSizeCandleA = sizesEatAllCandleA.includes(
+        candleA.bodySize
+    );
+
+    const matchCurrBiggerWholeSize = candleB.wholeSize < candleA.wholeSize;
+    if (
+        matchCurrBiggerWholeSize &&
+        matchEatAllSequence &&
+        matchEatAllSizeCandleA
+    ) {
+        return {
+            type: "threeOutsideEatAll",
+            variant: candleA.side === "bull" ? "up" : "down",
+            pressureA: candleA.pressure,
+        };
+    }
     // eat-all variant is the last two candles are bullish/bearish followed by a strong candle (medium or up size) and the current candle engulfs the whole candle (from max/min) is greater than previous candle
     // eat-all bullish candle example: BTC/BRL 2021-08-27T20:00:00.000Z / 2021-08-19T21:00:00.000Z
     // eat-all bearish candle example: BTC/BRL 2021-08-26T01:00:00.000Z
+    // END EAT-ALL VARIANT
 
     const sizesCandleA = ["small", "medium", "big", "huge"];
     const matchSizes = sizesCandleA.includes(candleA.bodySize);

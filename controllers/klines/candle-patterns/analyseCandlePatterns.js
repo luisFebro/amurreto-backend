@@ -14,8 +14,10 @@ function analyseCandlePatterns(candleData) {
 
     const candleBodySize = findCandleBodySize(vol);
     const pressure = handleStrength(vol);
+
     const allData = {
-        timestamp: price.timestamp, // for testing only
+        timestamp: price.timestamp,
+        marketVol: vol.marketVol,
         side: price.isBullish ? "bull" : "bear",
         openPrice: price.open,
         closePrice: price.close,
@@ -23,6 +25,7 @@ function analyseCandlePatterns(candleData) {
         upperPerc: vol.upperPerc,
         lowerPerc: vol.lowerPerc,
         bodySize: candleBodySize,
+        wholeSize: vol.wholeCandleSize, // including max/min
         pressure,
     };
     keepSameSequence(allData, { maxArray: 3, mostRecent: "last" });
@@ -82,8 +85,7 @@ candleData { price:
  timestamp: date,
  },
 vol:
-{ baseVol: 153,
- volFullCandle: 4087.23,
+{ marketVol: 153,
  volRealBody: -3623.9,
  bodyPerc: 88.7,
  upperPerc: 3.7,

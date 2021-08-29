@@ -54,9 +54,13 @@ const isStar = (data) => {
     const isMorningStar = candleC.side === "bear" && candleA.side === "bull";
     const variant = isMorningStar ? "morning" : "shooting";
 
-    // it requires to be bearish because still tend to be uptrend
-    const isBearishShootingStarCandleB = candleB.side === "bear";
-    if (!isMorningStar && !isBearishShootingStarCandleB) return false;
+    // it requires to be bearish or the follow exception because still tend to be uptrend
+    const exceptionToBullishCandleBStar =
+        candleB.side === "bull" && candleB.upperPerc >= 50;
+
+    const isShootingStarCandleB =
+        candleB.side === "bear" || exceptionToBullishCandleBStar;
+    if (!isMorningStar && !isShootingStarCandleB) return false;
 
     return {
         type: "star",
