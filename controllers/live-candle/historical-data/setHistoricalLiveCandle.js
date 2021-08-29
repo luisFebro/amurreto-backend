@@ -9,7 +9,6 @@ async function setHistoricalLiveCandle({ side, timestamp, emaTrend }) {
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
     // the most recent for both history and sidesStreak starts at the rightmost side to the left.
     const currMin = getDiffInMinutes(timestamp);
-    console.log("currMin", currMin);
 
     const moreHistory = {
         emaTrend,
@@ -45,7 +44,6 @@ async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
 
     // data include: bullSidePerc, bearSidePerc, totalAllSides,
     let percData = getSidePercs(dbSidesStreak);
-    const { totalAllSides } = percData;
 
     // if change, save history and clean the current array
     const hasLiveCandleChanged =
@@ -73,7 +71,10 @@ async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
         };
     }
 
-    const insertNewSide = needPushCurrSide({ currMin, totalAllSides });
+    const insertNewSide = needPushCurrSide({
+        currMin,
+        totalAllSides: percData.totalAllSides,
+    });
 
     if (insertNewSide) {
         return {
