@@ -2,22 +2,23 @@ const novadax = require("../exchangeAPI");
 const { addDays, addHours } = require("../../utils/dates/dateFnsBack");
 const getWickVolume = require("./algo/getWickVolume");
 const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
-const calculateATR = require("../indicators/atr");
-const calculateRSI = require("../indicators/rsi");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
-const detectBullishThreads = require("./algo/candle/algo/detectBullishThreads");
-const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
-const {
-    checkWingForCandle,
-} = require("./algo/candle/algo/findResistenceSupportWings");
 const { createOrderBySignal } = require("../orders/orders");
 const { IS_PROD } = require("../../config");
-const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
+const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 // strategies
 const watchStrategies = require("../strategies/strategies");
+const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
 const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
 // end strategies
+// const calculateATR = require("../indicators/atr");
+// const calculateRSI = require("../indicators/rsi");
+// const detectBullishThreads = require("./algo/candle/algo/detectBullishThreads");
+// const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
+// const {
+//     checkWingForCandle,
+// } = require("./algo/candle/algo/findResistenceSupportWings");
 
 /*
 Candlestick Charts are also known as candlesticks, Japanese lines, yin and yang lines, and bar lines. The commonly used term is "K-line", which originated from the 18th century Tokugawa shogunate era in Japan. The rice market transaction (1603-1867) is used to calculate the daily rise and fall of rice prices.
@@ -26,7 +27,7 @@ The drawing of the K-line chart in the stock market and futures market contains 
 Kline - https://www.programmersought.com/article/7775785243
  */
 
-const candlesThread = [];
+// const candlesThread = [];
 // const candlesHistory = [];
 async function getCandlesticksData(payload = {}) {
     const {
@@ -131,12 +132,12 @@ async function getCandlesticksData(payload = {}) {
                 vol: allVolData,
             });
 
-        candlesThread.push({
-            isBullish,
-            open,
-            close,
-            timestamp: JSON.stringify(timestamp),
-        });
+        // candlesThread.push({
+        //     isBullish,
+        //     open,
+        //     close,
+        //     timestamp: JSON.stringify(timestamp),
+        // });
 
         const finalData = {
             count: ind + 1,
@@ -166,11 +167,11 @@ async function getCandlesticksData(payload = {}) {
         return finalData;
     });
 
-    const currPrice = candlestickData.slice(-1)[0]
-        ? candlestickData.slice(-1)[0].close
-        : 0;
-    const { threads, nextResistence, nextSupport, keyResistence, keySupport } =
-        detectBullishThreads(candlesThread, { currPrice });
+    // const currPrice = candlestickData.slice(-1)[0]
+    //     ? candlestickData.slice(-1)[0].close
+    //     : 0;
+    // const { threads, nextResistence, nextSupport, keyResistence, keySupport } =
+    //     detectBullishThreads(candlesThread, { currPrice });
 
     // INDICATORS CALCULATION
     const closingPrices = dataForIndicators.map((candle) => candle[4]);
@@ -218,13 +219,13 @@ async function getCandlesticksData(payload = {}) {
         // const isOverbought = rsi >= 70;
         // const isOversold = rsi <= 30;
 
-        const {
-            threadsCount,
-            isHigherWing,
-            isLowerWing,
-            // isKeySupport,
-            // isKeyResistence,
-        } = checkWingForCandle(candle, threads);
+        // const {
+        //     threadsCount,
+        //     isHigherWing,
+        //     isLowerWing,
+        //     // isKeySupport,
+        //     // isKeyResistence,
+        // } = checkWingForCandle(candle, threads);
 
         const secondCheckData = {
             ...candle,
@@ -260,6 +261,12 @@ async function getCandlesticksData(payload = {}) {
         ema9: lastEma9,
         ema20: lastEma20,
         ema50: lastEma50,
+    });
+
+    const historicalData = await setHistoricalLiveCandle({
+        side: liveCandle.isBullish ? "bull" : "bear",
+        timestamp: liveCandle.timestamp,
+        emaTrend: lastEmaTrend,
     });
 
     const finalSignalData = await watchStrategies({
@@ -326,7 +333,7 @@ async function getCandlesticksData(payload = {}) {
 //     sinceType: "count", // count, date
 //     customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
 //     sinceCount: 100, // default 250 last candles
-//     noList: false, // default true
+//     noList: true, // default true
 //     reverseData: false,
 //     onlyBuySignals: false,
 // }).then(console.log);
