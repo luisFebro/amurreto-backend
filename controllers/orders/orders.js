@@ -5,7 +5,7 @@ const { getConvertedPrice } = require("../helpers/convertors");
 const { getTradingSymbolBack } = require("../basicInfo");
 const {
     getOrderTransactionPerc,
-    findTransactionSidePerc,
+    // findTransactionSidePerc,
     setDbOrderBack,
     cancelDbOrderBack,
     verifyLastStrategy,
@@ -18,52 +18,49 @@ const getCurrencyAmount = require("./currencyAmounts");
 async function createOrderBySignal(signalData, options = {}) {
     const { signal, strategy, transactionPerc } = signalData;
 
-    const handleSide = () => {
-        if (signal === "WAIT") return "WAIT";
-        if (signal === "HOLD") return "BUY";
+    // const handleSide = () => {
+    // if (signal === "WAIT") return "WAIT";
+    // if (signal === "HOLD") return "BUY";
 
-        return signal;
-    };
+    // return signal;
+    // };
 
-    const side = handleSide();
+    const side = signal;
 
     const {
         symbol = "BTC/BRL",
-        type = "LIMIT",
         capitalPositionPerc = 100,
         forcePrice = false,
+        // type = "LIMIT",
     } = options;
 
     const [
         alreadyRanStrategy,
         gotOpenOrder,
         transactionPositionPerc,
-        priorSidePerc,
         isBlockedByCurcuitBreak,
+        // priorSidePerc,
     ] = await Promise.all([
         verifyLastStrategy(symbol, { status: "pending", side, strategy }),
         checkOpeningOrder({ symbol, maxIterateCount: 0 }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
-        findTransactionSidePerc({ symbol }),
         needCircuitBreaker(),
+        // findTransactionSidePerc({ symbol }),
     ]);
 
-    const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
+    // const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
 
     // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
     // if got some buying position and WAIT is current sign, it is Sell sign.
-    const gotBuyPosition = priorBuyingPerc > 0;
-    const isWaitWithBuyingPosition = signal === "WAIT" && gotBuyPosition;
+    // const gotBuyPosition = priorBuyingPerc > 0;
+    // const isWaitWithBuyingPosition = signal === "WAIT" && gotBuyPosition;
 
     // in order to use HOLD, it should be only a BUY if there is no prior SELL transaction in the current trade. That's because the robot will buy again after a SELL back to HOLD during an uptrend.
-    const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
+    // const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
     // if strategy already ran, then ignore it.
     // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
     const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
-    const condBuy =
-        defaultCond &&
-        !isBlockedByCurcuitBreak &&
-        (signal === "BUY" || signal === "HOLD" || isHoldWithoutPriorSell);
+    const condBuy = defaultCond && !isBlockedByCurcuitBreak && signal === "BUY"; // signal === "HOLD" || isHoldWithoutPriorSell
 
     if (condBuy) {
         return await createOrderBack({
@@ -77,8 +74,7 @@ async function createOrderBySignal(signalData, options = {}) {
         });
     }
 
-    const condSell =
-        defaultCond && (signal === "SELL" || isWaitWithBuyingPosition);
+    const condSell = defaultCond && signal === "SELL"; // isWaitWithBuyingPosition
     if (condSell) {
         return await createOrderBack({
             side: "SELL",

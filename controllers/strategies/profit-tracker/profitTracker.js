@@ -87,8 +87,6 @@ async function getLiveProfitsPerc() {
         priorPercs: profitTracker,
     });
 
-    console.log("maxPerc", maxPerc);
-    console.log("minPerc", minPerc);
     return {
         transactionId,
         isProfit: netPerc >= 0,

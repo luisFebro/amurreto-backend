@@ -1,5 +1,6 @@
 function getCandlePatternsSignal({ liveCandle }) {
     const threeCandleType = liveCandle.threeCandleType;
+    const twoCandleType = liveCandle.twoCandleType;
 
     const star = checkCandlePatternSignal("star", "morning", threeCandleType);
     if (star) return star;
@@ -18,7 +19,7 @@ function getCandlePatternsSignal({ liveCandle }) {
     );
     if (runThreeInside) return runThreeInside;
 
-    const runTweezers = threeCandleType.includes("tweezers");
+    const runTweezers = twoCandleType.includes("tweezers");
     if (runTweezers) {
         return {
             signal: "BUY",
@@ -27,8 +28,9 @@ function getCandlePatternsSignal({ liveCandle }) {
         };
     }
 
+    //
     return {
-        signal: "WAIT",
+        signal: "HOLD",
         strategy: "no strategy",
         transactionPerc: 100,
     };

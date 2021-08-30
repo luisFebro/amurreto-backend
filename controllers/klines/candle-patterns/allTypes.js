@@ -35,11 +35,11 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end single candle
 
     // 2 candles
-    const checkTweezers = areTweezers(defaultData);
-    if (checkTweezers) twoCandleType = JSON.stringify(checkTweezers);
-
     const checkHarami = isHarami(defaultData);
     if (checkHarami) twoCandleType = JSON.stringify(checkHarami);
+
+    const checkTweezers = areTweezers(defaultData);
+    if (checkTweezers) twoCandleType = JSON.stringify(checkTweezers);
 
     const checkEngulfing = isEngulfing(defaultData);
     if (checkEngulfing) twoCandleType = JSON.stringify(checkEngulfing);
