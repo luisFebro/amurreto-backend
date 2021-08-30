@@ -76,13 +76,19 @@ async function getLiveProfitsPerc() {
         }),
     ]);
 
-    const { maxPerc, minPerc, netPerc } = compareAndSetHigherPerc({
+    const {
+        maxPerc = 0,
+        minPerc = 0,
+        netPerc,
+    } = compareAndSetHigherPerc({
         maxPerc: max,
         netPerc: net,
         minPerc: min,
         priorPercs: profitTracker,
     });
 
+    console.log("maxPerc", maxPerc);
+    console.log("minPerc", minPerc);
     return {
         transactionId,
         isProfit: netPerc >= 0,
@@ -114,8 +120,8 @@ function compareAndSetHigherPerc(data) {
 
     if (!priorPercs)
         return {
-            maxPerc: netPerc,
-            netPerc,
+            maxPerc: netPerc || 0,
+            netPerc: netPerc || 0,
         };
 
     const priorMaxPerc = priorPercs.maxPerc;
