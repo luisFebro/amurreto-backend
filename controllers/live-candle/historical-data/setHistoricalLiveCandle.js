@@ -83,10 +83,13 @@ async function handleSidesStreak({ currMin, side, timestamp }) {
     });
 
     if (insertNewSide) {
+        const newSidesStreak = [side, ...dbSidesStreak];
+        const newPercData = getSidePercs(newSidesStreak);
+
         return {
-            sidesStreak: [side, ...dbSidesStreak],
+            sidesStreak: newSidesStreak,
             history: dbHistory,
-            ...percData,
+            ...newPercData,
         };
     }
 
