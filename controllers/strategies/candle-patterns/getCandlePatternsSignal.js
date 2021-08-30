@@ -29,7 +29,7 @@ function getCandlePatternsSignal({ liveCandle }) {
 
     return {
         signal: "WAIT",
-        strategy: "",
+        strategy: "no strategy",
         transactionPerc: 100,
     };
 }
