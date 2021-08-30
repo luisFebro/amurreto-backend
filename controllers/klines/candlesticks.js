@@ -7,6 +7,7 @@ const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const { createOrderBySignal } = require("../orders/orders");
 const { IS_PROD, IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
+const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 // strategies
 const watchStrategies = require("../strategies/strategies");
 const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
@@ -126,10 +127,12 @@ async function getCandlesticksData(payload = {}) {
 
         // candlesHistory.push({ vol: allVolData, price: allPriceData });
 
+        const candleBodySize = findCandleBodySize(allVolData);
         const { oneCandleType, twoCandleType, threeCandleType } =
             analyseCandlePatterns({
                 price: allPriceData,
                 vol: allVolData,
+                candleBodySize,
             });
 
         // candlesThread.push({
@@ -148,13 +151,14 @@ async function getCandlesticksData(payload = {}) {
             oneCandleType,
             twoCandleType,
             threeCandleType,
+            candleBodySize,
+            // volRealBody,
             // priceInc: getIncreasedPerc(lastClosePrice, close),
             // end candles
             // open,
             // highest,
             // lowest,
             // vol,
-            // volRealBody,
             // volUpperWick,
             // volLowerWick,
             // volFullCandle,
@@ -268,14 +272,17 @@ async function getCandlesticksData(payload = {}) {
         liveCandle,
     });
 
-    if (IS_PROD) {
-        const historicalData = await setHistoricalLiveCandle({
-            side: liveCandle.isBullish ? "bull" : "bear",
-            timestamp: liveCandle.timestamp,
-            emaTrend: lastEmaTrend,
-            openPrice: liveCandle.open,
-        });
+    const historicalLiveCandle = await setHistoricalLiveCandle({
+        side: liveCandle.isBullish ? "bull" : "bear",
+        timestamp: liveCandle.timestamp,
+        emaTrend: lastEmaTrend,
+        openPrice: liveCandle.open,
+        currBodySize: liveCandle.candleBodySize,
+    });
 
+    console.log("historicalLiveCandle", historicalLiveCandle);
+
+    if (IS_PROD) {
         await createOrderBySignal(finalSignalData, { symbol });
     }
 
@@ -336,7 +343,7 @@ if (IS_DEV) {
         sinceType: "count", // count, date
         customDate: "2021-08-30T13:00:00.000Z", // if hour less than 9, put 0 in front
         sinceCount: 50, // default 250 last candles
-        noList: false, // default true
+        noList: true, // default true
         reverseData: false,
         onlyBuySignals: false,
     }).then(console.log);

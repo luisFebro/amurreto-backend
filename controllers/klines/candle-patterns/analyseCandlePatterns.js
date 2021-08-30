@@ -1,7 +1,5 @@
 // auto patterns recognition
-
 const findCandleTypes = require("./allTypes");
-const findCandleBodySize = require("./helpers/findCandleBodySize");
 const {
     keepSameSequence,
     array,
@@ -10,9 +8,8 @@ const {
 const candlesDataAnalysis = array;
 
 function analyseCandlePatterns(candleData) {
-    const { vol, price } = candleData; // n1 data details
+    const { vol, price, candleBodySize } = candleData; // n1 data details
 
-    const candleBodySize = findCandleBodySize(vol);
     const pressure = handleStrength(vol);
 
     const allData = {

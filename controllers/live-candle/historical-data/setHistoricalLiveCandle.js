@@ -1,6 +1,7 @@
 const LiveCandleHistory = require("../../../models/LiveCandleHistory");
 const { getDiffInMinutes } = require("../../../utils/dates/dateFnsBack");
 const getPercentage = require("../../../utils/number/perc/getPercentage");
+const checkLiveCandleRealibility = require("./checkLiveCandleRealibity");
 
 const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
@@ -9,6 +10,7 @@ async function setHistoricalLiveCandle({
     timestamp,
     emaTrend,
     openPrice,
+    currBodySize,
 }) {
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
@@ -30,9 +32,21 @@ async function setHistoricalLiveCandle({
         bearSidePerc,
         history,
         openPrice,
+        bodySize: currBodySize,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
+
+    // return { status: true, reason: "thunderingChange" }
+    const resRealibility = checkLiveCandleRealibility({
+        currTimeSidesStreak: sidesStreak,
+        lastTimeCandle: history && history[0],
+        bullSidePerc,
+        bearSidePerc,
+        currBodySize,
+    });
+
+    return resRealibility;
 }
 
 // HELPERS

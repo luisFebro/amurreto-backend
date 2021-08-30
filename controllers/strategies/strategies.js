@@ -11,7 +11,6 @@ async function watchStrategies(options = {}) {
     const { liveCandle } = options;
 
     const profitTracker = await watchProfitTracker();
-    console.log("profitTracker", profitTracker);
 
     // manage all strategies
     const candlePatternsSignal = getCandlePatternsSignal({ liveCandle });
