@@ -138,20 +138,6 @@ async function createOrderBack(payload = {}) {
 
     const orderPrice = isMarket ? "0" : marketPrice;
 
-    await novadax
-        .createOrder(symbol, type, side, baseCurrencyAmount, orderPrice, params)
-        .catch((response) => {
-            const error = response.toString();
-            console.log("error", error);
-            if (error.includes("A30007"))
-                Promise.reject("Insufficient balance");
-            if (error.includes("A30004")) Promise.reject("Value is too small");
-            if (error.includes("A30002"))
-                Promise.reject(
-                    "Balance not enough or order amount is too small"
-                );
-        });
-
     const moreData = {
         symbol,
         strategy,
@@ -172,6 +158,20 @@ async function createOrderBack(payload = {}) {
     });
 
     await setDbOrderBack({ side, mostRecentData, moreData });
+
+    await novadax
+        .createOrder(symbol, type, side, baseCurrencyAmount, orderPrice, params)
+        .catch((response) => {
+            const error = response.toString();
+            console.log("error", error);
+            if (error.includes("A30007"))
+                Promise.reject("Insufficient balance");
+            if (error.includes("A30004")) Promise.reject("Value is too small");
+            if (error.includes("A30002"))
+                Promise.reject(
+                    "Balance not enough or order amount is too small"
+                );
+        });
 
     return mostRecentData;
 }

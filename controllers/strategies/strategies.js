@@ -19,7 +19,7 @@ async function watchStrategies(options = {}) {
         isOverbought: null,
     });
 
-    return emaSignal;
+    return "WAIT";
 }
 
 module.exports = watchStrategies;
