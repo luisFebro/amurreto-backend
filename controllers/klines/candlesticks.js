@@ -263,16 +263,17 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
+    const finalSignalData = await watchStrategies({
+        lastEmaTrend,
+        liveCandle,
+    });
+
     if (IS_PROD) {
         const historicalData = await setHistoricalLiveCandle({
             side: liveCandle.isBullish ? "bull" : "bear",
             timestamp: liveCandle.timestamp,
             emaTrend: lastEmaTrend,
             openPrice: liveCandle.open,
-        });
-
-        const finalSignalData = await watchStrategies({
-            lastEmaTrend,
         });
 
         await createOrderBySignal(finalSignalData, { symbol });
@@ -335,7 +336,7 @@ if (IS_DEV) {
         sinceType: "count", // count, date
         customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
         sinceCount: 100, // default 250 last candles
-        noList: false, // default true
+        noList: true, // default true
         reverseData: false,
         onlyBuySignals: false,
     }).then(console.log);
