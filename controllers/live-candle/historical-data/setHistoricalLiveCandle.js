@@ -70,13 +70,14 @@ async function handleSidesStreak({ currMin, side, timestamp }) {
 
     if (hasLiveCandleChanged) {
         // save last-past-hour candle history
-        const MAX_LAST_ITEMS = 100;
+        const MAX_LAST_ITEMS = 20;
         const newHistory = [
             {
                 timestamp: dbTimestamp,
                 sidesStreak: dbSidesStreak,
                 openPrice: dbData && dbData.openPrice,
                 emaTrend: dbData && dbData.emaTrend,
+                bodySize: dbData && dbData.bodySize,
                 ...percData,
             },
             ...dbHistory,
