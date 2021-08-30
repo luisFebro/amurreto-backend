@@ -54,7 +54,7 @@ async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
 
     // if change, save history and clean the current array
     const hasLiveCandleChanged =
-        new Date(timestamp).getHours() !== new Date(dbTimestamp).getHours();
+        new Date(timestamp).getHours() > new Date(dbTimestamp).getHours();
 
     if (hasLiveCandleChanged) {
         // save last-past-hour candle history
