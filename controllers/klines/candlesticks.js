@@ -263,18 +263,18 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
-    const historicalData = await setHistoricalLiveCandle({
-        side: liveCandle.isBullish ? "bull" : "bear",
-        timestamp: liveCandle.timestamp,
-        emaTrend: lastEmaTrend,
-        openPrice: liveCandle.open,
-    });
-
-    const finalSignalData = await watchStrategies({
-        lastEmaTrend,
-    });
-
     if (IS_PROD) {
+        const historicalData = await setHistoricalLiveCandle({
+            side: liveCandle.isBullish ? "bull" : "bear",
+            timestamp: liveCandle.timestamp,
+            emaTrend: lastEmaTrend,
+            openPrice: liveCandle.open,
+        });
+
+        const finalSignalData = await watchStrategies({
+            lastEmaTrend,
+        });
+
         await createOrderBySignal(finalSignalData, { symbol });
     }
 
@@ -308,7 +308,7 @@ async function getCandlesticksData(payload = {}) {
             // incPrice: lastIncPrice,
         },
         indicators,
-        finalSignal: finalSignalData.signal,
+        // finalSignal: finalSignalData.signal,
         list: handleListData(candlestickData, {
             noList,
             reverseData,
@@ -328,17 +328,17 @@ async function getCandlesticksData(payload = {}) {
 }
 
 if (IS_DEV) {
-    // const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
-    // getCandlesticksData({
-    //     symbol: "BTC/BRL",
-    //     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-    //     sinceType: "count", // count, date
-    //     customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
-    //     sinceCount: 100, // default 250 last candles
-    //     noList: false, // default true
-    //     reverseData: false,
-    //     onlyBuySignals: false,
-    // }).then(console.log);
+    const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
+    getCandlesticksData({
+        symbol: "BTC/BRL",
+        limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
+        sinceType: "count", // count, date
+        customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceCount: 100, // default 250 last candles
+        noList: false, // default true
+        reverseData: false,
+        onlyBuySignals: false,
+    }).then(console.log);
 }
 
 // HELPERS
