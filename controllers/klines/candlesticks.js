@@ -5,7 +5,7 @@ const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const { createOrderBySignal } = require("../orders/orders");
-const { IS_PROD } = require("../../config");
+const { IS_PROD, IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 // strategies
 const watchStrategies = require("../strategies/strategies");
@@ -141,7 +141,7 @@ async function getCandlesticksData(payload = {}) {
 
         const finalData = {
             count: ind + 1,
-            close,
+            open,
             // candle
             timestamp,
             isBullish,
@@ -267,6 +267,7 @@ async function getCandlesticksData(payload = {}) {
         side: liveCandle.isBullish ? "bull" : "bear",
         timestamp: liveCandle.timestamp,
         emaTrend: lastEmaTrend,
+        openPrice: liveCandle.open,
     });
 
     const finalSignalData = await watchStrategies({
@@ -326,17 +327,19 @@ async function getCandlesticksData(payload = {}) {
     };
 }
 
-// const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
-// getCandlesticksData({
-//     symbol: "BTC/BRL",
-//     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-//     sinceType: "count", // count, date
-//     customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
-//     sinceCount: 100, // default 250 last candles
-//     noList: false, // default true
-//     reverseData: false,
-//     onlyBuySignals: false,
-// }).then(console.log);
+if (IS_DEV) {
+    // const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
+    // getCandlesticksData({
+    //     symbol: "BTC/BRL",
+    //     limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
+    //     sinceType: "count", // count, date
+    //     customDate: "2021-08-25T23:00:00.000Z", // if hour less than 9, put 0 in front
+    //     sinceCount: 100, // default 250 last candles
+    //     noList: false, // default true
+    //     reverseData: false,
+    //     onlyBuySignals: false,
+    // }).then(console.log);
+}
 
 // HELPERS
 function handleListData(list, { noList, reverseData, onlyBuySignals }) {

@@ -4,7 +4,12 @@ const getPercentage = require("../../../utils/number/perc/getPercentage");
 
 const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
-async function setHistoricalLiveCandle({ side, timestamp, emaTrend }) {
+async function setHistoricalLiveCandle({
+    side,
+    timestamp,
+    emaTrend,
+    openPrice,
+}) {
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
     // the most recent for both history and sidesStreak starts at the rightmost side to the left.
@@ -12,6 +17,7 @@ async function setHistoricalLiveCandle({ side, timestamp, emaTrend }) {
 
     const moreHistory = {
         emaTrend,
+        openPrice,
     };
 
     const { sidesStreak, bullSidePerc, bearSidePerc, history } =
@@ -29,6 +35,7 @@ async function setHistoricalLiveCandle({ side, timestamp, emaTrend }) {
         bullSidePerc,
         bearSidePerc,
         history,
+        openPrice,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);

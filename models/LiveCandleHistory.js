@@ -8,6 +8,7 @@ const mainData = {
     bullSidePerc: Number,
     bearSidePerc: Number,
     emaTrend: String,
+    openPrice: Number,
 };
 
 const HistoryData = new Schema(mainData, { _id: true });
