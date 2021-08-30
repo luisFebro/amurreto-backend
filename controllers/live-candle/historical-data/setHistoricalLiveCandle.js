@@ -15,17 +15,11 @@ async function setHistoricalLiveCandle({
     // the most recent for both history and sidesStreak starts at the rightmost side to the left.
     const currMin = getDiffInMinutes(timestamp);
 
-    const moreHistory = {
-        emaTrend,
-        openPrice,
-    };
-
     const { sidesStreak, bullSidePerc, bearSidePerc, history } =
         await handleSidesStreak({
             currMin,
             side,
             timestamp,
-            moreHistory,
         });
 
     const newData = {
@@ -42,7 +36,7 @@ async function setHistoricalLiveCandle({
 }
 
 // HELPERS
-async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
+async function handleSidesStreak({ currMin, side, timestamp }) {
     const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID);
 
     let dbSidesStreak = dbData && dbData.sidesStreak;
@@ -53,18 +47,20 @@ async function handleSidesStreak({ currMin, side, timestamp, moreHistory }) {
     let percData = getSidePercs(dbSidesStreak);
 
     // if change, save history and clean the current array
-    const hasLiveCandleChanged =
-        new Date(timestamp).getHours() > new Date(dbTimestamp).getHours();
+    const currHour = new Date(timestamp).getHours();
+    const dbHour = new Date(dbTimestamp).getHours();
+    const hasLiveCandleChanged = !dbHour ? false : currHour !== dbHour;
 
     if (hasLiveCandleChanged) {
         // save last-past-hour candle history
-        const MAX_LAST_ITEMS = 10;
+        const MAX_LAST_ITEMS = 100;
         const newHistory = [
             {
-                timestamp,
+                timestamp: dbTimestamp,
                 sidesStreak: dbSidesStreak,
+                openPrice: dbData && dbData.openPrice,
+                emaTrend: dbData && dbData.emaTrend,
                 ...percData,
-                ...moreHistory,
             },
             ...dbHistory,
         ].slice(0, MAX_LAST_ITEMS);
