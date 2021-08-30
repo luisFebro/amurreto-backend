@@ -18,6 +18,15 @@ function getCandlePatternsSignal({ liveCandle }) {
     );
     if (runThreeInside) return runThreeInside;
 
+    const runTweezers = threeCandleType.includes("tweezers");
+    if (runTweezers) {
+        return {
+            signal: "BUY",
+            strategy: "patternTWEEZERS",
+            transactionPerc: 100,
+        };
+    }
+
     return {
         signal: "WAIT",
         strategy: "",

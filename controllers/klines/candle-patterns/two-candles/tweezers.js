@@ -27,6 +27,7 @@ const areTweezers = (data) => {
 
     return {
         type: "tweezers",
+        variant: "bullish",
         pressureA: candleA.pressure,
     };
 };
