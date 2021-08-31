@@ -16,12 +16,12 @@ const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
 
-async function createOrderBySignal(signalData, options = {}) {
+async function createOrderBySignal(signalData = {}, options = {}) {
     const { signal, strategy, transactionPerc } = signalData;
 
     const handleSide = () => {
         // BUY and SELL sides from signal is valid. Others 2 are ignored
-        if (signal === "WAIT" || signal === "HOLD") return null;
+        if (signal === "WAIT") return null; // signal === "HOLD"
         return signal;
     };
 

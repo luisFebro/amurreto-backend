@@ -28,6 +28,20 @@ The drawing of the K-line chart in the stock market and futures market contains 
 Kline - https://www.programmersought.com/article/7775785243
  */
 
+if (IS_DEV) {
+    const LIMIT = 3; // undefined indicators may not work properly in this version if this is a number...
+    getCandlesticksData({
+        symbol: "BTC/BRL",
+        limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
+        sinceType: "date", // count, date
+        customDate: "2021-08-30T23:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceCount: 50, // default 250 last candles
+        noList: false, // default true
+        reverseData: false,
+        onlyBuySignals: false,
+    }).then(console.log);
+}
+
 // const candlesThread = [];
 // const candlesHistory = [];
 async function getCandlesticksData(payload = {}) {
@@ -152,6 +166,9 @@ async function getCandlesticksData(payload = {}) {
             twoCandleType,
             threeCandleType,
             candleBodySize,
+            bodyPerc: volRealBodyPerc,
+            upperPerc: volUpperWickPerc,
+            lowerPerc: volLowerWickPerc,
             // volRealBody,
             // priceInc: getIncreasedPerc(lastClosePrice, close),
             // end candles
@@ -239,7 +256,6 @@ async function getCandlesticksData(payload = {}) {
             // isKeyResistence,
             // atr: atrData && atrData.atr,
             // incAtr: atrData && atrData.incVolat,
-            // ALL DATA ANALYSED ABOVE SHOULD BE BOILED DOWN TO ANALYSE SIGNAL - Buy, Hold, Sell, Wait
             // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
             // isMaxVolume9: maxVol9 === candle.vol,
             // ema9,
@@ -331,20 +347,6 @@ async function getCandlesticksData(payload = {}) {
         //     isKeyResistence: liveCandle.isKeyResistence,
         // },
     };
-}
-
-if (IS_DEV) {
-    const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
-    getCandlesticksData({
-        symbol: "BTC/BRL",
-        limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-        sinceType: "count", // count, date
-        customDate: "2021-08-30T13:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 20, // default 250 last candles
-        noList: true, // default true
-        reverseData: false,
-        onlyBuySignals: false,
-    }).then(console.log);
 }
 
 // HELPERS

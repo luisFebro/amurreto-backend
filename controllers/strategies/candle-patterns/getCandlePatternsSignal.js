@@ -1,6 +1,6 @@
-function getCandlePatternsSignal({ liveCandle }) {
-    const threeCandleType = liveCandle.threeCandleType;
-    const twoCandleType = liveCandle.twoCandleType;
+async function getCandlePatternsSignal({ liveCandle }) {
+    const threeCandleType = liveCandle.threeCandleType || " ";
+    const twoCandleType = liveCandle.twoCandleType || " ";
 
     const star = checkCandlePatternSignal("star", "morning", threeCandleType);
     if (star) return star;
@@ -28,12 +28,8 @@ function getCandlePatternsSignal({ liveCandle }) {
         };
     }
 
-    //
-    return {
-        signal: "HOLD",
-        strategy: null,
-        transactionPerc: 100,
-    };
+    // empty signal handle with strategiesManager
+    return { signal: null };
 }
 
 // HELPERS
