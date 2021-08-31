@@ -124,7 +124,7 @@ function needPushCurrSide({ currMin, totalAllSides }) {
     if (totalAllSides === 2 && currMin >= 20 && currMin < 30) return true;
     if (totalAllSides === 3 && currMin >= 30 && currMin < 40) return true;
     if (totalAllSides === 4 && currMin >= 40 && currMin < 50) return true;
-    if (totalAllSides === 5 && currMin >= 50) return true;
+    if (totalAllSides === 5 && currMin >= 59) return true; // this one is closer so that we can have a more accurate and closer result of the current candle final state
 
     return false;
 }
