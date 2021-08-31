@@ -60,7 +60,7 @@ function checkLiveCandleRealibility({
 
     return {
         status: false,
-        reason: "",
+        reason: "noCondMatch",
     };
 }
 
