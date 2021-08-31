@@ -37,13 +37,13 @@ async function createOrderBySignal(signalData, options = {}) {
 
     const [
         alreadyExecutedStrategyForSide,
-        gotOpenOrder,
-        transactionPositionPerc,
+        gotOpenOrderExchange,
+        transactionPositionPerc, // 100 for 100% of money exchange or 50 for 50% of money exchange available in quote currency BRL
         isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, { status: "pending", side }),
-        checkOpeningOrder({ symbol, maxIterateCount: 0 }),
+        checkOpeningOrderNotDoneExchange({ symbol, maxIterateCount: 0 }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
         needCircuitBreaker(),
         // findTransactionSidePerc({ symbol }),
@@ -58,7 +58,9 @@ async function createOrderBySignal(signalData, options = {}) {
     // in order to use HOLD, it should be only a BUY if there is no prior SELL transaction in the current trade. That's because the robot will buy again after a SELL back to HOLD during an uptrend.
     // const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
 
-    const defaultCond = !gotOpenOrder && !alreadyExecutedStrategyForSide;
+    const defaultCond =
+        !gotOpenOrderExchange && !alreadyExecutedStrategyForSide;
+    // circuit break only apply to Buy cond because if we block sell of current transaction, the algo will be stuck and a sudden plunge in price will be ignored
     const condBuy = defaultCond && !isBlockedByCurcuitBreak && signal === "BUY"; // signal === "HOLD" || isHoldWithoutPriorSell
 
     if (condBuy) {
@@ -308,7 +310,7 @@ async function getOrdersList(payload = {}) {
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
 // .then(console.log)
 
-async function checkOpeningOrder({ symbol, maxIterateCount }) {
+async function checkOpeningOrderNotDoneExchange({ symbol, maxIterateCount }) {
     // verify if there is open order
     // after detect the open order, the order is cancelled and new order will be made after the algo iterate the below number of time.
     // if maxIterateCount is zero, the opening order is cancelled in the next algo iteration and attempt a new order if any buy/sell signal
