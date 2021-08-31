@@ -77,9 +77,7 @@ BUY, SELL, WAIT, ? (unknown)
 // HOLD not being using in this +v1.15
 
 */
-
 /* ARCHIVES
-
 const emaSignal = analyseEmaSignals({
     emaTrend: lastEmaTrend,
     isOverbought: null,

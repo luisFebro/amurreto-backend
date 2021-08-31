@@ -22,17 +22,13 @@ const isThreeOutside = (data) => {
     const matchEatAllSequence =
         candleC.side === candleB.side && candleB.side !== candleA.side;
 
-    const sizesEatAllCandleA = ["medium", "big", "huge"];
-    const matchEatAllSizeCandleA = sizesEatAllCandleA.includes(
-        candleA.bodySize
-    );
+    const sizesEatAllBoth = ["medium", "big", "huge"];
+    const matchEatAllSizes =
+        sizesEatAllBoth.includes(candleA.bodySize) &&
+        sizesEatAllBoth.includes(candleB.bodySize);
 
     const matchCurrBiggerWholeSize = candleB.wholeSize < candleA.wholeSize;
-    if (
-        matchCurrBiggerWholeSize &&
-        matchEatAllSequence &&
-        matchEatAllSizeCandleA
-    ) {
+    if (matchCurrBiggerWholeSize && matchEatAllSequence && matchEatAllSizes) {
         return {
             type: "threeOutsideEatAll",
             variant: candleA.side === "bull" ? "up" : "down",
