@@ -8,7 +8,17 @@ const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSign
 
 // IDEA: record on DB every time an strategy is for selling to compare effectiveness
 async function watchStrategies(options = {}) {
-    const { liveCandle } = options;
+    const { liveCandle, candleReliability } = options;
+    const checkCandleReliability =
+        candleReliability && candleReliability.status;
+
+    console.log("candleReliability", candleReliability);
+    if (!checkCandleReliability)
+        return {
+            signal: "WAIT",
+            strategy: null,
+            transactionPerc: 100,
+        };
 
     const profitTracker = await watchProfitTracker();
 

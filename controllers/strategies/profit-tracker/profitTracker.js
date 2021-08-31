@@ -49,7 +49,9 @@ async function getLiveProfitsPerc() {
     const { list } = transactionData[0];
     const { profitTracker, _id: transactionId } = list;
 
-    const lastBuyData = list.buyPrices.slice(-1)[0];
+    const lastBuyData = list.buyPrices
+        ? list.buyPrices.slice(-1)[0]
+        : { amounts: 0, fee: 0 };
     const lastPendingBuyMarketPrice = lastBuyData.amounts.market;
     const lastPendingBuyBaseAmount = lastBuyData.amounts.base;
     const lastPendingBuyFeeAmount = lastBuyData.fee.amount;

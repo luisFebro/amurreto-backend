@@ -8,24 +8,25 @@ const {
     // findTransactionSidePerc,
     setDbOrderBack,
     cancelDbOrderBack,
-    verifyLastStrategy,
+    checkAlreadyExecutedStrategy,
 } = require("./dbOrders");
 const AmurretoOrders = require("../../models/Orders");
 const { TAKER_MARKET_FEE } = require("../fees");
 const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
+const { IS_PROD, IS_DEV } = require("../../config");
 
 async function createOrderBySignal(signalData, options = {}) {
     const { signal, strategy, transactionPerc } = signalData;
 
-    // const handleSide = () => {
-    // if (signal === "WAIT") return "WAIT";
-    // if (signal === "HOLD") return "BUY";
+    const handleSide = () => {
+        // BUY and SELL sides from signal is valid. Others 2 are ignored
+        if (signal === "WAIT" || signal === "HOLD") return null;
+        return signal;
+    };
 
-    // return signal;
-    // };
-
-    const side = signal;
+    const side = handleSide();
+    if (!side || IS_DEV) return null;
 
     const {
         symbol = "BTC/BRL",
@@ -35,19 +36,18 @@ async function createOrderBySignal(signalData, options = {}) {
     } = options;
 
     const [
-        alreadyRanStrategy,
+        alreadyExecutedStrategyForSide,
         gotOpenOrder,
         transactionPositionPerc,
         isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
-        verifyLastStrategy(symbol, { status: "pending", side, strategy }),
+        checkAlreadyExecutedStrategy(symbol, { status: "pending", side }),
         checkOpeningOrder({ symbol, maxIterateCount: 0 }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
         needCircuitBreaker(),
         // findTransactionSidePerc({ symbol }),
     ]);
-
     // const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
 
     // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
@@ -57,9 +57,8 @@ async function createOrderBySignal(signalData, options = {}) {
 
     // in order to use HOLD, it should be only a BUY if there is no prior SELL transaction in the current trade. That's because the robot will buy again after a SELL back to HOLD during an uptrend.
     // const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
-    // if strategy already ran, then ignore it.
-    // hold here in case of the asset suddenly jumbs to uptrend instead of bullish reversal where we buy it
-    const defaultCond = !gotOpenOrder && !alreadyRanStrategy;
+
+    const defaultCond = !gotOpenOrder && !alreadyExecutedStrategyForSide;
     const condBuy = defaultCond && !isBlockedByCurcuitBreak && signal === "BUY"; // signal === "HOLD" || isHoldWithoutPriorSell
 
     if (condBuy) {
@@ -147,29 +146,42 @@ async function createOrderBack(payload = {}) {
         price: marketPrice,
     };
 
-    const mostRecentData = await getOrdersList({
-        symbol,
-        mostRecent: true,
-        fallback,
-    });
+    // REGISTRATION DB AND EXCHANGE
+    if (IS_PROD) {
+        await novadax
+            .createOrder(
+                symbol,
+                type,
+                side,
+                baseCurrencyAmount,
+                orderPrice,
+                params
+            )
+            .catch((response) => {
+                const error = response.toString();
+                console.log("error", error);
+                if (error.includes("A30007"))
+                    Promise.reject("Insufficient balance");
+                if (error.includes("A30004"))
+                    Promise.reject("Value is too small");
+                if (error.includes("A30002"))
+                    Promise.reject(
+                        "Balance not enough or order amount is too small"
+                    );
+            });
 
-    await setDbOrderBack({ side, mostRecentData, moreData });
-
-    await novadax
-        .createOrder(symbol, type, side, baseCurrencyAmount, orderPrice, params)
-        .catch((response) => {
-            const error = response.toString();
-            console.log("error", error);
-            if (error.includes("A30007"))
-                Promise.reject("Insufficient balance");
-            if (error.includes("A30004")) Promise.reject("Value is too small");
-            if (error.includes("A30002"))
-                Promise.reject(
-                    "Balance not enough or order amount is too small"
-                );
+        // after set transaction exchange, fetch that data to register in DB
+        const mostRecentData = await getOrdersList({
+            symbol,
+            mostRecent: true,
+            fallback,
         });
 
-    return mostRecentData;
+        await setDbOrderBack({ side, mostRecentData, moreData });
+    }
+    // END REGISTRATION DB AND EXCHANGE
+
+    return null;
 }
 // createOrderBack()
 // .then(console.log)

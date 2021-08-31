@@ -2,23 +2,6 @@ const AmurretoOrders = require("../../models/Orders");
 const { pushFIFO } = require("../../utils/mongodb/fifo");
 // const getPercentage = require("../utils/number/perc/getPercentage");
 
-async function verifyLastStrategy(symbol, options = {}) {
-    const { side, strategy } = options;
-    // there will be only one pending status for
-    // each asset/security so it is safe to query
-    // for symbol and status pending only
-    const dataTransaction = await getDataTransaction({ symbol, side });
-
-    const checkAlreadyRanStrategy = (list) => {
-        const priorStrategies = list.map((trans) => trans.strategy);
-        return priorStrategies.includes(strategy);
-    };
-
-    return dataTransaction.length
-        ? checkAlreadyRanStrategy(dataTransaction)
-        : false;
-}
-
 async function setDbOrderBack({ side, mostRecentData, moreData }) {
     const {
         quote,
@@ -99,6 +82,17 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
     }
 
     return "done";
+}
+
+async function checkAlreadyExecutedStrategy(symbol, options = {}) {
+    const { side } = options;
+    // there will be only one pending status for
+    // each asset/security so it is safe to query
+    // for symbol and status pending only
+
+    // In the most recent algo v1.15, only need verify if a SELL/BUY transaction is already taken by any strategy since we are now dealing with multiple patterns as strategy
+    const dataTransaction = await getDataTransaction({ symbol, side });
+    return dataTransaction.length ? true : false;
 }
 
 async function cancelDbOrderBack(timestamp, options = {}) {
@@ -243,9 +237,19 @@ async function getDataTransaction({ symbol, side }) {
 // END HELPERS
 
 module.exports = {
-    verifyLastStrategy,
+    checkAlreadyExecutedStrategy,
     setDbOrderBack,
     cancelDbOrderBack,
     getOrderTransactionPerc,
     findTransactionSidePerc,
 };
+
+/* ARCHIVES
+In the most recent algo, only need verify if a SELL/BUY transaction is already taken by any strategy since we are now dealing with multiple patterns as strategy
+
+const checkAlreadyRanStrategy = () => {
+    const priorStrategies = dataTransaction.map((trans) => trans.strategy);
+    return priorStrategies.includes(strategy);
+};
+
+*/

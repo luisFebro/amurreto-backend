@@ -31,7 +31,7 @@ function getCandlePatternsSignal({ liveCandle }) {
     //
     return {
         signal: "HOLD",
-        strategy: "no strategy",
+        strategy: null,
         transactionPerc: 100,
     };
 }

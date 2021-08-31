@@ -3,18 +3,18 @@
 
 function checkLiveCandleRealibility({
     bullSidePerc = 0,
-    // currBodySize,
-    // currTimeSidesStreak = [],
+    currBodySize,
+    currTimeSidesStreak = [],
     // bearSidePerc = 0,
     // lastTimeCandle,
 }) {
-    console.log("currBodySize", currBodySize);
-    const currBodySize = "medium";
-    const currTimeSidesStreak = ["bull", "bull", "bear", "bear", "bear"];
-    // console.log("bearSidePerc", bearSidePerc);
-    // console.log("bullSidePerc", bullSidePerc);
-    // console.log("currBodySize", currBodySize);
-    // console.log("currTimeSidesStreak.slice(0, 2)", currTimeSidesStreak.slice(0, 2));
+    const currSide = currTimeSidesStreak && currTimeSidesStreak[0];
+    if (currSide === "bear") {
+        return {
+            status: true,
+            reason: "bearsDisabled",
+        };
+    }
 
     const totalSides = currTimeSidesStreak.length;
 
@@ -35,17 +35,12 @@ function checkLiveCandleRealibility({
         }
     }
 
-    const isMajorityBull = bullSidePerc > 66;
+    const isMajorityBull = bullSidePerc >= 66;
     // cond 2
     const isLast3SidesBullish = currTimeSidesStreak
         .slice(0, 3)
-        .every((side) => side === "bull" && currTimeSidesStreak.length === 3);
-    if (
-        isMajorityBull &&
-        isLast3SidesBullish &&
-        currBodySize === "small" &&
-        totalSides >= 3
-    ) {
+        .every((side) => side === "bull" && totalSides >= 2);
+    if (isMajorityBull && isLast3SidesBullish && currBodySize === "small") {
         return {
             status: true,
             reason: "threeSmallBullish",
@@ -55,8 +50,8 @@ function checkLiveCandleRealibility({
     // cond 3
     const isLast2SidesBullish = currTimeSidesStreak
         .slice(0, 2)
-        .every((side) => side === "bull" && currTimeSidesStreak.length === 2);
-    if (isLast2SidesBullish && currBodySize === "medium" && totalSides >= 2) {
+        .every((side) => side === "bull" && totalSides >= 2);
+    if (isLast2SidesBullish && currBodySize === "medium") {
         return {
             status: true,
             reason: "twoMediumBullish",

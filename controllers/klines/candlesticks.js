@@ -5,7 +5,7 @@ const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const { createOrderBySignal } = require("../orders/orders");
-const { IS_PROD, IS_DEV } = require("../../config");
+const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 // strategies
@@ -267,12 +267,7 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
-    const finalSignalData = await watchStrategies({
-        lastEmaTrend,
-        liveCandle,
-    });
-
-    const historicalLiveCandle = await setHistoricalLiveCandle({
+    const candleReliability = await setHistoricalLiveCandle({
         side: liveCandle.isBullish ? "bull" : "bear",
         timestamp: liveCandle.timestamp,
         emaTrend: lastEmaTrend,
@@ -280,11 +275,14 @@ async function getCandlesticksData(payload = {}) {
         currBodySize: liveCandle.candleBodySize,
     });
 
-    console.log("historicalLiveCandle", historicalLiveCandle);
+    const finalSignalData = await watchStrategies({
+        liveCandle,
+        candleReliability,
+        // lastEmaTrend,
+    });
 
-    if (IS_PROD) {
-        await createOrderBySignal(finalSignalData, { symbol });
-    }
+    // now all orders registration to exchange and db is by default only executed in PRODUCTION
+    await createOrderBySignal(finalSignalData, { symbol });
 
     // const lastIsOverbought = lastRsi >= 70;
     const indicators = {
@@ -342,7 +340,7 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-08-30T13:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 50, // default 250 last candles
+        sinceCount: 20, // default 250 last candles
         noList: true, // default true
         reverseData: false,
         onlyBuySignals: false,
