@@ -5,6 +5,13 @@ async function getCandlePatternsSignal({ liveCandle }) {
     const star = checkCandlePatternSignal("star", "morning", threeCandleType);
     if (star) return star;
 
+    const runThreeOutsideEatAll = checkCandlePatternSignal(
+        "threeOutsideEatAll",
+        "up",
+        threeCandleType
+    );
+    if (runThreeOutsideEatAll) return runThreeOutsideEatAll;
+
     const runThreeOutside = checkCandlePatternSignal(
         "threeOutside",
         "up",

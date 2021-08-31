@@ -13,6 +13,10 @@ async function watchStrategies(options = {}) {
     const checkCandleReliability =
         candleReliability && candleReliability.status;
 
+    // watchProfitTracker is the highest priority to track pending transaction.
+    const profitTracker = await watchProfitTracker();
+    // console.log("profitTracker", profitTracker);
+
     console.log("candleReliability", candleReliability);
     if (!checkCandleReliability)
         return {
@@ -33,8 +37,6 @@ async function watchStrategies(options = {}) {
             transactionPerc: 100,
         };
     }
-
-    const profitTracker = await watchProfitTracker();
 
     // manage all strategies. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([

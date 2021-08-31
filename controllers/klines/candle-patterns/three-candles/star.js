@@ -52,7 +52,6 @@ const isStar = (data) => {
     if (!matchCandleBAnyStarType) return false;
 
     const isMorningStar = candleC.side === "bear" && candleA.side === "bull";
-    console.log("isMorningStar", isMorningStar);
     const variant = isMorningStar ? "morning" : "shooting";
 
     const matchMorningStarUpperLimit = candleB.upperPerc <= 50;
