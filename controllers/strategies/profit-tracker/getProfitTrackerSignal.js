@@ -3,10 +3,10 @@ async function getProfitTrackerSignal({ profitTracker = {} }) {
     const {
         watching,
         isProfit,
-        diffMax,
+        diffMax, // diff from maxPerc and netPerc
         diffVolat,
+        netPerc,
         // maxPerc,
-        // netPerc,
         // minPerc,
     } = profitTracker;
 
@@ -18,10 +18,37 @@ async function getProfitTrackerSignal({ profitTracker = {} }) {
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
-            strategy: "profitMaxStopLoss",
+            strategy: "maxStopLoss",
             transactionPerc: 100,
         };
     }
+
+    // condition for sale if diffVolat reaches 1.0
+
+    // PROFIT HANDLING
+    const MAX_DIFF_START_PROFIT = 0.3;
+    const MAX_DIFF_MID_PROFIT = 0.5;
+    const MAX_DIFF_LONG_PROFIT = 0.7;
+    const startProfitRange = netPerc >= 0 && netPerc < 0.5;
+    const midProfitRange = netPerc >= 0.5 && netPerc < 1.5;
+    const longProfitRange = netPerc >= 1.5;
+
+    const isStartProfit =
+        startProfitRange && diffMax >= MAX_DIFF_START_PROFIT && "startProfit";
+    const isMidProfit =
+        midProfitRange && diffMax >= MAX_DIFF_MID_PROFIT && "midProfit";
+    const isLongProfit =
+        longProfitRange && diffMax >= MAX_DIFF_LONG_PROFIT && "longProfit";
+    const profitRange = isStartProfit || isMidProfit || isLongProfit;
+
+    if (isProfit && profitRange) {
+        return {
+            signal: "SELL",
+            strategy: profitRange,
+            transactionPerc: 100,
+        };
+    }
+    // END PROFIT HANDLING
 
     // empty signal handle with strategiesManager
     return { signal: null };

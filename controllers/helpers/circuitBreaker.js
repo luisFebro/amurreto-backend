@@ -55,10 +55,6 @@ async function needCircuitBreaker() {
         livePrice - lastTransactionSellMarketPrice
     );
 
-    console.log(
-        "circuitBreaker getDiffInMinutes",
-        getDiffInMinutes(lastTransactionSellDate)
-    );
     const isBlockedForPrice = diffPriceLastTransaction <= MIN_PRICE_DIFF;
     const isBlockedForTime =
         getDiffInMinutes(lastTransactionSellDate) <= MIN_TIME_AFTER_LAST_TRANS;
