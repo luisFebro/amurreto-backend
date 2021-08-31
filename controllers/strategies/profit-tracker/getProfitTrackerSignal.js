@@ -12,7 +12,7 @@ async function getProfitTrackerSignal({ profitTracker = {} }) {
 
     if (!watching) return { signal: null };
 
-    const MAX_DIFF_VOLAT_PERC = 1.5; // diff between maxPerc and minPerc from profit
+    const MAX_DIFF_VOLAT_PERC = 2; // diff between maxPerc and minPerc from profit
 
     const maxProfitStopLoss = !isProfit && diffVolat >= MAX_DIFF_VOLAT_PERC;
     if (maxProfitStopLoss) {
