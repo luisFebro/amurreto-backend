@@ -22,7 +22,7 @@ bree.on("worker created", (name) => {
 });
 
 // start/stop all jobs (this is the equivalent of reloading a crontab):
-bree.start();
+// bree.start();
 
 const activateDev = false;
 if (IS_DEV && !activateDev) {
