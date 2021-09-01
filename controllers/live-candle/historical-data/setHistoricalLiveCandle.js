@@ -80,6 +80,7 @@ async function handleSidesStreak({ currMin, side, timestamp }) {
                 openPrice: dbData && dbData.openPrice,
                 emaTrend: dbData && dbData.emaTrend,
                 bodySize: dbData && dbData.bodySize,
+                lowerWing20: dbData && dbData.lowerWing20,
                 ...percData,
             },
             ...dbHistory,

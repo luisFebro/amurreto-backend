@@ -278,6 +278,8 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
+    // the data will be mingled with current local dev, so only in prod.
+    let finalSignalData = { signal: null };
     if (IS_PROD) {
         const candleReliability = await setHistoricalLiveCandle({
             side: liveCandle.isBullish ? "bull" : "bear",
@@ -287,14 +289,14 @@ async function getCandlesticksData(payload = {}) {
             currBodySize: liveCandle.candleBodySize,
             lowerWing20,
         });
-    }
 
-    const finalSignalData = await watchStrategies({
-        liveCandle,
-        candleReliability,
-        lowerWing20,
-        // lastEmaTrend,
-    });
+        finalSignalData = await watchStrategies({
+            liveCandle,
+            candleReliability,
+            lowerWing20,
+            // lastEmaTrend,
+        });
+    }
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION
     await createOrderBySignal(finalSignalData, { symbol });
