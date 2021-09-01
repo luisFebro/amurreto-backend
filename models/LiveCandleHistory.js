@@ -10,6 +10,7 @@ const mainData = {
     emaTrend: String,
     openPrice: Number,
     bodySize: String,
+    lowerWing20: Object, // { closePrice, timestamp, diffCurrPrice } so that we can detect buy opportunities in case of other strategies failed to detect.
 };
 
 const HistoryData = new Schema(mainData, { _id: true });

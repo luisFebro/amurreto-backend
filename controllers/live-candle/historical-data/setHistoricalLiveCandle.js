@@ -11,6 +11,7 @@ async function setHistoricalLiveCandle({
     emaTrend,
     openPrice,
     currBodySize,
+    lowerWing20,
 }) {
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
@@ -33,6 +34,7 @@ async function setHistoricalLiveCandle({
         history,
         openPrice,
         bodySize: currBodySize,
+        lowerWing20,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);

@@ -8,14 +8,14 @@ const { createOrderBySignal } = require("../orders/orders");
 const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
+const detectSequenceStreaks = require("./algo/candle/algo/detectSequenceStreaks");
 // strategies
-const watchStrategies = require("../strategies/strategies");
+const watchStrategies = require("../strategies/watchStrategies");
 const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
 const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
 // end strategies
 // const calculateATR = require("../indicators/atr");
 // const calculateRSI = require("../indicators/rsi");
-// const detectBullishThreads = require("./algo/candle/algo/detectBullishThreads");
 // const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 // const {
 //     checkWingForCandle,
@@ -35,14 +35,13 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-08-30T23:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 50, // default 250 last candles
-        noList: true, // default true
+        sinceCount: 20, // default 250 last candles
+        noList: false, // default true
         reverseData: false,
         onlyBuySignals: false,
     }).then(console.log);
 }
 
-// const candlesThread = [];
 // const candlesHistory = [];
 async function getCandlesticksData(payload = {}) {
     const {
@@ -149,16 +148,10 @@ async function getCandlesticksData(payload = {}) {
                 candleBodySize,
             });
 
-        // candlesThread.push({
-        //     isBullish,
-        //     open,
-        //     close,
-        //     timestamp: JSON.stringify(timestamp),
-        // });
-
         const finalData = {
             count: ind + 1,
             open,
+            close,
             // candle
             timestamp,
             isBullish,
@@ -192,7 +185,7 @@ async function getCandlesticksData(payload = {}) {
     //     ? candlestickData.slice(-1)[0].close
     //     : 0;
     // const { threads, nextResistence, nextSupport, keyResistence, keySupport } =
-    //     detectBullishThreads(candlesThread, { currPrice });
+    //     detectSequenceStreaks(candlesThread, { currPrice });
 
     // INDICATORS CALCULATION
     const closingPrices = dataForIndicators.map((candle) => candle[4]);
@@ -252,8 +245,6 @@ async function getCandlesticksData(payload = {}) {
             ...candle,
             emaTrend,
             finalSignal: analyseEmaSignals({ emaTrend }).signal,
-            // isKeySupport,
-            // isKeyResistence,
             // atr: atrData && atrData.atr,
             // incAtr: atrData && atrData.incVolat,
             // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
@@ -263,12 +254,16 @@ async function getCandlesticksData(payload = {}) {
             // ema50,
         };
 
-        // if (!isHigherWing) delete secondCheckData.threadsCount;
-        // if (!isKeySupport) delete secondCheckData.isKeySupport;
-        // if (!isKeyResistence) delete secondCheckData.isKeyResistence;
-
         return secondCheckData;
     });
+
+    const MAX_CANDLES_SEQUENCE = 20;
+    const dataForSequenceStreak = candlestickData.slice(
+        `-${MAX_CANDLES_SEQUENCE}`
+    );
+    const { sequenceStreaks, lowerWing20 } = detectSequenceStreaks(
+        dataForSequenceStreak
+    );
 
     const liveCandle = candlestickData.slice(-1)[0] || {};
     const lastEma9 = dataEma9.slice(-1)[0];
@@ -289,11 +284,13 @@ async function getCandlesticksData(payload = {}) {
         emaTrend: lastEmaTrend,
         openPrice: liveCandle.open,
         currBodySize: liveCandle.candleBodySize,
+        lowerWing20,
     });
 
     const finalSignalData = await watchStrategies({
         liveCandle,
         candleReliability,
+        lowerWing20,
         // lastEmaTrend,
     });
 

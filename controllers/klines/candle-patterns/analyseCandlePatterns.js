@@ -1,11 +1,8 @@
 // auto patterns recognition
 const findCandleTypes = require("./allTypes");
-const {
-    keepSameSequence,
-    array,
-} = require("../../../utils/array/keepSameSequence");
+const keepSameSequence = require("../../../utils/array/keepSameSequence");
 
-const candlesDataAnalysis = array;
+const candlesDataAnalysis = [];
 
 function analyseCandlePatterns(candleData) {
     const { vol, price, candleBodySize } = candleData; // n1 data details
@@ -25,7 +22,7 @@ function analyseCandlePatterns(candleData) {
         wholeSize: vol.wholeCandleSize, // including max/min
         pressure,
     };
-    keepSameSequence(allData, { maxArray: 3, mostRecent: "last" });
+    keepSameSequence(allData, { maxArray: 3, array: candlesDataAnalysis });
 
     const { oneCandleType, twoCandleType, threeCandleType } = findCandleTypes({
         candlesDataAnalysis,

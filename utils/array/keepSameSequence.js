@@ -1,8 +1,6 @@
-const array = [];
 // it should be inside a loop.
-
 function keepSameSequence(payload, options = {}) {
-    const { maxArray = 3, mostRecent = "first" } = options;
+    const { array = [], maxArray = 3, mostRecent = "last" } = options;
 
     const mostRecentAllow = ["last", "first"];
     if (!mostRecentAllow.includes(mostRecent))
@@ -24,10 +22,7 @@ function keepSameSequence(payload, options = {}) {
     runInsertion();
 }
 
-module.exports = {
-    keepSameSequence,
-    array,
-};
+module.exports = keepSameSequence;
 
 // e.g
 // keepSameSequence("a");
