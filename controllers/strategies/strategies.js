@@ -18,7 +18,7 @@ async function watchStrategies(options = {}) {
 
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker();
-
+    const isProfit = profitTracker && profitTracker.isProfit;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
     // bearish candles do not apply in this version, thus returns this { status: true, reason: 'bearsDisabled' } and algo flow continues
     const isCurrCandleReliable = candleReliability.status;
@@ -45,6 +45,7 @@ async function watchStrategies(options = {}) {
 
     const finalSignal = strategiesHandler(allStrategySignals, {
         isCurrCandleReliable,
+        isProfit,
     });
     console.log("finalSignal", finalSignal);
 
@@ -53,13 +54,17 @@ async function watchStrategies(options = {}) {
 
 // HELPERS
 function strategiesHandler(allSignals = [], options = {}) {
-    const { isCurrCandleReliable } = options;
+    const { isCurrCandleReliable, isProfit } = options;
 
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
     );
     if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
+
+    // allow only maxStopLoss to be triggered if no profit is made. All other selling strategies will be activated once isProfit is true.
+    if (!isProfit && firstFoundValidStrategy.strategy !== "maxStopLoss")
+        return DEFAULT_WAIT_SIGNAL;
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     const isUnreliableBuySignal = isBuySignal && !isCurrCandleReliable;

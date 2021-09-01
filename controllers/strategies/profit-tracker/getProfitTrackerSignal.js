@@ -1,5 +1,5 @@
 async function getProfitTrackerSignal({ profitTracker = {} }) {
-    if (!profitTracker) return { signal: null };
+    if (!profitTracker.watching) return { signal: null };
     const {
         watching,
         isProfit,
