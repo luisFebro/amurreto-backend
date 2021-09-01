@@ -5,7 +5,7 @@ const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const { createOrderBySignal } = require("../orders/orders");
-const { IS_DEV } = require("../../config");
+const { IS_PROD, IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 const detectSequenceStreaks = require("./algo/candle/algo/detectSequenceStreaks");
@@ -278,14 +278,16 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
-    const candleReliability = await setHistoricalLiveCandle({
-        side: liveCandle.isBullish ? "bull" : "bear",
-        timestamp: liveCandle.timestamp,
-        emaTrend: lastEmaTrend,
-        openPrice: liveCandle.open,
-        currBodySize: liveCandle.candleBodySize,
-        lowerWing20,
-    });
+    if (IS_PROD) {
+        const candleReliability = await setHistoricalLiveCandle({
+            side: liveCandle.isBullish ? "bull" : "bear",
+            timestamp: liveCandle.timestamp,
+            emaTrend: lastEmaTrend,
+            openPrice: liveCandle.open,
+            currBodySize: liveCandle.candleBodySize,
+            lowerWing20,
+        });
+    }
 
     const finalSignalData = await watchStrategies({
         liveCandle,
