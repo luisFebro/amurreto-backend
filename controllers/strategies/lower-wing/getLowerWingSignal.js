@@ -5,6 +5,7 @@ also can be used to determine the support of the current market
  */
 
 async function getLowerWingSignal({ lowerWing20 }) {
+    console.log("lowerWing20", lowerWing20);
     if (!lowerWing20)
         return {
             signal: null,

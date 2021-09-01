@@ -21,14 +21,10 @@ async function watchStrategies(options = {}) {
     const profitTracker = await watchProfitTracker();
     const isProfit = profitTracker && profitTracker.isProfit;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
-    // bearish candles do not apply in this version, thus returns this { status: true, reason: 'bearsDisabled' } and algo flow continues
     const isCurrCandleReliable = candleReliability.status;
 
     async function checkThunderingChange() {
-        if (
-            !isCurrCandleReliable ||
-            candleReliability.reason !== "thunderingChange"
-        )
+        if (candleReliability.reason !== "thunderingChange")
             return { signal: null };
         return {
             signal: "BUY",

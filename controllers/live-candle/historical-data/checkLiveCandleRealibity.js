@@ -11,7 +11,7 @@ function checkLiveCandleRealibility({
     const currSide = currTimeSidesStreak && currTimeSidesStreak[0];
     if (currSide === "bear") {
         return {
-            status: true,
+            status: false,
             reason: "bearsDisabled",
         };
     }
