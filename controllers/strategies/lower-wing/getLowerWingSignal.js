@@ -13,7 +13,7 @@ async function getLowerWingSignal({ lowerWing20 }) {
 
     const diffCurrPrice = lowerWing20.diffCurrPrice;
 
-    const MAX_PRICE_DIFF = 3000; // this change to 2000
+    const MAX_PRICE_DIFF = 2000; // this change to 2000
     const MIN_PRICE_DIFF = 1500;
     const isInDetectionRange =
         diffCurrPrice >= MIN_PRICE_DIFF && diffCurrPrice <= MAX_PRICE_DIFF;
