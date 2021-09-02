@@ -70,7 +70,7 @@ function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
         "powerHighWaveDoji";
 
     // big for test
-    const confirmationCandle = ["medium", "big"].includes("medium");
+    const confirmationCandle = ["medium"].includes("medium");
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
 
     if (!powerCandle) return null;

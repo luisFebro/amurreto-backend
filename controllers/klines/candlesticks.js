@@ -34,8 +34,8 @@ if (IS_DEV) {
         symbol: "BTC/BRL",
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "date", // count, date
-        customDate: "2021-09-02T04:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 100, // default 250 last candles
+        customDate: "2021-08-29T00:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceCount: 50, // default 250 last candles
         noList: false, // default true
         reverseData: false,
         onlyBuySignals: false,

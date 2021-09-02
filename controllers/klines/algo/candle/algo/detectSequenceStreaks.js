@@ -156,7 +156,7 @@ function detectSequenceStreaks(data) {
 
     // LOWER WING
     const liveCandle = readyData.slice(-1)[0];
-    const currPrice = liveCandle.closePrice;
+    const currPrice = liveCandle && liveCandle.closePrice;
 
     const lowestPrices = sortArray(readyData, {
         sortBy: "lowest",
