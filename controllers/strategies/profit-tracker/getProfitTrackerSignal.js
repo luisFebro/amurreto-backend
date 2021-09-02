@@ -1,4 +1,4 @@
-async function getProfitTrackerSignal({ profitTracker = {} }) {
+async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
     if (!profitTracker.watching) return { signal: null };
     const {
         watching,
@@ -26,8 +26,13 @@ async function getProfitTrackerSignal({ profitTracker = {} }) {
     // condition for sale if diffVolat reaches 1.0
 
     // PROFIT HANDLING
+    // give more space to grow even more since is sithering with profits
+    // UPDATE - include the last size because it likely to be the next candle which will fall in price.
+    const liveBodySize = liveCandle.candleBodySize;
+    const isCandleWonderProfit = ["big", "huge"].includes(liveBodySize);
+
     const MAX_DIFF_START_PROFIT = 0.3;
-    const MAX_DIFF_MID_PROFIT = 0.5;
+    const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 0.7 : 0.5;
     const MAX_DIFF_LONG_PROFIT = 0.7;
     const startProfitRange = netPerc >= 0 && netPerc < 0.5;
     const midProfitRange = netPerc >= 0.5 && netPerc < 1.5;

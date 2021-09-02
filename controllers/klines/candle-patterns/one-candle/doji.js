@@ -36,8 +36,17 @@ const isDoji = (data) => {
 
     if (!matchMinToBeDoji) return false;
 
+    // high-wave A big bearish/bullish candle which means reversal and breaks all supports and followed by high waves candles for indecision which will result in a big move next.
+    const matchShadows =
+        candleA.lowerPerc >= 30 &&
+        candleA.lowerPerc <= 59 &&
+        candleA.upperPerc >= 30 &&
+        candleA.upperPerc <= 59;
+    const isHighWave = candleA.bodyPerc <= 2 || matchShadows;
+
     return {
         type: "doji",
+        variant: isHighWave ? "high wave" : "spinning top",
         pressureA: candleA.pressure,
     };
 };

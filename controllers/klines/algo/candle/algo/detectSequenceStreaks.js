@@ -1,5 +1,6 @@
 const sortArray = require("../../../../../utils/array/sortArray");
-const keepSameSequence = require("../../../../../utils/array/keepSameSequence");
+const sortDates = require("../../../../../utils/dates/sortDates");
+const { getDiffInMinutes } = require("../../../../../utils/dates/dateFnsBack");
 // const { findResistenceSupportWings } = require("./findResistenceSupportWings");
 
 /* e.g
@@ -37,62 +38,22 @@ function detectSequenceStreaks(data) {
         };
     });
 
-    // LOWER WING
-    const liveCandle = readyData.slice(-1)[0];
-    const currPrice = liveCandle.closePrice;
-
-    const lowestPrices = sortArray(readyData, {
-        sortBy: "lowest",
-        target: "closePrice",
-    });
-    const lowerWing20 = {
-        timestamp: lowestPrices[0].timestamp,
-        closePrice: lowestPrices[0].closePrice,
-        diffCurrPrice: Number(
-            Number(currPrice - lowestPrices[0].closePrice).toFixed(2)
-        ),
-    };
-    // END LOWER WING
-
     // SEQUENCE STREAK
-    // identify the start of a sequence with:
-    // - at least 3 sequences.
-    // - sequenceA not equal to sequenceB and sequenceB and sequenceC are equal. e.g ["bull", "bear", "bear"] or ["bear", "bull", "bull"]
-    // - ["bear" (end prior sequence), "bull" (start of a new sequence), "bull"] - the sequenceB should be marked as the start point and also determine the last candle sequence of prior one which should be marked for candle sequenceA
-    // const lastThreeCandles = [];
-    // const currSequence = [];
-    // const MAX_SEQUENCE_ANALYSIS = 3;
-    // readyData.forEach(sequence => {
-    //     keepSameSequence(sequence, { maxArray: MAX_SEQUENCE_ANALYSIS, array: lastThreeCandles })
-
-    //     const isValidSequence = lastThreeCandles.length >= MAX_SEQUENCE_ANALYSIS;
-    //     if(!isValidSequence) return null;
-    //     // currSequence.push(sequence);
-
-    //     const sequenceA = lastThreeCandles[2].side;
-    //     console.log("sequenceA", sequenceA);
-    //     const sequenceB = lastThreeCandles[1].side;
-    //     const sequenceC = lastThreeCandles[0].side;
-
-    //     // const detectedSequence = sequenceA === sequenceB && sequenceB !== sequenceC;
-    //     // if(detectedSequence) currSequence.push(lastThreeCandles);
-    // })
-    // END SEQUENCE STREAK
-
-    let streakBuilder = [];
-    const finalSequenceStreak = [];
+    let bullStreakBuilder = [];
+    const bullSequenceStreaks = [];
+    let allBullishCandles = []; // use it for get all other bearish candles and sequence since we need them in this new algo
 
     readyData.forEach((candle, ind) => {
         const isLastCandle = ind + 1 === readyData.length;
-        streakBuilder.push(candle);
-        if (streakBuilder.length < 3) return;
+        bullStreakBuilder.push(candle);
+        if (bullStreakBuilder.length < 2) return;
 
         // FILTER OUT - filter out all bearish in the row. Keep only if one bear though
         let thisPriorCandle = "";
         let timestampsCandlesToBeRemoved = [];
         let tempTimestamps = [];
         let needCollection = false;
-        streakBuilder.forEach((c) => {
+        bullStreakBuilder.forEach((c) => {
             const removeFromStreak =
                 thisPriorCandle === "bear" && c.side === "bear";
 
@@ -111,74 +72,146 @@ function detectSequenceStreaks(data) {
             }
         });
 
-        streakBuilder = streakBuilder.filter(
+        bullStreakBuilder = bullStreakBuilder.filter(
             (c) => !timestampsCandlesToBeRemoved.includes(c.timestamp)
         );
         const startsWithBear =
-            streakBuilder.length && streakBuilder[0].side === "bear";
-        if (startsWithBear) streakBuilder = streakBuilder.slice(1);
+            bullStreakBuilder.length && bullStreakBuilder[0].side === "bear";
+        if (startsWithBear) bullStreakBuilder = bullStreakBuilder.slice(1);
         // END FILTER OUT
 
         if (isLastCandle) needCollection = true;
 
         if (needCollection) {
-            const endsWithBear =
-                streakBuilder.length &&
-                streakBuilder.slice(-1)[0].side === "bear";
-            if (endsWithBear) streakBuilder = streakBuilder.slice(0, -1);
-            if (streakBuilder.length >= 2) {
-                const { closePrice, timestamp } = streakBuilder[0];
-
-                finalSequenceStreak.push({
-                    closePrice,
-                    timestamp,
+            // const endsWithBear =
+            //     bullStreakBuilder.length &&
+            //     bullStreakBuilder.slice(-1)[0].side === "bear";
+            // if (endsWithBear) bullStreakBuilder = bullStreakBuilder.slice(0, -1);
+            if (bullStreakBuilder.length >= 2) {
+                allBullishCandles = [
+                    ...allBullishCandles,
+                    ...bullStreakBuilder,
+                ];
+                bullSequenceStreaks.push({
+                    sequence: "bull",
+                    count: bullStreakBuilder.length,
+                    startTimeStamp: bullStreakBuilder[0].timestamp,
                 });
-
-                streakBuilder = [];
+                bullStreakBuilder = [];
             }
         }
     });
 
-    console.log("streakBuilder", streakBuilder);
-    console.log("finalSequenceStreak", finalSequenceStreak);
+    const allBullishTimestamps = allBullishCandles.map((s) => s.timestamp);
+    const allBearishCandles = readyData.filter(
+        (s) => !allBullishTimestamps.includes(s.timestamp)
+    );
+    // console.log("allBearishCandles", allBearishCandles);
+
+    let bearStreakBuilder = [];
+    const bearSequenceStreaks = [];
+    allBearishCandles.forEach((c, ind) => {
+        bearStreakBuilder.push(c);
+
+        const lastTimestamp = bearStreakBuilder.slice(-2)[0].timestamp;
+        const currTimestamp = c.timestamp;
+        const diffMinTimestamps = getDiffInMinutes(lastTimestamp, {
+            laterDate: currTimestamp,
+        });
+
+        const FRAMETIME_MIN = 60;
+        const isLastCandle = ind + 1 === allBearishCandles.length;
+        const isNewSequence = diffMinTimestamps > FRAMETIME_MIN;
+        // the minimum of a valid range is 3 candles, two bearish in one and the last in the next. If only two, it means there is a leftover candle with no pair
+        // this verification only need to the first tip of the sequence. that's why an ind cond to verify if it is the first candles
+        const detectedAloneBearishCandle =
+            ind <= 2 && isNewSequence && bearStreakBuilder.length === 2;
+        if (detectedAloneBearishCandle)
+            bearStreakBuilder = [bearStreakBuilder.slice(-1)[0]];
+
+        if (bearStreakBuilder.length < 2) return;
+
+        if (isNewSequence || isLastCandle) {
+            // remove the last for the next sequence
+            // if last one, does not need to slice anything
+            const finalBearSequenceStreaks = isLastCandle
+                ? bearStreakBuilder
+                : bearStreakBuilder.slice(0, -1);
+            bearSequenceStreaks.push({
+                sequence: "bear",
+                count: finalBearSequenceStreaks.length,
+                startTimeStamp: finalBearSequenceStreaks[0].timestamp,
+            });
+
+            // let only the last candle to the next sequence
+            bearStreakBuilder = isLastCandle ? [] : bearStreakBuilder.slice(-1);
+        }
+    });
+    const allSequences = sortDates(
+        [...bullSequenceStreaks, ...bearSequenceStreaks],
+        { sortBy: "latest", target: "startTimeStamp" }
+    );
+    const sequenceStreaks = getStringifiedSequences(allSequences);
+    // END SEQUENCE STREAK
+
+    // LOWER WING
+    const liveCandle = readyData.slice(-1)[0];
+    const currPrice = liveCandle.closePrice;
+
+    const lowestPrices = sortArray(readyData, {
+        sortBy: "lowest",
+        target: "closePrice",
+    });
+
+    const lowerWing20 = {
+        timestamp: lowestPrices[0].timestamp,
+        closePrice: lowestPrices[0].closePrice,
+        diffCurrPrice: Number(
+            Number(currPrice - lowestPrices[0].closePrice).toFixed(2)
+        ),
+    };
+    // END LOWER WING
+
     return {
-        sequenceStreaks: null,
+        sequenceStreaks,
         lowerWing20,
     };
 }
 
+// HELPERS
+function getStringifiedSequences(allSequences = []) {
+    if (!allSequences.length) return "";
+
+    const letters = [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+    ];
+
+    // e.g A.bulls.10|B.bears.5|C.bulls.5
+    let finalSequenceString = "";
+    allSequences.forEach((s, ind) => {
+        const currLetter = letters[ind];
+        const side = `${s.sequence}s`;
+        const count = s.count;
+        finalSequenceString += `${currLetter}.${side}.${count}|`;
+    });
+
+    return finalSequenceString;
+}
+// END HELPERS
+
 module.exports = detectSequenceStreaks;
-
-/* e.g
-// const res = detectSequenceStreaks(thread, { currPrice: 172000 });
-// console.log("res", res);
-[ { candlesCount: 6,
-       lowerWing: '"2021-07-05T16:00:00.000Z"',
-       higherWing: '"2021-07-05T21:00:00.000Z"',
-       resistencePrice: 175687.92,
-       supportPrice: 171905.06,
-       isKeySupport: false,
-       isKeyResistence: false },
-     { candlesCount: 6,
-       lowerWing: '"2021-07-06T11:00:00.000Z"',
-       higherWing: '"2021-07-06T16:00:00.000Z"',
-       resistencePrice: 176694.27,
-       supportPrice: 173601.3,
-       isKeySupport: false,
-       isKeyResistence: false },
-     { candlesCount: 9,
-       lowerWing: '"2021-07-06T00:00:00.000Z"',
-       higherWing: '"2021-07-06T08:00:00.000Z"',
-       resistencePrice: 178152.2,
-       supportPrice: 173663.51,
-       isKeySupport: false,
-       isKeyResistence: false },
-     { candlesCount: 23,
-       lowerWing: '"2021-07-06T19:00:00.000Z"',
-       higherWing: '"2021-07-07T17:00:00.000Z"',
-       resistencePrice: 182780.39,
-       supportPrice: 176234.64,
-       isKeySupport: false,
-       isKeyResistence: false } ],
-
- */

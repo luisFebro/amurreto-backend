@@ -34,7 +34,7 @@ if (IS_DEV) {
         symbol: "BTC/BRL",
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
-        customDate: "2021-08-30T23:00:00.000Z", // if hour less than 9, put 0 in front
+        customDate: "2021-09-01T13:00:00.000Z", // if hour less than 9, put 0 in front
         sinceCount: 20, // default 250 last candles
         noList: true, // default true
         reverseData: false,
@@ -288,6 +288,7 @@ async function getCandlesticksData(payload = {}) {
             openPrice: liveCandle.open,
             currBodySize: liveCandle.candleBodySize,
             lowerWing20,
+            sequenceStreaks,
         });
     }
 
@@ -295,6 +296,7 @@ async function getCandlesticksData(payload = {}) {
         liveCandle,
         candleReliability,
         lowerWing20,
+        sequenceStreaks,
         // lastEmaTrend,
     });
 

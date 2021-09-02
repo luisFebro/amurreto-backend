@@ -12,6 +12,7 @@ async function setHistoricalLiveCandle({
     openPrice,
     currBodySize,
     lowerWing20,
+    sequenceStreaks,
 }) {
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
@@ -35,6 +36,7 @@ async function setHistoricalLiveCandle({
         openPrice,
         bodySize: currBodySize,
         lowerWing20,
+        sequenceStreaks,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
@@ -81,6 +83,7 @@ async function handleSidesStreak({ currMin, side, timestamp }) {
                 emaTrend: dbData && dbData.emaTrend,
                 bodySize: dbData && dbData.bodySize,
                 lowerWing20: dbData && dbData.lowerWing20,
+                sequenceStreaks: dbData && dbData.sequenceStreaks,
                 ...percData,
             },
             ...dbHistory,

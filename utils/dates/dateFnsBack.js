@@ -26,17 +26,19 @@ const getCurrMonth = (date = new Date()) => {
     return monthes[indMonth];
 };
 
-const getDiffInMinutes = (date) => {
-    const targetDate = new Date(date);
-    const year = targetDate.getFullYear();
-    const month = targetDate.getMonth();
-    const day = targetDate.getDate();
-    const hour = targetDate.getHours();
-    const minute = targetDate.getMinutes();
+const getDiffInMinutes = (date, options = {}) => {
+    const { laterDate } = options;
 
-    const earlierDate = new Date(year, month, day, hour, minute, 0);
-    const laterDate = new Date();
-    return differenceInMinutes(laterDate, earlierDate);
+    const earlierDate = new Date(date);
+    const year = earlierDate.getFullYear();
+    const month = earlierDate.getMonth();
+    const day = earlierDate.getDate();
+    const hour = earlierDate.getHours();
+    const minute = earlierDate.getMinutes();
+
+    const earlierD = new Date(year, month, day, hour, minute, 0);
+    const laterD = laterDate ? new Date(laterDate) : new Date();
+    return differenceInMinutes(laterD, earlierD);
 };
 
 module.exports = {

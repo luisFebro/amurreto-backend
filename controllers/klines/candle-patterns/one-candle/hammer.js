@@ -29,8 +29,12 @@ const isHammer = (data) => {
     const matchPressure = checkBullishHammer || checkBearishHammer;
     if (!matchPressure) return false;
 
+    const isThorHammer =
+        candleA.pressure.part === "lower" && candleA.pressure.perc >= 50;
+
     return {
         type: "hammer",
+        variant: isThorHammer ? "thor" : "normal",
         pressureA: candleA.pressure,
     };
 };

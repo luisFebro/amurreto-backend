@@ -4,21 +4,23 @@ for instance, if the lowerWingPrice is 172.000 and the price goes to above 174.5
 also can be used to determine the support of the current market
  */
 
-async function getLowerWingSignal({ lowerWing20 }) {
-    console.log("lowerWing20", lowerWing20);
+async function getLowerWingSignal({ lowerWing20, sequenceStreaks }) {
     if (!lowerWing20)
         return {
             signal: null,
         };
 
     const diffCurrPrice = lowerWing20.diffCurrPrice;
+    console.log("sequenceStreaks", sequenceStreaks);
+    console.log("diffCurrPrice", diffCurrPrice);
 
-    const MAX_PRICE_DIFF = 2000; // this change to 2000
+    const MAX_PRICE_DIFF = 2500;
     const MIN_PRICE_DIFF = 1500;
     const isInDetectionRange =
         diffCurrPrice >= MIN_PRICE_DIFF && diffCurrPrice <= MAX_PRICE_DIFF;
 
-    const isCurrBullishStreak = true;
+    // e.g if bulls it means at least the last 2 candles are bullish - A.bulls.10|B.bears.2|C.bears.2|D.bulls.6|
+    const isCurrBullishStreak = sequenceStreaks.includes("A.bulls");
 
     if (isInDetectionRange && isCurrBullishStreak) {
         return {
@@ -27,7 +29,7 @@ async function getLowerWingSignal({ lowerWing20 }) {
             transactionPerc: 100,
         };
     }
-    // need a condition to detect if thereis at least 2 bullish candles
+
     return {
         signal: null,
     };
