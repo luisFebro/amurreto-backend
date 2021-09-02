@@ -29,14 +29,14 @@ Kline - https://www.programmersought.com/article/7775785243
  */
 
 if (IS_DEV) {
-    const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
+    const LIMIT = 3; // undefined indicators may not work properly in this version if this is a number...
     getCandlesticksData({
         symbol: "BTC/BRL",
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-        sinceType: "count", // count, date
-        customDate: "2021-09-01T13:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 20, // default 250 last candles
-        noList: true, // default true
+        sinceType: "date", // count, date
+        customDate: "2021-09-02T04:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceCount: 100, // default 250 last candles
+        noList: false, // default true
         reverseData: false,
         onlyBuySignals: false,
     }).then(console.log);
@@ -151,14 +151,14 @@ async function getCandlesticksData(payload = {}) {
         const finalData = {
             count: ind + 1,
             open,
-            close,
+            close, // do not remove
             // candle
             timestamp,
             isBullish,
-            oneCandleType,
-            twoCandleType,
-            threeCandleType,
-            candleBodySize,
+            oneCandleType, // do not remove
+            twoCandleType, // do not remove
+            threeCandleType, // do not remove
+            candleBodySize, // do not remove
             bodyPerc: volRealBodyPerc,
             upperPerc: volUpperWickPerc,
             lowerPerc: volLowerWickPerc,
@@ -184,8 +184,6 @@ async function getCandlesticksData(payload = {}) {
     // const currPrice = candlestickData.slice(-1)[0]
     //     ? candlestickData.slice(-1)[0].close
     //     : 0;
-    // const { threads, nextResistence, nextSupport, keyResistence, keySupport } =
-    //     detectSequenceStreaks(candlesThread, { currPrice });
 
     // INDICATORS CALCULATION
     const closingPrices = dataForIndicators.map((candle) => candle[4]);
@@ -266,6 +264,7 @@ async function getCandlesticksData(payload = {}) {
     );
 
     const liveCandle = candlestickData.slice(-1)[0] || {};
+    const lastLiveCandle = candlestickData.slice(-2)[0] || {};
     const lastEma9 = dataEma9.slice(-1)[0];
     const lastEma20 = dataEma20.slice(-1)[0];
     const lastEma50 = dataEma50.slice(-1)[0];
@@ -294,6 +293,7 @@ async function getCandlesticksData(payload = {}) {
 
     const finalSignalData = await watchStrategies({
         liveCandle,
+        lastLiveCandle,
         candleReliability,
         lowerWing20,
         sequenceStreaks,

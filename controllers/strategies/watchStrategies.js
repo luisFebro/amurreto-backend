@@ -15,8 +15,13 @@ const DEFAULT_WAIT_SIGNAL = {
 };
 
 async function watchStrategies(options = {}) {
-    const { liveCandle, candleReliability, lowerWing20, sequenceStreaks } =
-        options;
+    const {
+        liveCandle,
+        lastLiveCandle,
+        candleReliability,
+        lowerWing20,
+        sequenceStreaks,
+    } = options;
 
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker();
@@ -36,9 +41,9 @@ async function watchStrategies(options = {}) {
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
-        getProfitTrackerSignal({ profitTracker, liveCandle }),
+        getProfitTrackerSignal({ profitTracker, lastLiveCandle }),
         checkThunderingChange(),
-        getCandlePatternsSignal({ liveCandle }),
+        getCandlePatternsSignal({ liveCandle, lastLiveCandle }),
         getLowerWingSignal({ lowerWing20, sequenceStreaks }),
     ]);
 

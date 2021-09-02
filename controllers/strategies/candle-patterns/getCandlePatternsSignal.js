@@ -1,9 +1,8 @@
-async function getCandlePatternsSignal({ liveCandle }) {
+async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
     const liveBodySize = liveCandle.candleBodySize;
 
     const threeCandleType = liveCandle.threeCandleType || " ";
     const twoCandleType = liveCandle.twoCandleType || " ";
-    const oneCandleType = liveCandle.oneCandleType;
 
     // ONE CANDLE
     // END ONE CANDLE
@@ -19,7 +18,7 @@ async function getCandlePatternsSignal({ liveCandle }) {
     }
 
     const runPowerConfirmed = checkPowerConfirmed({
-        oneCandleType,
+        lastLiveCandle,
         liveBodySize,
     });
     if (runPowerConfirmed) return runPowerConfirmed;
@@ -56,17 +55,22 @@ async function getCandlePatternsSignal({ liveCandle }) {
 }
 
 // HELPERS
-function checkPowerConfirmed({ oneCandleType, liveBodySize }) {
+// IMPORTANT: the backtesting for this strategy is not available
+// since the data collected are from live candles - current and last - respectively and there is no back tracing of data
+function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
+    const lastOneCandleType = lastLiveCandle.oneCandleType || " ";
+
     const isThorHammer =
-        oneCandleType.includes("hammer") &&
-        oneCandleType.includes("thor") &&
+        lastOneCandleType.includes("hammer") &&
+        lastOneCandleType.includes("thor") &&
         "powerThorHammer";
     const isHighWaveDoji =
-        oneCandleType.includes("doji") &&
-        oneCandleType.includes("high wave") &&
+        lastOneCandleType.includes("doji") &&
+        lastOneCandleType.includes("high wave") &&
         "powerHighWaveDoji";
 
-    const confirmationCandle = ["medium"].includes(liveBodySize);
+    // big for test
+    const confirmationCandle = ["medium", "big"].includes("medium");
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
 
     if (!powerCandle) return null;

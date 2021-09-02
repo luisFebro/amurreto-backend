@@ -36,17 +36,24 @@ const isDoji = (data) => {
 
     if (!matchMinToBeDoji) return false;
 
+    // DOJI SUBTYPES
     // high-wave A big bearish/bullish candle which means reversal and breaks all supports and followed by high waves candles for indecision which will result in a big move next.
     const matchShadows =
         candleA.lowerPerc >= 30 &&
         candleA.lowerPerc <= 59 &&
         candleA.upperPerc >= 30 &&
         candleA.upperPerc <= 59;
-    const isHighWave = candleA.bodyPerc <= 2 || matchShadows;
+    const isHighWave = (candleA.bodyPerc <= 2 || matchShadows) && "high wave";
+    // Bearish reversal candle with a long upper wick and the open/close near the low.
+    const isGravestone = candleA.upperCase >= 70 && "gravestone";
+    // Either bullish or bearish candle (depending on context) with a long lower wick and the open/close near the high.
+    const isDragonfly = candleA.lowerCase >= 70 && "dragonfly";
+    const isOtherDojiTypes = isHighWave || isGravestone || isDragonfly;
+    // END DOJI SUBTYPES
 
     return {
         type: "doji",
-        variant: isHighWave ? "high wave" : "spinning top",
+        variant: isOtherDojiTypes || "spinning top",
         pressureA: candleA.pressure,
     };
 };
