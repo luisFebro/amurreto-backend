@@ -31,7 +31,11 @@ async function watchEmaUptrendStopLoss({
 
     // ACTIVATION
     const condActivation =
-        watching && emaTrend === "uptrend" && matchSizeInUptrend && isBullish;
+        watching &&
+        enableNextUptrend &&
+        emaTrend === "uptrend" &&
+        matchSizeInUptrend &&
+        isBullish;
     if (condActivation) {
         await toggleActivation(true);
     }

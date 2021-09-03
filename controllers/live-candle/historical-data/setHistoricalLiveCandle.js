@@ -2,7 +2,7 @@ const LiveCandleHistory = require("../../../models/LiveCandleHistory");
 const { getDiffInMinutes } = require("../../../utils/dates/dateFnsBack");
 const getPercentage = require("../../../utils/number/perc/getPercentage");
 const checkLiveCandleReliability = require("./checkLiveCandleReliability");
-const { IS_PROD } = require("../../../config");
+const { IS_DEV } = require("../../../config");
 
 const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
@@ -16,7 +16,7 @@ async function setHistoricalLiveCandle({
     sequenceStreaks,
 }) {
     // the data will be mingled with current local dev, so only in prod.
-    // if(IS_PROD) return {};
+    if (IS_DEV) return {};
 
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
@@ -46,9 +46,7 @@ async function setHistoricalLiveCandle({
         sequenceStreaks,
     };
 
-    if (IS_PROD) {
-        await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
-    }
+    await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
 
     // return { status: true, reason: "thunderingChange" }
     const candleReliability = checkLiveCandleReliability({
