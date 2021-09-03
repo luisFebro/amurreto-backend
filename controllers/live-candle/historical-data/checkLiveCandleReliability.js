@@ -1,7 +1,7 @@
 // condition to check by time sidestreak if the candle tend to be bullish or bearish or less likely to change sides
 // also detect signal thundering change which are candles generally hammers that change to bullish in the last moments
 
-function checkLiveCandleRealibility({
+function checkLiveCandleReliability({
     bullSidePerc = 0,
     currBodySize,
     currTimeSidesStreak = [],
@@ -64,4 +64,4 @@ function checkLiveCandleRealibility({
     };
 }
 
-module.exports = checkLiveCandleRealibility;
+module.exports = checkLiveCandleReliability;

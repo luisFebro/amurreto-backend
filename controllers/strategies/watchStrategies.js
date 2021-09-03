@@ -1,4 +1,5 @@
 const watchProfitTracker = require("./profit-tracker/profitTracker");
+const watchEmaUptrendStopLoss = require("./ema/watchEmaUptrendStopLoss");
 // strategy types
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
@@ -21,10 +22,17 @@ async function watchStrategies(options = {}) {
         candleReliability,
         lowerWing20,
         sequenceStreaks,
+        dbEmaUptrend,
     } = options;
 
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker();
+    const emaUptrendStopLoss = await watchEmaUptrendStopLoss({
+        liveCandle,
+        profitTracker,
+        dbEmaUptrend,
+    });
+
     const isProfit = profitTracker && profitTracker.isProfit;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
     const isCurrCandleReliable = candleReliability.status;
@@ -50,6 +58,7 @@ async function watchStrategies(options = {}) {
     const finalSignal = strategiesHandler(allStrategySignals, {
         isCurrCandleReliable,
         isProfit,
+        emaUptrendStopLoss,
     });
     console.log("finalSignal", finalSignal);
 
@@ -58,7 +67,15 @@ async function watchStrategies(options = {}) {
 
 // HELPERS
 function strategiesHandler(allSignals = [], options = {}) {
-    const { isCurrCandleReliable, isProfit } = options;
+    const { isCurrCandleReliable, isProfit, emaUptrendStopLoss } = options;
+    const { turnOtherStrategiesOff, sellSignal } = emaUptrendStopLoss;
+
+    // CHECK EMA UPTREND STOPLOSS
+    if (turnOtherStrategiesOff) {
+        if (!sellSignal) return DEFAULT_WAIT_SIGNAL;
+        return sellSignal;
+    }
+    // END CHECK EMA UPTREND STOPLOSS
 
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(

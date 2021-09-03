@@ -5,14 +5,14 @@ const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const { createOrderBySignal } = require("../orders/orders");
-const { IS_PROD, IS_DEV } = require("../../config");
+const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 const detectSequenceStreaks = require("./algo/candle/algo/detectSequenceStreaks");
 // strategies
 const watchStrategies = require("../strategies/watchStrategies");
 const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
-const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
+// const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
 // end strategies
 // const calculateATR = require("../indicators/atr");
 // const calculateRSI = require("../indicators/rsi");
@@ -29,16 +29,15 @@ Kline - https://www.programmersought.com/article/7775785243
  */
 
 if (IS_DEV) {
-    const LIMIT = 3; // undefined indicators may not work properly in this version if this is a number...
+    const LIMIT = undefined; // undefined indicators may not work properly in this version if this is a number...
     getCandlesticksData({
         symbol: "BTC/BRL",
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
-        sinceType: "date", // count, date
-        customDate: "2021-08-29T00:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceType: "count", // count, date
+        customDate: "2021-08-15T07:03:00.000Z", // if hour less than 9, put 0 in front
         sinceCount: 50, // default 250 last candles
-        noList: false, // default true
+        noList: true, // default true
         reverseData: false,
-        onlyBuySignals: false,
     }).then(console.log);
 }
 
@@ -53,7 +52,6 @@ async function getCandlesticksData(payload = {}) {
         limit, // if no limit is specified, returns up the current period or max 3000, limit is downward if not specified a sinceDate, or from sinceDate to upward quantity limit
         noList = false,
         reverseData = false,
-        onlyBuySignals = false,
         onlyLiveCandle = false,
     } = payload;
 
@@ -242,7 +240,7 @@ async function getCandlesticksData(payload = {}) {
         const secondCheckData = {
             ...candle,
             emaTrend,
-            finalSignal: analyseEmaSignals({ emaTrend }).signal,
+            // finalSignal: null,
             // atr: atrData && atrData.atr,
             // incAtr: atrData && atrData.incVolat,
             // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
@@ -277,19 +275,15 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
-    // the data will be mingled with current local dev, so only in prod.
-    let candleReliability = { status: true };
-    if (IS_PROD) {
-        candleReliability = await setHistoricalLiveCandle({
-            side: liveCandle.isBullish ? "bull" : "bear",
-            timestamp: liveCandle.timestamp,
-            emaTrend: lastEmaTrend,
-            openPrice: liveCandle.open,
-            currBodySize: liveCandle.candleBodySize,
-            lowerWing20,
-            sequenceStreaks,
-        });
-    }
+    const { candleReliability, dbEmaUptrend } = await setHistoricalLiveCandle({
+        side: liveCandle.isBullish ? "bull" : "bear",
+        timestamp: liveCandle.timestamp,
+        emaTrend: lastEmaTrend,
+        openPrice: liveCandle.open,
+        currBodySize: liveCandle.candleBodySize,
+        lowerWing20,
+        sequenceStreaks,
+    });
 
     const finalSignalData = await watchStrategies({
         liveCandle,
@@ -297,7 +291,7 @@ async function getCandlesticksData(payload = {}) {
         candleReliability,
         lowerWing20,
         sequenceStreaks,
-        // lastEmaTrend,
+        dbEmaUptrend,
     });
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION
@@ -333,11 +327,9 @@ async function getCandlesticksData(payload = {}) {
             // incPrice: lastIncPrice,
         },
         indicators,
-        // finalSignal: finalSignalData.signal,
         list: handleListData(candlestickData, {
             noList,
             reverseData,
-            onlyBuySignals,
         }),
         // borders: {
         //     nextResistence,
@@ -353,16 +345,9 @@ async function getCandlesticksData(payload = {}) {
 }
 
 // HELPERS
-function handleListData(list, { noList, reverseData, onlyBuySignals }) {
+function handleListData(list, { noList, reverseData }) {
     // ascending/historical order by default so that we read from the last to the top, otherwise it would not be possible to see the historical
     if (noList) return null;
-
-    if (onlyBuySignals)
-        list = list.filter(
-            (candle) =>
-                candle.finalSignal.toUpperCase() === "BUY" ||
-                candle.finalSignal.toUpperCase() === "HOLD"
-        );
     if (reverseData) list = list.reverse();
 
     return list;
@@ -447,3 +432,14 @@ Note that the info from the last (current) candle may be incomplete until the ca
 The list of candles is returned sorted in ascending (historical/chronological) order, oldest candle first, most recent candle last.
  https://ccxt.readthedocs.io/en/latest/manual.html#ohlcv-candlestick-charts
  */
+
+/* ARCHIVES
+
+if (onlyBuySignals)
+list = list.filter(
+    (candle) =>
+        candle.finalSignal.toUpperCase() === "BUY" ||
+        candle.finalSignal.toUpperCase() === "HOLD"
+);
+
+*/

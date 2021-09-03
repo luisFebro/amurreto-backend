@@ -4,26 +4,6 @@ async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
     const threeCandleType = liveCandle.threeCandleType || " ";
     const twoCandleType = liveCandle.twoCandleType || " ";
 
-    // ONE CANDLE
-    // END ONE CANDLE
-
-    // TWO CANDLES
-    const runTweezers = twoCandleType.includes("tweezers");
-    if (runTweezers) {
-        return {
-            signal: "BUY",
-            strategy: "patternTWEEZERS",
-            transactionPerc: 100,
-        };
-    }
-
-    const runPowerConfirmed = checkPowerConfirmed({
-        lastLiveCandle,
-        liveBodySize,
-    });
-    if (runPowerConfirmed) return runPowerConfirmed;
-    // END TWO CANDLES
-
     // THREE CANDLES
     const star = checkCandlePatternSignal("star", "morning", threeCandleType);
     if (star) return star;
@@ -50,6 +30,26 @@ async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
     if (runThreeInside) return runThreeInside;
     // END THREE CANDLES
 
+    // TWO CANDLES
+    const runTweezers = twoCandleType.includes("tweezers");
+    if (runTweezers) {
+        return {
+            signal: "BUY",
+            strategy: "patternTWEEZERS",
+            transactionPerc: 100,
+        };
+    }
+
+    const runPowerConfirmed = checkPowerConfirmed({
+        lastLiveCandle,
+        liveBodySize,
+    });
+    if (runPowerConfirmed) return runPowerConfirmed;
+    // END TWO CANDLES
+
+    // ONE CANDLE
+    // END ONE CANDLE
+
     // empty signal handle with strategiesManager
     return { signal: null };
 }
@@ -69,7 +69,6 @@ function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
         lastOneCandleType.includes("high wave") &&
         "powerHighWaveDoji";
 
-    // big for test
     const confirmationCandle = ["medium"].includes("medium");
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
 

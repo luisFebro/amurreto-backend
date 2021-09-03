@@ -1,7 +1,8 @@
 const LiveCandleHistory = require("../../../models/LiveCandleHistory");
 const { getDiffInMinutes } = require("../../../utils/dates/dateFnsBack");
 const getPercentage = require("../../../utils/number/perc/getPercentage");
-const checkLiveCandleRealibility = require("./checkLiveCandleRealibity");
+const checkLiveCandleReliability = require("./checkLiveCandleReliability");
+const { IS_PROD } = require("../../../config");
 
 const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
@@ -14,16 +15,22 @@ async function setHistoricalLiveCandle({
     lowerWing20,
     sequenceStreaks,
 }) {
+    // the data will be mingled with current local dev, so only in prod.
+    // if(IS_PROD) return {};
+
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one
     // the most recent for both history and sidesStreak starts at the rightmost side to the left.
     const currMin = getDiffInMinutes(timestamp);
 
+    const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID);
+
     const { sidesStreak, bullSidePerc, bearSidePerc, history } =
-        await handleSidesStreak({
+        handleSidesStreak({
             currMin,
             side,
             timestamp,
+            dbData,
         });
 
     const newData = {
@@ -39,10 +46,12 @@ async function setHistoricalLiveCandle({
         sequenceStreaks,
     };
 
-    await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
+    if (IS_PROD) {
+        await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
+    }
 
     // return { status: true, reason: "thunderingChange" }
-    const resRealibility = checkLiveCandleRealibility({
+    const candleReliability = checkLiveCandleReliability({
         currTimeSidesStreak: sidesStreak,
         lastTimeCandle: history && history[0],
         bullSidePerc,
@@ -50,13 +59,14 @@ async function setHistoricalLiveCandle({
         currBodySize,
     });
 
-    return resRealibility;
+    return {
+        candleReliability,
+        dbEmaUptrend: dbData && dbData.emaUptrendStopLoss,
+    };
 }
 
 // HELPERS
-async function handleSidesStreak({ currMin, side, timestamp }) {
-    const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID);
-
+function handleSidesStreak({ dbData, currMin, side, timestamp }) {
     let dbSidesStreak = dbData && dbData.sidesStreak;
     const dbTimestamp = dbData && dbData.timestamp;
     let dbHistory = dbData && dbData.history;
