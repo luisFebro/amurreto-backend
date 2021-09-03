@@ -58,6 +58,13 @@ async function watchEmaUptrendStopLoss({
             "emaUptrendStopLoss.enableNextUptrend": true,
         });
     }
+
+    if (!enableNextUptrend) {
+        return {
+            turnOtherStrategiesOff: false,
+            sellSignal: false,
+        };
+    }
     // END VERIFICATION AND REACTIVATION
 
     const MAX_RANGE_EMA_PROFIT_PERC = 4;
