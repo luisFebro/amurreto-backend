@@ -61,7 +61,6 @@ async function watchStrategies(options = {}) {
         emaUptrendStopLoss,
     });
     console.log("finalSignal", finalSignal);
-
     return finalSignal;
 }
 

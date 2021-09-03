@@ -4,7 +4,7 @@ const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 /*
 EMA UPTREND STOP LOSS - if bullish big or huge candle and it is an EMA uptrend, activate it and disable temporarily other sell strategies.
 
-- selling process will follow the follow:
+- selling process will be the following:
 - if isOn and when PROFIT reach 4%, activate all other SELLING RULES. While not reaching this value, deactivate other SELLING strategies
 - if not reaching 4%, SELL SIGNAL (emaDownStopLoss) when the liveCandleBody is bearish and size is big or huge.
 - note that big or huge is about the half the size of a huge candle. The idea is to give more space to the market fetch more profit opening the gap of the stop loss.
@@ -15,7 +15,7 @@ emaUptrendStopLoss: {
     used: false,
 }
 when 'used' is true, then even if it is an uptrend signal from EMA, just ignore it
- */
+*/
 
 async function watchEmaUptrendStopLoss({
     liveCandle = {},
@@ -26,6 +26,14 @@ async function watchEmaUptrendStopLoss({
     const { emaTrend, candleBodySize, isBullish } = liveCandle;
     const { on, enableNextUptrend } = dbEmaUptrend;
 
+    if (!watching) {
+        return {
+            turnOtherStrategiesOff: false,
+            sellSignal: false,
+        };
+    }
+
+    // this is about the candleSizesAllowed...
     const candleSizesAllowed = ["big", "huge"];
     const matchSizeInUptrend = candleSizesAllowed.includes(candleBodySize);
 
@@ -49,12 +57,6 @@ async function watchEmaUptrendStopLoss({
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, {
             "emaUptrendStopLoss.enableNextUptrend": true,
         });
-    }
-
-    if (!enableNextUptrend) {
-        return {
-            turnOtherStrategiesOff: false,
-        };
     }
     // END VERIFICATION AND REACTIVATION
 
