@@ -5,8 +5,8 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
         isProfit,
         diffMax, // diff from maxPerc and netPerc
         diffVolat,
-        netPerc,
-        // maxPerc,
+        // netPerc,
+        maxPerc,
         // minPerc,
     } = profitTracker;
 
@@ -35,9 +35,10 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     const MAX_DIFF_START_PROFIT = 1;
     const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
     const MAX_DIFF_LONG_PROFIT = 0.4;
-    const startProfitRange = netPerc >= 0 && netPerc < 0.5;
-    const midProfitRange = netPerc >= 0.5 && netPerc < 1.5;
-    const longProfitRange = netPerc >= 1.5;
+    // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
+    const startProfitRange = maxPerc >= 0 && maxPerc < 0.5;
+    const midProfitRange = maxPerc >= 0.5 && maxPerc < 1.5;
+    const longProfitRange = maxPerc >= 1.5;
 
     const isStartProfit =
         startProfitRange && diffMax >= MAX_DIFF_START_PROFIT && "startProfit";
