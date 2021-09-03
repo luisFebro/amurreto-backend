@@ -33,8 +33,8 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     const isCandleWonderProfit = ["big", "huge"].includes(lastLiveBodySize);
 
     const MAX_DIFF_START_PROFIT = 1;
-    const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.5;
-    const MAX_DIFF_LONG_PROFIT = 0.3;
+    const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
+    const MAX_DIFF_LONG_PROFIT = 0.4;
     const startProfitRange = netPerc >= 0 && netPerc < 0.5;
     const midProfitRange = netPerc >= 0.5 && netPerc < 1.5;
     const longProfitRange = netPerc >= 1.5;

@@ -35,8 +35,8 @@ function checkLiveCandleReliability({
         }
     }
 
-    const isMajorityBull = bullSidePerc >= 66;
     // cond 2
+    const isMajorityBull = bullSidePerc >= 66;
     const isLast3SidesBullish = currTimeSidesStreak
         .slice(0, 3)
         .every((side) => side === "bull" && totalSides >= 2);
