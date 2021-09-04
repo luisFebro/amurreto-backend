@@ -121,9 +121,9 @@ async function readTradesHistoryBack(payload = {}) {
     return data;
 }
 
-readTradesHistoryBack({ status: "done" }).then((res) =>
-    console.log(JSON.stringify(res))
-);
+// readTradesHistoryBack({ status: "done" }).then((res) =>
+//     console.log(JSON.stringify(res))
+// );
 
 // HELPERS
 
