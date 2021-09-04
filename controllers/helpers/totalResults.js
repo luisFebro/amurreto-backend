@@ -24,13 +24,14 @@ function getTotalFee(type = "amount") {
 }
 
 function getAmountPriceResults(file = "totalResults") {
-    const startQuotePrice = {
-        $trunc: [{ $multiply: ["$$buyBasePrice", "$$buyMarketPrice"] }, 2],
-    };
+    // for better precision in price and being in sync with DB value which was registered, now we fetch directly that price from quote currency
+    const startQuotePrice = "$$buyQuotePrice";
+    // $trunc: [{ $multiply: ["$$buyBasePrice", "$$buyMarketPrice"] }, 2],
+    // };
 
-    const endQuotePrice = {
-        $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
-    };
+    const endQuotePrice = "$$sellQuotePrice";
+    // $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
+    // };
 
     const totalFeeAmount = getTotalFee("amount");
 

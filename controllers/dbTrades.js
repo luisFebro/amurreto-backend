@@ -41,6 +41,12 @@ async function readTradesHistoryBack(payload = {}) {
         capitalPosition: {
             $first: "$list.capitalPosition", // this is returning the wrong value, only the first transaction, replace it with actullay buy history
         },
+        buyQuotePrice: {
+            $last: "$$elem.buyPrices.amounts.quote",
+        },
+        sellQuotePrice: {
+            $last: "$$elem.sellPrices.amounts.quote",
+        },
         buyBasePrice: {
             $last: "$$elem.buyPrices.amounts.base",
         },
