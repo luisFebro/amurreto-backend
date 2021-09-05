@@ -26,8 +26,6 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
         };
     }
 
-    // condition for sale if diffVolat reaches 1.0
-
     // PROFIT HANDLING
     // give more space to grow even more since is sithering with profits
     // UPDATE - include the last size because it likely to be the next candle which will fall in price.
@@ -35,20 +33,25 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     const isCandleWonderProfit = ["big", "huge"].includes(lastLiveBodySize);
 
     const MAX_DIFF_START_PROFIT = 2;
+    const MAX_DIFF_SAVE_PROFIT = 0.4; // this is very volatile and lossing vulnarable and profit can highly become a loss.
     const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 0.4; // 0.4 is a common number when prices start to become bearish
-    const midProfitRange = maxPerc >= 0.4 && maxPerc < 1.5;
+    const saveProfitRange = maxPerc >= 0.4 && maxPerc < 0.7;
+    const midProfitRange = maxPerc >= 0.7 && maxPerc < 1.5;
     const longProfitRange = maxPerc >= 1.5;
 
     const isStartProfit =
         startProfitRange && diffMax >= MAX_DIFF_START_PROFIT && "startProfit";
     const isMidProfit =
         midProfitRange && diffMax >= MAX_DIFF_MID_PROFIT && "midProfit";
+    const isSaveProfit =
+        saveProfitRange && diffMax >= MAX_DIFF_SAVE_PROFIT && "saveProfit";
     const isLongProfit =
         longProfitRange && diffMax >= MAX_DIFF_LONG_PROFIT && "longProfit";
-    const profitRange = isStartProfit || isMidProfit || isLongProfit;
+    const profitRange =
+        isStartProfit || isSaveProfit || isMidProfit || isLongProfit;
 
     if (isProfit && profitRange) {
         return {
