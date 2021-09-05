@@ -34,12 +34,12 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     const lastLiveBodySize = lastLiveCandle.candleBodySize;
     const isCandleWonderProfit = ["big", "huge"].includes(lastLiveBodySize);
 
-    const MAX_DIFF_START_PROFIT = 1.5;
+    const MAX_DIFF_START_PROFIT = 2;
     const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
-    const startProfitRange = maxPerc >= 0 && maxPerc < 0.5;
-    const midProfitRange = maxPerc >= 0.5 && maxPerc < 1.5;
+    const startProfitRange = maxPerc >= 0 && maxPerc < 0.4; // 0.4 is a common number when prices start to become bearish
+    const midProfitRange = maxPerc >= 0.4 && maxPerc < 1.5;
     const longProfitRange = maxPerc >= 1.5;
 
     const isStartProfit =
