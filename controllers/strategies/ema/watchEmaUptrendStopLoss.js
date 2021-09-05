@@ -59,7 +59,9 @@ async function watchEmaUptrendStopLoss({
         });
     }
 
-    if (!enableNextUptrend) {
+    // if enableNextUptrend, it means it can be activate in the current uptrend.
+    // Otherwise, it will only be activated when there is an bearReversal or downtrend again. So that we can use it once once for uptrend
+    if (enableNextUptrend) {
         return {
             turnOtherStrategiesOff: false,
             sellSignal: false,
@@ -72,11 +74,13 @@ async function watchEmaUptrendStopLoss({
     const turnOtherStrategiesOn = on && !isWithinEmaRange;
 
     const sellingSizes = ["big", "huge"];
+    const reachedMinGain = netPerc <= 0.3; // even if the bullish candle fail abrutly, make sure take some profit and be in the positive
     const needSelling =
-        on &&
-        !isBullish &&
-        isWithinEmaRange &&
-        sellingSizes.includes(candleBodySize);
+        (on &&
+            !isBullish &&
+            isWithinEmaRange &&
+            sellingSizes.includes(candleBodySize)) ||
+        reachedMinGain;
 
     if (needSelling || turnOtherStrategiesOn) {
         await toggleActivation(false);

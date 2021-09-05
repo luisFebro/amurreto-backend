@@ -13,7 +13,7 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     if (!watching) return { signal: null };
     // FACTS
     // 2% is about -3.000 in price including 0.60% buy/sell fees.
-    // 0.7 of profit is the minimum to breakeven, thus not earning or losing anything.
+    // 0.4 of profit is the minimum to breakeven, thus not earning or losing anything.
 
     const MAX_DIFF_VOLAT_PERC = 2.5; // diff between maxPerc and minPerc from profit
 
