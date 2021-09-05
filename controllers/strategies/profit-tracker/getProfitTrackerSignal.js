@@ -38,8 +38,8 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 0.4; // 0.4 is a common number when prices start to become bearish
-    const saveProfitRange = maxPerc >= 0.4 && maxPerc < 0.7;
-    const midProfitRange = maxPerc >= 0.7 && maxPerc < 1.5;
+    const saveProfitRange = maxPerc >= 0.4 && maxPerc < 0.8;
+    const midProfitRange = maxPerc >= 0.8 && maxPerc < 1.5;
     const longProfitRange = maxPerc >= 1.5;
 
     const isStartProfit =
