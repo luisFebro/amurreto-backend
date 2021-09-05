@@ -28,14 +28,13 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
 
     // PROFIT HANDLING
     // give more space to grow even more since is sithering with profits
-    // UPDATE - include the last size because it likely to be the next candle which will fall in price.
     const lastLiveBodySize = lastLiveCandle.candleBodySize;
     const isCandleWonderProfit = ["big", "huge"].includes(lastLiveBodySize);
 
     const MAX_DIFF_START_PROFIT = 2;
     const MAX_DIFF_SAVE_PROFIT = 0.4; // this is very volatile and lossing vulnarable and profit can highly become a loss.
     const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
-    const MAX_DIFF_LONG_PROFIT = 0.5;
+    const MAX_DIFF_LONG_PROFIT = isCandleWonderProfit ? 1 : 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 0.4; // 0.4 is a common number when prices start to become bearish
     const saveProfitRange = maxPerc >= 0.4 && maxPerc < 0.8;
