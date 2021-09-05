@@ -67,7 +67,7 @@ async function watchEmaUptrendStopLoss({
     }
     // END VERIFICATION AND REACTIVATION
 
-    const MAX_RANGE_EMA_PROFIT_PERC = 4;
+    const MAX_RANGE_EMA_PROFIT_PERC = 3;
     const isWithinEmaRange = netPerc <= MAX_RANGE_EMA_PROFIT_PERC;
     const turnOtherStrategiesOn = on && !isWithinEmaRange;
 

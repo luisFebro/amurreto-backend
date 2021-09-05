@@ -11,9 +11,11 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     } = profitTracker;
 
     if (!watching) return { signal: null };
-
+    // FACTS
     // 2% is about -3.000 in price including 0.60% buy/sell fees.
-    const MAX_DIFF_VOLAT_PERC = 2; // diff between maxPerc and minPerc from profit
+    // 0.7 of profit is the minimum to breakeven, thus not earning or losing anything.
+
+    const MAX_DIFF_VOLAT_PERC = 2.5; // diff between maxPerc and minPerc from profit
 
     const maxProfitStopLoss = !isProfit && diffVolat >= MAX_DIFF_VOLAT_PERC;
     if (maxProfitStopLoss) {
@@ -32,9 +34,9 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
     const lastLiveBodySize = lastLiveCandle.candleBodySize;
     const isCandleWonderProfit = ["big", "huge"].includes(lastLiveBodySize);
 
-    const MAX_DIFF_START_PROFIT = 1;
+    const MAX_DIFF_START_PROFIT = 1.5;
     const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
-    const MAX_DIFF_LONG_PROFIT = 0.4;
+    const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 0.5;
     const midProfitRange = maxPerc >= 0.5 && maxPerc < 1.5;
