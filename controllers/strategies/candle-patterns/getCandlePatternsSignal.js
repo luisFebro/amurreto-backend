@@ -1,8 +1,13 @@
-async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
+async function getCandlePatternsSignal({
+    liveCandle,
+    lastLiveCandle,
+    sequenceStreaks,
+}) {
     const liveBodySize = liveCandle.candleBodySize;
 
     const threeCandleType = liveCandle.threeCandleType || " ";
     const twoCandleType = liveCandle.twoCandleType || " ";
+    const oneCandleType = liveCandle.oneCandleType || " ";
 
     // THREE CANDLES
     const star = checkCandlePatternSignal("star", "morning", threeCandleType);
@@ -48,6 +53,16 @@ async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
     // END TWO CANDLES
 
     // ONE CANDLE
+    const isCurrStreakBearish = sequenceStreaks.includes("A.bears"); // because it is more powerful when there is a sudden change in the candle and strong indication of reversal.
+    const runSoloPowerThor =
+        isCurrStreakBearish && oneCandleType.includes("soloThor");
+    if (runSoloPowerThor) {
+        return {
+            signal: "BUY",
+            strategy: "soloPowerThor",
+            transactionPerc: 100,
+        };
+    }
     // END ONE CANDLE
 
     // empty signal handle with strategiesManager
@@ -69,7 +84,7 @@ function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
         lastOneCandleType.includes("high wave") &&
         "powerHighWaveDoji";
 
-    const confirmationCandle = ["small", "medium"].includes("medium");
+    const confirmationCandle = ["small", "medium"].includes(liveBodySize);
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
 
     if (!powerCandle) return null;

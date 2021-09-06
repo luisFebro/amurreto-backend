@@ -51,7 +51,11 @@ async function watchStrategies(options = {}) {
     const allStrategySignals = await Promise.all([
         getProfitTrackerSignal({ profitTracker, lastLiveCandle }),
         checkThunderingChange(),
-        getCandlePatternsSignal({ liveCandle, lastLiveCandle }),
+        getCandlePatternsSignal({
+            liveCandle,
+            lastLiveCandle,
+            sequenceStreaks,
+        }),
         getLowerWingSignal({ lowerWing20, sequenceStreaks }),
     ]);
 

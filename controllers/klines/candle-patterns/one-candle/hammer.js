@@ -32,9 +32,15 @@ const isHammer = (data) => {
     const isThorHammer =
         candleA.pressure.part === "lower" && candleA.pressure.perc >= 50;
 
+    const handleVariant = () => {
+        if (isThorHammer && candleA.lowerPerc >= 55 && candleA.side === "bull")
+            return "soloThor";
+        return isThorHammer ? "thor" : "normal";
+    };
+
     return {
         type: "hammer",
-        variant: isThorHammer ? "thor" : "normal",
+        variant: handleVariant(),
         pressureA: candleA.pressure,
     };
 };
