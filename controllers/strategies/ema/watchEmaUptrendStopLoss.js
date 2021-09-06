@@ -74,7 +74,7 @@ async function watchEmaUptrendStopLoss({
     const turnOtherStrategiesOn = on && !isWithinEmaRange;
 
     const sellingSizes = ["big", "huge"];
-    const reachedMinGain = netPerc <= 0.3; // even if the bullish candle fail abrutly, make sure take some profit and be in the positive
+    const reachedMinGain = on && netPerc <= 0.3; // even if the bullish candle fail abrutly, make sure take some profit and be in the positive
     const needSelling =
         (on &&
             !isBullish &&
