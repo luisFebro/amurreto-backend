@@ -19,8 +19,8 @@ function checkLiveCandleReliability({
     const totalSides = currTimeSidesStreak.length;
 
     // cond 1
-    const gotAllSides = totalSides === 6;
-    if (gotAllSides) {
+    const gotAlmostAllSides = totalSides === 5; // total is 6
+    if (gotAlmostAllSides) {
         const wasBearishForMostTime = currTimeSidesStreak
             .slice(2)
             .every((side) => side === "bear");
@@ -39,7 +39,7 @@ function checkLiveCandleReliability({
     const isMajorityBull = bullSidePerc >= 66;
     const isLast3SidesBullish = currTimeSidesStreak
         .slice(0, 3)
-        .every((side) => side === "bull" && totalSides >= 2);
+        .every((side) => side === "bull" && totalSides >= 3);
     if (isMajorityBull && isLast3SidesBullish && currBodySize === "small") {
         return {
             status: true,
