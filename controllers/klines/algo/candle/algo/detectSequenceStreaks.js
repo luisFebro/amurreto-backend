@@ -83,6 +83,12 @@ function detectSequenceStreaks(data) {
         if (isLastCandle) needCollection = true;
 
         if (needCollection) {
+            const startWith2Bulls = Boolean(
+                bullStreakBuilder.length &&
+                    bullStreakBuilder[0].side === "bull" &&
+                    bullStreakBuilder[1].side === "bull"
+            );
+            if (!startWith2Bulls) bullStreakBuilder = [];
             // const endsWithBear =
             //     bullStreakBuilder.length &&
             //     bullStreakBuilder.slice(-1)[0].side === "bear";
@@ -106,7 +112,6 @@ function detectSequenceStreaks(data) {
     const allBearishCandles = readyData.filter(
         (s) => !allBullishTimestamps.includes(s.timestamp)
     );
-    // console.log("allBearishCandles", allBearishCandles);
 
     let bearStreakBuilder = [];
     const bearSequenceStreaks = [];
@@ -119,6 +124,8 @@ function detectSequenceStreaks(data) {
             laterDate: currTimestamp,
         });
 
+        // if there is a bear, bear, bull, bear sequence...
+        // the bull is considered as bear and thusly the diffMinTimestamps should be 60 not 120 as if there is a gab because it is bull
         const FRAMETIME_MIN = 60;
         const isLastCandle = ind + 1 === allBearishCandles.length;
         const isNewSequence = diffMinTimestamps > FRAMETIME_MIN;

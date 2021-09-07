@@ -63,6 +63,7 @@ async function watchStrategies(options = {}) {
         isCurrCandleReliable,
         isProfit,
         emaUptrendStopLoss,
+        sequenceStreaks,
     });
     console.log("finalSignal", finalSignal);
     return finalSignal;
@@ -70,7 +71,12 @@ async function watchStrategies(options = {}) {
 
 // HELPERS
 function strategiesHandler(allSignals = [], options = {}) {
-    const { isCurrCandleReliable, isProfit, emaUptrendStopLoss } = options;
+    const {
+        isCurrCandleReliable,
+        isProfit,
+        emaUptrendStopLoss,
+        sequenceStreaks,
+    } = options;
     const { turnOtherStrategiesOff, sellSignal } = emaUptrendStopLoss;
 
     // CHECK EMA UPTREND STOPLOSS
@@ -88,6 +94,14 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     const isSellSignal = !isBuySignal;
+
+    // CHECK STREAKS
+    const isLastStreakBearish =
+        sequenceStreaks && sequenceStreaks.includes("B.bears");
+    const isStrongStreak =
+        isLastStreakBearish || firstFoundValidStrategy.strategy === "soloThor";
+    if (isBuySignal && !isStrongStreak) return DEFAULT_WAIT_SIGNAL;
+    // END CHECK STREAKS
 
     // allow only maxStopLoss to be triggered if no profit is made. All other selling strategies will be activated once isProfit is true.
     if (

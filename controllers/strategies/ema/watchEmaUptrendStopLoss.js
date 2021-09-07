@@ -26,6 +26,29 @@ async function watchEmaUptrendStopLoss({
     const { emaTrend, candleBodySize, isBullish } = liveCandle;
     const { on, enableNextUptrend } = dbEmaUptrend;
 
+    // VERIFICATION AND REACTIVATION
+    // - this should be before !watching check.
+    // - when bear or bearReversal, activate the enableNextUptrend again so that we can execute once per uptrend
+    // on === false is true only in PROD where
+    const condReactivation =
+        on === false &&
+        (emaTrend === "bearReversal" || emaTrend === "downtrend");
+    if (condReactivation) {
+        await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, {
+            "emaUptrendStopLoss.enableNextUptrend": true,
+        });
+    }
+
+    // if enableNextUptrend, it means it can be activate in the current uptrend.
+    // Otherwise, it will only be activated when there is an bearReversal or downtrend again. So that we can use it once once for uptrend
+    if (enableNextUptrend) {
+        return {
+            turnOtherStrategiesOff: false,
+            sellSignal: false,
+        };
+    }
+    // END VERIFICATION AND REACTIVATION
+
     if (!watching) {
         return {
             turnOtherStrategiesOff: false,
@@ -48,26 +71,6 @@ async function watchEmaUptrendStopLoss({
         await toggleActivation(true);
     }
     // END ACTIVATION
-
-    // VERIFICATION AND REACTIVATION
-    // - when bear or bearReversal, activate the enableNextUptrend again so that we can execute once per uptrend
-    const condReactivation =
-        !on && (emaTrend === "bearReversal" || emaTrend === "bear");
-    if (condReactivation) {
-        await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, {
-            "emaUptrendStopLoss.enableNextUptrend": true,
-        });
-    }
-
-    // if enableNextUptrend, it means it can be activate in the current uptrend.
-    // Otherwise, it will only be activated when there is an bearReversal or downtrend again. So that we can use it once once for uptrend
-    if (enableNextUptrend) {
-        return {
-            turnOtherStrategiesOff: false,
-            sellSignal: false,
-        };
-    }
-    // END VERIFICATION AND REACTIVATION
 
     const MAX_RANGE_EMA_PROFIT_PERC = 3;
     const isWithinEmaRange = netPerc <= MAX_RANGE_EMA_PROFIT_PERC;

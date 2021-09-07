@@ -35,7 +35,7 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-09-03T09:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 100, // default 250 last candles
+        sinceCount: 50, // default 250 last candles
         noList: true, // default true
         reverseData: false,
     }).then(console.log);

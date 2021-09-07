@@ -49,6 +49,7 @@ async function setHistoricalLiveCandle({
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
 
     // return { status: true, reason: "thunderingChange" }
+    // it is here because use percentage from live candle
     const candleReliability = checkLiveCandleReliability({
         currTimeSidesStreak: sidesStreak,
         lastTimeCandle: history && history[0],

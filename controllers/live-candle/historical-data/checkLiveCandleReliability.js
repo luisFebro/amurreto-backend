@@ -24,9 +24,9 @@ function checkLiveCandleReliability({
         const wasBearishForMostTime = currTimeSidesStreak
             .slice(2)
             .every((side) => side === "bear");
-        const gotLastCandlesBullish =
-            currTimeSidesStreak.slice(0, 2).some((side) => side === "bull") &&
-            currTimeSidesStreak[0] === "bull";
+        const gotLastCandlesBullish = currTimeSidesStreak
+            .slice(0, 2)
+            .every((side) => side === "bull");
         if (wasBearishForMostTime && gotLastCandlesBullish) {
             return {
                 status: true,
@@ -37,10 +37,10 @@ function checkLiveCandleReliability({
 
     // cond 2
     const isMajorityBull = bullSidePerc >= 66;
-    const isLast3SidesBullish = currTimeSidesStreak
+    const isLast4SidesBullish = currTimeSidesStreak
         .slice(0, 3)
-        .every((side) => side === "bull" && totalSides >= 3);
-    if (isMajorityBull && isLast3SidesBullish && currBodySize === "small") {
+        .every((side) => side === "bull" && totalSides >= 4);
+    if (isMajorityBull && isLast4SidesBullish && currBodySize === "small") {
         return {
             status: true,
             reason: "threeSmallBullish",
@@ -48,10 +48,10 @@ function checkLiveCandleReliability({
     }
 
     // cond 3
-    const isLast2SidesBullish = currTimeSidesStreak
+    const isLast3SidesBullish = currTimeSidesStreak
         .slice(0, 2)
-        .every((side) => side === "bull" && totalSides >= 2);
-    if (isLast2SidesBullish && currBodySize === "medium") {
+        .every((side) => side === "bull" && totalSides >= 3);
+    if (isLast3SidesBullish && currBodySize === "medium") {
         return {
             status: true,
             reason: "twoMediumBullish",
