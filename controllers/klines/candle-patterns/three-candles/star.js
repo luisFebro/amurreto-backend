@@ -29,7 +29,11 @@ const isStar = (data) => {
     const matchSides = candleC.side !== candleA.side;
     if (!matchSides) return false;
 
-    const sizesCandleA = ["tiny", "small", "medium", "big", "huge"];
+    // detect bear only in the last case with big and huge
+    const isCurrBull = candleA.side === "bull";
+    const sizesCandleA = isCurrBull
+        ? ["small", "medium", "big", "huge"]
+        : ["big", "huge"];
     const sizesCandleC = ["small", "medium", "big", "huge"];
     const matchSizes =
         sizesCandleA.includes(candleA.bodySize) &&

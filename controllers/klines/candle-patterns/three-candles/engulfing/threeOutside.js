@@ -18,7 +18,11 @@ const isThreeOutside = (data) => {
         candleA.openPrice && candleB.openPrice && candleC.openPrice;
     if (!gotAllCandlesData) return false;
 
-    const sizesCandleA = ["small", "medium", "big", "huge"];
+    // detect bear only in the last case with big and huge
+    const isCurrBull = candleA.side === "bull";
+    const sizesCandleA = isCurrBull
+        ? ["small", "medium", "big", "huge"]
+        : ["big", "huge"];
     const matchSizes = sizesCandleA.includes(candleA.bodySize);
     if (!matchSizes) return false;
 

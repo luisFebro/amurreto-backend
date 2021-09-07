@@ -13,13 +13,6 @@ async function getCandlePatternsSignal({
     const star = checkCandlePatternSignal("star", "morning", threeCandleType);
     if (star) return star;
 
-    const runThreeOutsideEatAll = checkCandlePatternSignal(
-        "threeOutsideEatAll",
-        "up",
-        threeCandleType
-    );
-    if (runThreeOutsideEatAll) return runThreeOutsideEatAll;
-
     const runThreeOutside = checkCandlePatternSignal(
         "threeOutside",
         "up",
@@ -122,3 +115,14 @@ function checkCandlePatternSignal(strategyName, buyCond, data) {
 // END HELPERS
 
 module.exports = getCandlePatternsSignal;
+
+/* ARCHIVES
+
+const runThreeOutsideEatAll = checkCandlePatternSignal(
+    "threeOutsideEatAll",
+    "up",
+    threeCandleType
+);
+if (runThreeOutsideEatAll) return runThreeOutsideEatAll;
+
+*/

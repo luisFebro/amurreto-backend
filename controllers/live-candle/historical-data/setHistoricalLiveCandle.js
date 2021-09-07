@@ -12,6 +12,7 @@ async function setHistoricalLiveCandle({
     emaTrend,
     openPrice,
     currBodySize,
+    wholeCandleSize,
     lowerWing20,
     sequenceStreaks,
 }) {
@@ -44,6 +45,7 @@ async function setHistoricalLiveCandle({
         bodySize: currBodySize,
         lowerWing20,
         sequenceStreaks,
+        wholeCandleSize,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
@@ -93,6 +95,7 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
                 bodySize: dbData && dbData.bodySize,
                 lowerWing20: dbData && dbData.lowerWing20,
                 sequenceStreaks: dbData && dbData.sequenceStreaks,
+                wholeCandleSize: dbData && dbData.wholeCandleSize,
                 ...percData,
             },
             ...dbHistory,

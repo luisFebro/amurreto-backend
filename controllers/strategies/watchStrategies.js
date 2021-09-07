@@ -73,9 +73,9 @@ async function watchStrategies(options = {}) {
 function strategiesHandler(allSignals = [], options = {}) {
     const {
         isCurrCandleReliable,
-        isProfit,
         emaUptrendStopLoss,
         sequenceStreaks,
+        // isProfit,
     } = options;
     const { turnOtherStrategiesOff, sellSignal } = emaUptrendStopLoss;
 
@@ -87,29 +87,27 @@ function strategiesHandler(allSignals = [], options = {}) {
     // END CHECK EMA UPTREND STOPLOSS
 
     // the first array to be looked over got more priority over the last ones
-    const firstFoundValidStrategy = allSignals.find(
-        (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
-    );
-    if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
+    // const firstFoundValidStrategy = allSignals.find(
+    //     (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
+    // );
+    // if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
+    const firstFoundValidStrategy = {
+        signal: "BUY",
+    };
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
-    const isSellSignal = !isBuySignal;
+    // const isSellSignal = !isBuySignal;
 
     // CHECK STREAKS
+    // unhealthy bull is when there is a too long sequence and this indicates that price will go down bluntly at any time
+    // const MAX_HEALTH_SEQUENCE = 7;
+    // const isHealtyBullStreak = true;
     const isLastStreakBearish =
         sequenceStreaks && sequenceStreaks.includes("B.bears");
     const isStrongStreak =
         isLastStreakBearish || firstFoundValidStrategy.strategy === "soloThor";
     if (isBuySignal && !isStrongStreak) return DEFAULT_WAIT_SIGNAL;
     // END CHECK STREAKS
-
-    // allow only maxStopLoss to be triggered if no profit is made. All other selling strategies will be activated once isProfit is true.
-    if (
-        isSellSignal &&
-        !isProfit &&
-        firstFoundValidStrategy.strategy !== "maxStopLoss"
-    )
-        return DEFAULT_WAIT_SIGNAL;
 
     const isUnreliableBuySignal = isBuySignal && !isCurrCandleReliable;
     if (isUnreliableBuySignal) return DEFAULT_WAIT_SIGNAL;
@@ -132,4 +130,15 @@ const emaSignal = analyseEmaSignals({
     isOverbought: null,
 });
 
+// detection for bullish candle patterns adjust to catch only if size is big or huge, decreasing the changes to sell very early in a potential bullish transaction
+// CHECK EXCEPTION STOPLOSS WHEN LOSS
+    // allow only maxStopLoss to be triggered if no profit is made. All other selling strategies will be activated once isProfit is true.
+    const exceptionStrategies = ["maxStopLoss", "threeInside", "threeOutside"]
+    if (
+        isSellSignal &&
+        !isProfit &&
+        !exceptionStrategies.includes(firstFoundValidStrategy.strategy)
+    )
+        return DEFAULT_WAIT_SIGNAL;
+    // END CHECK EXCEPTION STOPLOSS WHEN LOSS
 */

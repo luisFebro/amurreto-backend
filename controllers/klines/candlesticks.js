@@ -35,8 +35,8 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-09-03T09:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 50, // default 250 last candles
-        noList: true, // default true
+        sinceCount: 20, // default 250 last candles
+        noList: false, // default true
         reverseData: false,
     }).then(console.log);
 }
@@ -160,6 +160,7 @@ async function getCandlesticksData(payload = {}) {
             bodyPerc: volRealBodyPerc,
             upperPerc: volUpperWickPerc,
             lowerPerc: volLowerWickPerc,
+            volFullCandle, // do not remove - for historical
             // volRealBody,
             // priceInc: getIncreasedPerc(lastClosePrice, close),
             // end candles
@@ -169,7 +170,6 @@ async function getCandlesticksData(payload = {}) {
             // vol,
             // volUpperWick,
             // volLowerWick,
-            // volFullCandle,
             // volRealBodyPerc,
             // volUpperWickPerc,
             // volLowerWickPerc,
@@ -281,6 +281,7 @@ async function getCandlesticksData(payload = {}) {
         emaTrend: lastEmaTrend,
         openPrice: liveCandle.open,
         currBodySize: liveCandle.candleBodySize,
+        wholeCandleSize: liveCandle.volFullCandle,
         lowerWing20,
         sequenceStreaks,
     });
