@@ -253,7 +253,7 @@ async function getCandlesticksData(payload = {}) {
         return secondCheckData;
     });
 
-    const MAX_CANDLES_SEQUENCE = 20;
+    const MAX_CANDLES_SEQUENCE = 20; // 20
     const dataForSequenceStreak = candlestickData.slice(
         `-${MAX_CANDLES_SEQUENCE}`
     );

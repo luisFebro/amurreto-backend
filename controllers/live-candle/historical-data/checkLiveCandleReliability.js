@@ -37,10 +37,15 @@ function checkLiveCandleReliability({
 
     // cond 2
     const isMajorityBull = bullSidePerc >= 66;
+    const cond2BodySizes = ["small", "tiny"];
     const isLast4SidesBullish = currTimeSidesStreak
-        .slice(0, 3)
+        .slice(0, 4)
         .every((side) => side === "bull" && totalSides >= 4);
-    if (isMajorityBull && isLast4SidesBullish && currBodySize === "small") {
+    if (
+        isMajorityBull &&
+        isLast4SidesBullish &&
+        cond2BodySizes.includes(currBodySize)
+    ) {
         return {
             status: true,
             reason: "threeSmallBullish",
@@ -49,7 +54,7 @@ function checkLiveCandleReliability({
 
     // cond 3
     const isLast3SidesBullish = currTimeSidesStreak
-        .slice(0, 2)
+        .slice(0, 3)
         .every((side) => side === "bull" && totalSides >= 3);
     if (isLast3SidesBullish && currBodySize === "medium") {
         return {

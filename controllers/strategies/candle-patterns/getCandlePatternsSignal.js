@@ -1,7 +1,7 @@
 async function getCandlePatternsSignal({
     liveCandle,
     lastLiveCandle,
-    sequenceStreaks,
+    lowerWing20,
 }) {
     const liveBodySize = liveCandle.candleBodySize;
 
@@ -46,13 +46,23 @@ async function getCandlePatternsSignal({
     // END TWO CANDLES
 
     // ONE CANDLE
-    const isCurrStreakBearish = sequenceStreaks.includes("A.bears"); // because it is more powerful when there is a sudden change in the candle and strong indication of reversal.
+    const isNearSupport = lowerWing20 <= 2500; // allow run this only near the support
     const runSoloPowerThor =
-        isCurrStreakBearish && oneCandleType.includes("soloThor");
+        isNearSupport && oneCandleType.includes("soloThor");
     if (runSoloPowerThor) {
         return {
             signal: "BUY",
             strategy: "soloPowerThor",
+            transactionPerc: 100,
+        };
+    }
+
+    const runSoloHighWaveDoji =
+        isNearSupport && oneCandleType.includes("soloHighWave");
+    if (runSoloHighWaveDoji) {
+        return {
+            signal: "BUY",
+            strategy: "soloHighWave",
             transactionPerc: 100,
         };
     }

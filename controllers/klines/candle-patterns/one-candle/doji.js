@@ -47,7 +47,7 @@ const isDoji = (data) => {
     const isHighWave = (candleA.bodyPerc <= 2 || matchShadows) && "high wave";
     // solo means it is also a buy signal because the pattern is strong enough.
     const isSoloHighWave =
-        candleA.bodyPerc <= 2 && candleA.lowerPerc >= 65 && "soloHighWave";
+        candleA.bodyPerc <= 2 && candleA.lowerPerc >= 60 && "soloHighWave";
     // Bearish reversal candle with a long upper wick and the open/close near the low.
     const isGravestone = candleA.upperCase >= 70 && "gravestone";
     // Either bullish or bearish candle (depending on context) with a long lower wick and the open/close near the high.

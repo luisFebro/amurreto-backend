@@ -54,7 +54,7 @@ async function watchStrategies(options = {}) {
         getCandlePatternsSignal({
             liveCandle,
             lastLiveCandle,
-            sequenceStreaks,
+            lowerWing20,
         }),
         getLowerWingSignal({ lowerWing20, sequenceStreaks }),
     ]);
@@ -74,7 +74,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const {
         isCurrCandleReliable,
         emaUptrendStopLoss,
-        sequenceStreaks,
+        // sequenceStreaks,
         // isProfit,
     } = options;
     const { turnOtherStrategiesOff, sellSignal } = emaUptrendStopLoss;
@@ -97,17 +97,6 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     // const isSellSignal = !isBuySignal;
-
-    // CHECK STREAKS
-    // unhealthy bull is when there is a too long sequence and this indicates that price will go down bluntly at any time
-    // const MAX_HEALTH_SEQUENCE = 7;
-    // const isHealtyBullStreak = true;
-    const isLastStreakBearish =
-        sequenceStreaks && sequenceStreaks.includes("B.bears");
-    const isStrongStreak =
-        isLastStreakBearish || firstFoundValidStrategy.strategy === "soloThor";
-    if (isBuySignal && !isStrongStreak) return DEFAULT_WAIT_SIGNAL;
-    // END CHECK STREAKS
 
     const isUnreliableBuySignal = isBuySignal && !isCurrCandleReliable;
     if (isUnreliableBuySignal) return DEFAULT_WAIT_SIGNAL;
@@ -141,4 +130,15 @@ const emaSignal = analyseEmaSignals({
     )
         return DEFAULT_WAIT_SIGNAL;
     // END CHECK EXCEPTION STOPLOSS WHEN LOSS
+
+// CHECK STREAKS
+// unhealthy bull is when there is a too long sequence and this indicates that price will go down bluntly at any time
+// const MAX_HEALTH_SEQUENCE = 7;
+// const isHealtyBullStreak = true;
+const isLastStreakBearish =
+    sequenceStreaks && sequenceStreaks.includes("B.bears");
+const isStrongStreak =
+    isLastStreakBearish || firstFoundValidStrategy.strategy === "soloThor";
+if (isBuySignal && !isStrongStreak) return DEFAULT_WAIT_SIGNAL;
+// END CHECK STREAKS
 */
