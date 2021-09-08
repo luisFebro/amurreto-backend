@@ -9,6 +9,7 @@ const {
     isThreeInside,
     isThreeOutside,
     isStar,
+    isThunderingChange,
 } = require("./three-candles/threeCandles");
 
 function findCandleTypes({ candlesDataAnalysis = [] }) {
@@ -50,6 +51,10 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end 2 candles
 
     // 3 candles
+    const checkThunderingChange = isThunderingChange(defaultData);
+    if (checkThunderingChange)
+        threeCandleType = JSON.stringify(checkThunderingChange);
+
     const checkThreeInside = isThreeInside(defaultData);
     if (checkThreeInside) threeCandleType = JSON.stringify(checkThreeInside);
 

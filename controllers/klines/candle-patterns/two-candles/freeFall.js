@@ -10,7 +10,8 @@ const isFreeFall = (data) => {
     const gotAllCandlesData = candleA.openPrice && candleB.openPrice;
     if (!gotAllCandlesData) return false;
 
-    const matchSides = candleB.side === "bear";
+    // note that backtesting will not detect a bear candleA. Remove it for check this freeFall pattern for testing
+    const matchSides = candleB.side === "bear" && candleA.side === "bear";
     if (!matchSides) return false;
     const sizesCandleB = ["medium", "big", "huge"];
     const matchSizes = sizesCandleB.includes(candleB.bodySize);

@@ -14,7 +14,7 @@ async function getLowerWingSignal({ lowerWing20, sequenceStreaks }) {
     console.log("sequenceStreaks", sequenceStreaks);
     console.log("diffCurrPrice", diffCurrPrice);
 
-    const MAX_PRICE_DIFF = 2500;
+    const MAX_PRICE_DIFF = 3500;
     const MIN_PRICE_DIFF = 1500;
     const isInDetectionRange =
         diffCurrPrice >= MIN_PRICE_DIFF && diffCurrPrice <= MAX_PRICE_DIFF;

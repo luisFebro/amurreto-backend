@@ -35,7 +35,9 @@ const isHammer = (data) => {
     const handleVariant = () => {
         if (isThorHammer && candleA.lowerPerc >= 55 && candleA.side === "bull")
             return "soloThor";
-        return isThorHammer ? "thor" : "normal";
+        if (isThorHammer) return "thor";
+        const isShooting = candleA.upperPerc >= 40 && candleA.side === "bear";
+        return isShooting ? "shooting" : "morning";
     };
 
     return {

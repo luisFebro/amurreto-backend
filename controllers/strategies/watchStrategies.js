@@ -26,24 +26,12 @@ async function watchStrategies(options = {}) {
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker({ liveCandle });
 
-    // const isProfit = profitTracker && profitTracker.isProfit;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
     const isCurrCandleReliable = candleReliability.status;
-
-    async function checkThunderingChange() {
-        if (candleReliability.reason !== "thunderingChange")
-            return { signal: null };
-        return {
-            signal: "BUY",
-            strategy: "thunderingChange",
-            transactionPerc: 100,
-        };
-    }
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
         getProfitTrackerSignal({ profitTracker, liveCandle }),
-        checkThunderingChange(),
         getCandlePatternsSignal({
             liveCandle,
             lastLiveCandle,
@@ -53,6 +41,7 @@ async function watchStrategies(options = {}) {
     ]);
 
     const profitStrategy = allStrategySignals[0].whichStrategy;
+    console.log("profitStrategy", profitStrategy);
 
     const finalSignal = strategiesHandler(allStrategySignals, {
         isCurrCandleReliable,
@@ -76,10 +65,10 @@ function strategiesHandler(allSignals = [], options = {}) {
         // isProfit,
     } = options;
 
-    const currStrategy = (profitTracker && profitTracker.strategy) || null;
+    const signalStrategy = (profitTracker && profitTracker.strategy) || null;
     const currATR = liveCandle && liveCandle.atr;
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
-    console.log("currStrategy", currStrategy);
+    console.log("signalStrategy", signalStrategy);
     console.log("currATR", currATR);
 
     // the first array to be looked over got more priority over the last ones
@@ -102,7 +91,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // END CHECK PROFIT STRATAGY
 
     // CHECK FREE FALL (only exception to buy in a bear market)
-    const isFreeFall = currStrategy === "freeFall";
+    const isFreeFall = signalStrategy === "freeFall";
     // deny because volatility is high and probability favors losses since it is an downtrend.
     const denyBuySignal = !isFreeFall && disableATR;
     if (denyBuySignal) return DEFAULT_WAIT_SIGNAL;
@@ -121,7 +110,9 @@ function strategiesHandler(allSignals = [], options = {}) {
 }
 
 function handleUnreliableBuySignal({ isBuy, foundStrategy, isCurrReliable }) {
-    if (foundStrategy === "freeFall") return false;
+    const exceptionToReliability = ["freeFall", "thunderingChange"];
+    if (exceptionToReliability.includes(foundStrategy)) return false;
+
     return isBuy && !isCurrReliable;
 }
 // END HELPERS

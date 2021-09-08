@@ -21,16 +21,14 @@ function checkLiveCandleReliability({
     // cond 1
     const gotAlmostAllSides = totalSides === 5; // total is 6
     if (gotAlmostAllSides) {
-        const wasBearishForMostTime = currTimeSidesStreak
-            .slice(2)
-            .every((side) => side === "bear");
+        const isAtLeastHalfBull = bullSidePerc >= 50;
         const gotLastCandlesBullish = currTimeSidesStreak
             .slice(0, 2)
             .every((side) => side === "bull");
-        if (wasBearishForMostTime && gotLastCandlesBullish) {
+        if (isAtLeastHalfBull && gotLastCandlesBullish) {
             return {
                 status: true,
-                reason: "thunderingChange",
+                reason: "atLeastHalfLastBulls",
             };
         }
     }
