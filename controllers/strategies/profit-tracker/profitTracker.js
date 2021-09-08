@@ -7,7 +7,7 @@ async function watchProfitTracker({ liveCandle }) {
     const watching = Boolean(profitsData.transactionId);
 
     const atrLimits = liveCandle.atrLimits;
-    console.log("atrLimits", atrLimits);
+
     if (watching) {
         await registerProfitTracker(profitsData, { atrLimits });
     }
