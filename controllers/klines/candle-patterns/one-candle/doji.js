@@ -44,7 +44,7 @@ const isDoji = (data) => {
         candleA.upperPerc >= 30 &&
         candleA.upperPerc <= 59;
 
-    const isHighWave = (candleA.bodyPerc <= 2 || matchShadows) && "high wave";
+    const isHighWave = (candleA.bodyPerc <= 2 || matchShadows) && "highWave";
     // solo means it is also a buy signal because the pattern is strong enough.
     const isSoloHighWave =
         candleA.bodyPerc <= 2 && candleA.lowerPerc >= 60 && "soloHighWave";

@@ -55,6 +55,7 @@ async function getLiveProfitsPerc() {
     const lastPendingBuyMarketPrice = lastBuyData.amounts.market;
     const lastPendingBuyBaseAmount = lastBuyData.amounts.base;
     const lastPendingBuyFeeAmount = lastBuyData.fee.amount;
+    const currStrategy = lastBuyData.strategy;
 
     const defaultDataForLiveCandle = {
         buyMarketPrice: lastPendingBuyMarketPrice,
@@ -91,6 +92,7 @@ async function getLiveProfitsPerc() {
 
     return {
         transactionId,
+        strategy: currStrategy,
         isProfit: netPerc >= 0,
         maxPerc,
         netPerc,

@@ -1,7 +1,6 @@
 const novadax = require("../exchangeAPI");
 const { addDays, addHours } = require("../../utils/dates/dateFnsBack");
 const getWickVolume = require("./algo/getWickVolume");
-const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const getPercentage = require("../../utils/number/perc/getPercentage");
 const compareTimestamp = require("../../utils/dates/compareTimestamp");
 const { createOrderBySignal } = require("../orders/orders");
@@ -9,13 +8,16 @@ const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 const detectSequenceStreaks = require("./algo/candle/algo/detectSequenceStreaks");
+// indicators
+const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
+const calculateATR = require("../indicators/atr");
+// end indicators
+// const calculateRSI = require("../indicators/rsi");
 // strategies
 const watchStrategies = require("../strategies/watchStrategies");
 const analyseCandlePatterns = require("./candle-patterns/analyseCandlePatterns");
 // const analyseEmaSignals = require("../strategies/ema/analyseEmaSignals");
 // end strategies
-// const calculateATR = require("../indicators/atr");
-// const calculateRSI = require("../indicators/rsi");
 // const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 // const {
 //     checkWingForCandle,
@@ -35,8 +37,8 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-09-03T09:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 50, // default 250 last candles
-        noList: false, // default true
+        sinceCount: 100, // default 250 last candles
+        noList: true, // default true
         reverseData: false,
     }).then(console.log);
 }
@@ -185,20 +187,23 @@ async function getCandlesticksData(payload = {}) {
 
     // INDICATORS CALCULATION
     const closingPrices = dataForIndicators.map((candle) => candle[4]);
-
-    // const dataRsi = calculateRSI(closingPrices, { candlesCount });
-
+    // ema
     const { dataEma9, dataEma20, dataEma50 } = calculateEMAs(
         closingPrices,
         candlesCount
     );
+    // end ema
 
-    // const dataForAtr = dataForIndicators.map((candle) => ({
-    //     highest: candle[2],
-    //     lowest: candle[3],
-    //     close: candle[4],
-    // }));
-    // const dataAtr = calculateATR(dataForAtr, { candlesCount });
+    // atr
+    const dataForAtr = dataForIndicators.map((candle) => ({
+        highest: candle[2],
+        lowest: candle[3],
+        close: candle[4],
+    }));
+    const dataAtr = calculateATR(dataForAtr, { candlesCount });
+    // end atr
+
+    // const dataRsi = calculateRSI(closingPrices, { candlesCount });
 
     // const indicatorsPeriod = -9;
     // 14-lastPeriod maxVolat will be used to calcalate stop loss
@@ -224,7 +229,7 @@ async function getCandlesticksData(payload = {}) {
                 ? analyseEmaTrend({ ema9, ema20, ema50 })
                 : null;
 
-        // const atrData = dataAtr[ind];
+        const thisDataAtr = dataAtr[ind];
         // const rsi = dataRsi[ind];
         // const isOverbought = rsi >= 70;
         // const isOversold = rsi <= 30;
@@ -239,9 +244,9 @@ async function getCandlesticksData(payload = {}) {
 
         const secondCheckData = {
             ...candle,
-            emaTrend,
+            emaTrend, // do not remove it
+            atr: thisDataAtr && thisDataAtr.atr, // do not remove it
             // finalSignal: null,
-            // atr: atrData && atrData.atr,
             // incAtr: atrData && atrData.incVolat,
             // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
             // isMaxVolume9: maxVol9 === candle.vol,

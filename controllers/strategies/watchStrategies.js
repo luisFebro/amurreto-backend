@@ -27,6 +27,7 @@ async function watchStrategies(options = {}) {
 
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker();
+    console.log("profitTracker", profitTracker);
     const emaUptrendStopLoss = await watchEmaUptrendStopLoss({
         liveCandle,
         profitTracker,
@@ -34,6 +35,7 @@ async function watchStrategies(options = {}) {
     });
 
     const isProfit = profitTracker && profitTracker.isProfit;
+    const currStrategy = profitTracker && profitTracker.strategy;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
     const isCurrCandleReliable = candleReliability.status;
 
@@ -64,6 +66,7 @@ async function watchStrategies(options = {}) {
         isProfit,
         emaUptrendStopLoss,
         sequenceStreaks,
+        liveCandle,
     });
     console.log("finalSignal", finalSignal);
     return finalSignal;
@@ -74,6 +77,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const {
         isCurrCandleReliable,
         emaUptrendStopLoss,
+        liveCandle,
         // sequenceStreaks,
         // isProfit,
     } = options;
@@ -87,13 +91,10 @@ function strategiesHandler(allSignals = [], options = {}) {
     // END CHECK EMA UPTREND STOPLOSS
 
     // the first array to be looked over got more priority over the last ones
-    // const firstFoundValidStrategy = allSignals.find(
-    //     (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
-    // );
-    // if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
-    const firstFoundValidStrategy = {
-        signal: "BUY",
-    };
+    const firstFoundValidStrategy = allSignals.find(
+        (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
+    );
+    if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     // const isSellSignal = !isBuySignal;

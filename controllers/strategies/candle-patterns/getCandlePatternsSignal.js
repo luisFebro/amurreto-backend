@@ -84,17 +84,17 @@ function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
         "powerThorHammer";
     const isHighWaveDoji =
         lastOneCandleType.includes("doji") &&
-        lastOneCandleType.includes("high wave") &&
+        lastOneCandleType.includes("highWave") &&
         "powerHighWaveDoji";
 
     const confirmationCandle = ["small", "medium"].includes(liveBodySize);
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
 
-    if (!powerCandle) return null;
+    if (!powerCandle) return false;
 
     return {
         signal: "BUY",
-        strategy: powerCandle,
+        strategy: powerCandle || "someWentWrongPowerCand",
         transactionPerc: 100,
     };
 }
