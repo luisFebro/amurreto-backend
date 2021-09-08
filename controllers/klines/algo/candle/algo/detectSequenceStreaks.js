@@ -86,6 +86,7 @@ function detectSequenceStreaks(data) {
             const startWith2Bulls = Boolean(
                 bullStreakBuilder.length &&
                     bullStreakBuilder[0].side === "bull" &&
+                    bullStreakBuilder[1] &&
                     bullStreakBuilder[1].side === "bull"
             );
             if (!startWith2Bulls) bullStreakBuilder = [];

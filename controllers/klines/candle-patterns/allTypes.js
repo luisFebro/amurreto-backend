@@ -43,6 +43,7 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
 
     const checkEngulfing = isEngulfing(defaultData);
     if (checkEngulfing) twoCandleType = JSON.stringify(checkEngulfing);
+
     // end 2 candles
 
     // 3 candles

@@ -26,7 +26,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
     };
 
     const side = handleSide();
-    if (!side || IS_DEV) return null;
+    if (!side || !strategy || IS_DEV) return null;
 
     const {
         symbol = "BTC/BRL",
