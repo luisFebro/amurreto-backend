@@ -27,15 +27,14 @@ async function watchStrategies(options = {}) {
 
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker();
-    console.log("profitTracker", profitTracker);
+
     const emaUptrendStopLoss = await watchEmaUptrendStopLoss({
         liveCandle,
         profitTracker,
         dbEmaUptrend,
     });
 
-    const isProfit = profitTracker && profitTracker.isProfit;
-    const currStrategy = profitTracker && profitTracker.strategy;
+    // const isProfit = profitTracker && profitTracker.isProfit;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
     const isCurrCandleReliable = candleReliability.status;
 
@@ -63,10 +62,10 @@ async function watchStrategies(options = {}) {
 
     const finalSignal = strategiesHandler(allStrategySignals, {
         isCurrCandleReliable,
-        isProfit,
         emaUptrendStopLoss,
         sequenceStreaks,
         liveCandle,
+        profitTracker,
     });
     console.log("finalSignal", finalSignal);
     return finalSignal;
@@ -77,11 +76,17 @@ function strategiesHandler(allSignals = [], options = {}) {
     const {
         isCurrCandleReliable,
         emaUptrendStopLoss,
+        profitTracker,
         liveCandle,
         // sequenceStreaks,
         // isProfit,
     } = options;
     const { turnOtherStrategiesOff, sellSignal } = emaUptrendStopLoss;
+
+    const currStrategy = (profitTracker && profitTracker.strategy) || null;
+    const currATR = liveCandle && liveCandle.atr;
+    console.log("currStrategy", currStrategy);
+    console.log("currATR", currATR);
 
     // CHECK EMA UPTREND STOPLOSS
     if (turnOtherStrategiesOff) {
@@ -99,10 +104,33 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     // const isSellSignal = !isBuySignal;
 
-    const isUnreliableBuySignal = isBuySignal && !isCurrCandleReliable;
+    // CHECK FREE FALL
+    const isFreeFall = currStrategy === "freeFall";
+    // deny because volatility is high and probability favors losses since it is an downtrend.
+    const denyBuySignal = !isFreeFall && currATR >= 3000;
+    if (denyBuySignal) return DEFAULT_WAIT_SIGNAL;
+
+    if (isFreeFall) {
+        // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
+        const includeOnlyProfitStopLoss =
+            firstFoundValidStrategy.strategy.includes("Profit");
+        if (!includeOnlyProfitStopLoss) return DEFAULT_WAIT_SIGNAL;
+    }
+    // END CHECK FREE FALL
+
+    const isUnreliableBuySignal = handleUnreliableBuySignal({
+        isBuy: isBuySignal,
+        foundStrategy: firstFoundValidStrategy,
+        isCurrReliable: isCurrCandleReliable,
+    });
     if (isUnreliableBuySignal) return DEFAULT_WAIT_SIGNAL;
 
     return firstFoundValidStrategy;
+}
+
+function handleUnreliableBuySignal({ isBuy, foundStrategy, isCurrReliable }) {
+    if (foundStrategy === "freeFall") return false;
+    return isBuy && !isCurrReliable;
 }
 // END HELPERS
 

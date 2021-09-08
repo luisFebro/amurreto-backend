@@ -36,8 +36,8 @@ if (IS_DEV) {
         symbol: "BTC/BRL",
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
-        customDate: "2021-09-03T09:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 100, // default 250 last candles
+        customDate: "2021-05-12T22:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceCount: 250, // default 250 last candles
         noList: true, // default true
         reverseData: false,
     }).then(console.log);
@@ -271,9 +271,9 @@ async function getCandlesticksData(payload = {}) {
     const lastEma9 = dataEma9.slice(-1)[0];
     const lastEma20 = dataEma20.slice(-1)[0];
     const lastEma50 = dataEma50.slice(-1)[0];
+    const lastAtr = dataAtr.slice(-1)[0];
     // const lastRsi = dataRsi.slice(-1)[0];
     // const lastIncPrice = liveCandle.priceInc;
-    // const lastAtr = dataAtr.slice(-1)[0];
     const lastEmaTrend = analyseEmaTrend({
         ema9: lastEma9,
         ema20: lastEma20,
@@ -306,11 +306,11 @@ async function getCandlesticksData(payload = {}) {
     // const lastIsOverbought = lastRsi >= 70;
     const indicators = {
         emaTrend: lastEmaTrend,
+        atr: lastAtr && lastAtr.atr,
         // ema9: lastEma9,
         // ema20: lastEma20,
         // ema50: lastEma50,
         // rsi: lastRsi,
-        // atr: lastAtr && lastAtr.atr,
         // sub
         // isOverbought: lastIsOverbought,
         // isOversold: lastRsi <= 30,

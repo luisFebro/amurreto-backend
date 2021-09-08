@@ -29,6 +29,15 @@ async function getCandlePatternsSignal({
     // END THREE CANDLES
 
     // TWO CANDLES
+    const runFreeFall = twoCandleType.includes("freeFall");
+    if (runFreeFall) {
+        return {
+            signal: "BUY",
+            strategy: "freeFall",
+            transactionPerc: 100,
+        };
+    }
+
     const runTweezers = twoCandleType.includes("tweezers");
     if (runTweezers) {
         return {

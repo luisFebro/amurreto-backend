@@ -3,6 +3,7 @@ const {
     areTweezers,
     isHarami,
     isEngulfing,
+    isFreeFall,
 } = require("./two-candles/twoCandles");
 const {
     isThreeInside,
@@ -44,6 +45,8 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     const checkEngulfing = isEngulfing(defaultData);
     if (checkEngulfing) twoCandleType = JSON.stringify(checkEngulfing);
 
+    const checkFreeFall = isFreeFall(defaultData);
+    if (checkFreeFall) twoCandleType = JSON.stringify(checkFreeFall);
     // end 2 candles
 
     // 3 candles
