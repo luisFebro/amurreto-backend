@@ -60,10 +60,7 @@ async function setHistoricalLiveCandle({
         currBodySize,
     });
 
-    return {
-        candleReliability,
-        dbEmaUptrend: dbData && dbData.emaUptrendStopLoss,
-    };
+    return candleReliability;
 }
 
 // HELPERS

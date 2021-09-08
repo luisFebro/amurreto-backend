@@ -1,56 +1,79 @@
-async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
-    if (!profitTracker.watching) return { signal: null };
+async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
     const {
         watching,
-        isProfit,
-        diffMax, // diff from maxPerc and netPerc
-        diffVolat,
-        // netPerc,
         maxPerc,
+        atrLimit,
+        atrUpperLimit,
+        // atrLowerLimit,
+    } = profitTracker;
+
+    if (!watching || !atrLimit)
+        return { signal: null, whichStrategy: "tracker" };
+
+    const currPrice = liveCandle.close;
+    const currEmaTrend = liveCandle.emaTrend;
+
+    const hasPassedAtrUpperLimit = currPrice >= atrUpperLimit;
+    const atrTrends = ["bullReversal", "bull"];
+    const MAX_DIFF_SPLITTER = 0.8;
+    const condAtr =
+        !hasPassedAtrUpperLimit &&
+        (maxPerc >= MAX_DIFF_SPLITTER || atrTrends.includes(currEmaTrend));
+
+    const whichStrategy = condAtr ? "atr" : "tracker";
+
+    if (whichStrategy === "atr")
+        return {
+            whichStrategy: "atr",
+            ...getAtrStrategy({ ...profitTracker, currPrice }),
+        };
+
+    return {
+        whichStrategy: "tracker",
+        ...getTrackerStrategy(profitTracker),
+    };
+}
+
+// PROFIT STRATEGIES
+function getTrackerStrategy(profitTracker) {
+    const {
+        maxPerc,
+        isProfit,
+        diffVolat,
+        diffMax,
+        // netPerc,
         // minPerc,
     } = profitTracker;
 
-    if (!watching) return { signal: null };
+    const MAX_DIFF_VOLAT_PERC = 2.5; // diff between maxPerc and minPerc from profit
     // FACTS
     // 2% is about -3.000 in price including 0.60% buy/sell fees.
     // 0.4 of profit is the minimum to breakeven, thus not earning or losing anything.
-
-    const MAX_DIFF_VOLAT_PERC = 2.5; // diff between maxPerc and minPerc from profit
 
     const maxProfitStopLoss = !isProfit && diffVolat >= MAX_DIFF_VOLAT_PERC;
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
-            strategy: "maxStopLoss",
+            strategy: "maxProfitStopLoss",
             transactionPerc: 100,
         };
     }
 
-    // PROFIT HANDLING
-    // give more space to grow even more since is sithering with profits
-    const lastLiveBodySize = lastLiveCandle.candleBodySize;
-    const isCandleWonderProfit = ["big", "huge"].includes(lastLiveBodySize);
-
-    const MAX_DIFF_START_PROFIT = 2;
-    const MAX_DIFF_SAVE_PROFIT = 0.4; // this is very volatile and lossing vulnarable and profit can highly become a loss.
-    const MAX_DIFF_MID_PROFIT = isCandleWonderProfit ? 1 : 0.7;
-    const MAX_DIFF_LONG_PROFIT = isCandleWonderProfit ? 1 : 0.5;
+    const MAX_DIFF_START_PROFIT = 1.5;
+    const MAX_DIFF_MID_PROFIT = 1;
+    const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
-    const startProfitRange = maxPerc >= 0 && maxPerc < 0.4; // 0.4 is a common number when prices start to become bearish
-    const saveProfitRange = maxPerc >= 0.4 && maxPerc < 0.8;
-    const midProfitRange = maxPerc >= 0.8 && maxPerc < 1.5;
-    const longProfitRange = maxPerc >= 1.5;
+    const startProfitRange = maxPerc >= 0 && maxPerc < 0.8;
+    const midProfitRange = maxPerc >= 0.8 && maxPerc < 4;
+    const longProfitRange = maxPerc >= 4;
 
     const isStartProfit =
         startProfitRange && diffMax >= MAX_DIFF_START_PROFIT && "startProfit";
     const isMidProfit =
         midProfitRange && diffMax >= MAX_DIFF_MID_PROFIT && "midProfit";
-    const isSaveProfit =
-        saveProfitRange && diffMax >= MAX_DIFF_SAVE_PROFIT && "saveProfit";
     const isLongProfit =
         longProfitRange && diffMax >= MAX_DIFF_LONG_PROFIT && "longProfit";
-    const profitRange =
-        isStartProfit || isSaveProfit || isMidProfit || isLongProfit;
+    const profitRange = isStartProfit || isMidProfit || isLongProfit;
 
     if (isProfit && profitRange) {
         return {
@@ -59,11 +82,36 @@ async function getProfitTrackerSignal({ profitTracker = {}, lastLiveCandle }) {
             transactionPerc: 100,
         };
     }
-    // END PROFIT HANDLING
 
     // empty signal handle with strategiesManager
     return { signal: null };
 }
+
+function getAtrStrategy(profitTracker) {
+    const {
+        atrLowerLimit,
+        currPrice,
+        netPerc,
+        maxPerc,
+        // atrLimit,
+    } = profitTracker;
+    const minRangeForSellNetPerc = maxPerc >= 1.5;
+    const condMinimizeLoss = minRangeForSellNetPerc && netPerc <= 0;
+
+    const atrSellCond = condMinimizeLoss || currPrice <= atrLowerLimit;
+
+    if (atrSellCond) {
+        return {
+            signal: "SELL",
+            strategy: "atrProfitStopLoss",
+            transactionPerc: 100,
+        };
+    }
+
+    // empty signal handle with strategiesManager
+    return { signal: null };
+}
+// END PROFIT STRATEGIES
 
 module.exports = getProfitTrackerSignal;
 

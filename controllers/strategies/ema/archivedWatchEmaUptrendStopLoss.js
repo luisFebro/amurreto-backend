@@ -1,6 +1,7 @@
 const LiveCandleHistory = require("../../../models/LiveCandleHistory");
 const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
+// NOW HANDLING WITH ATR AND EMA TO CHECK PROFIT RANGE IN WATCHSTRATEGIES...
 /*
 EMA UPTREND STOP LOSS - if bullish big or huge candle and it is an EMA uptrend, activate it and disable temporarily other sell strategies.
 

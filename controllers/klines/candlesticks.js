@@ -37,9 +37,9 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-05-12T22:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 250, // default 250 last candles
+        sinceCount: 50, // default 250 last candles
         noList: true, // default true
-        reverseData: false,
+        reverseData: true,
     }).then(console.log);
 }
 
@@ -241,11 +241,18 @@ async function getCandlesticksData(payload = {}) {
         //     // isKeySupport,
         //     // isKeyResistence,
         // } = checkWingForCandle(candle, threads);
+        const atr = thisDataAtr && thisDataAtr.atr;
 
         const secondCheckData = {
             ...candle,
             emaTrend, // do not remove it
-            atr: thisDataAtr && thisDataAtr.atr, // do not remove it
+            atr, // do not remove it
+            atrLimits: setAtrBoundaries({ atr, close: candle.close }),
+            atrLimitsJson: setAtrBoundaries({
+                json: true,
+                atr,
+                close: candle.close,
+            }),
             // finalSignal: null,
             // incAtr: atrData && atrData.incVolat,
             // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
@@ -280,7 +287,7 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
-    const { candleReliability, dbEmaUptrend } = await setHistoricalLiveCandle({
+    const candleReliability = await setHistoricalLiveCandle({
         side: liveCandle.isBullish ? "bull" : "bear",
         timestamp: liveCandle.timestamp,
         emaTrend: lastEmaTrend,
@@ -297,7 +304,6 @@ async function getCandlesticksData(payload = {}) {
         candleReliability,
         lowerWing20,
         sequenceStreaks,
-        dbEmaUptrend,
     });
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION
@@ -351,6 +357,22 @@ async function getCandlesticksData(payload = {}) {
 }
 
 // HELPERS
+function setAtrBoundaries({ json = false, close, atr }) {
+    const MULTIPLIER = 2;
+    const atrDefaultBoundary = atr * MULTIPLIER;
+    const disableATR = atr >= 3000;
+
+    const data = {
+        atrUpperLimit: Number((close + atrDefaultBoundary).toFixed(2)),
+        atrLowerLimit: Number((close - atrDefaultBoundary).toFixed(2)),
+        atrLimit: Number(atrDefaultBoundary.toFixed(2)),
+        disableATR,
+    };
+
+    if (!json) return data;
+    return JSON.stringify(data);
+}
+
 function handleListData(list, { noList, reverseData }) {
     // ascending/historical order by default so that we read from the last to the top, otherwise it would not be possible to see the historical
     if (noList) return null;

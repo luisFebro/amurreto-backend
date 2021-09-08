@@ -45,6 +45,9 @@ const data = {
         maxPerc: Number,
         netPerc: Number,
         minPerc: Number,
+        atrUpperLimit: Number, // used for stoploss
+        atrLowerLimit: Number,
+        atrLimit: Number,
     },
 };
 

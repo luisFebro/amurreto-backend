@@ -1,5 +1,4 @@
 const watchProfitTracker = require("./profit-tracker/profitTracker");
-const watchEmaUptrendStopLoss = require("./ema/watchEmaUptrendStopLoss");
 // strategy types
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
@@ -22,17 +21,10 @@ async function watchStrategies(options = {}) {
         candleReliability,
         lowerWing20,
         sequenceStreaks,
-        dbEmaUptrend,
     } = options;
 
     // watchProfitTracker is the highest priority to track pending transaction.
-    const profitTracker = await watchProfitTracker();
-
-    const emaUptrendStopLoss = await watchEmaUptrendStopLoss({
-        liveCandle,
-        profitTracker,
-        dbEmaUptrend,
-    });
+    const profitTracker = await watchProfitTracker({ liveCandle });
 
     // const isProfit = profitTracker && profitTracker.isProfit;
     // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
@@ -50,7 +42,7 @@ async function watchStrategies(options = {}) {
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
-        getProfitTrackerSignal({ profitTracker, lastLiveCandle }),
+        getProfitTrackerSignal({ profitTracker, liveCandle }),
         checkThunderingChange(),
         getCandlePatternsSignal({
             liveCandle,
@@ -60,12 +52,14 @@ async function watchStrategies(options = {}) {
         getLowerWingSignal({ lowerWing20, sequenceStreaks }),
     ]);
 
+    const profitStrategy = allStrategySignals[0].whichStrategy;
+
     const finalSignal = strategiesHandler(allStrategySignals, {
         isCurrCandleReliable,
-        emaUptrendStopLoss,
         sequenceStreaks,
         liveCandle,
         profitTracker,
+        profitStrategy,
     });
     console.log("finalSignal", finalSignal);
     return finalSignal;
@@ -75,25 +69,18 @@ async function watchStrategies(options = {}) {
 function strategiesHandler(allSignals = [], options = {}) {
     const {
         isCurrCandleReliable,
-        emaUptrendStopLoss,
-        profitTracker,
         liveCandle,
+        profitTracker,
+        profitStrategy,
         // sequenceStreaks,
         // isProfit,
     } = options;
-    const { turnOtherStrategiesOff, sellSignal } = emaUptrendStopLoss;
 
     const currStrategy = (profitTracker && profitTracker.strategy) || null;
     const currATR = liveCandle && liveCandle.atr;
+    const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
     console.log("currStrategy", currStrategy);
     console.log("currATR", currATR);
-
-    // CHECK EMA UPTREND STOPLOSS
-    if (turnOtherStrategiesOff) {
-        if (!sellSignal) return DEFAULT_WAIT_SIGNAL;
-        return sellSignal;
-    }
-    // END CHECK EMA UPTREND STOPLOSS
 
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(
@@ -104,18 +91,23 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     // const isSellSignal = !isBuySignal;
 
-    // CHECK FREE FALL
+    // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
+
+    const onlyProfitStopLoss =
+        firstFoundValidStrategy.strategy.includes("Profit");
+
+    // CHECK PROFIT STRATAGY
+    const isAtrStrategy = profitStrategy === "atr";
+    if (!onlyProfitStopLoss && isAtrStrategy) return DEFAULT_WAIT_SIGNAL;
+    // END CHECK PROFIT STRATAGY
+
+    // CHECK FREE FALL (only exception to buy in a bear market)
     const isFreeFall = currStrategy === "freeFall";
     // deny because volatility is high and probability favors losses since it is an downtrend.
-    const denyBuySignal = !isFreeFall && currATR >= 3000;
+    const denyBuySignal = !isFreeFall && disableATR;
     if (denyBuySignal) return DEFAULT_WAIT_SIGNAL;
 
-    if (isFreeFall) {
-        // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
-        const includeOnlyProfitStopLoss =
-            firstFoundValidStrategy.strategy.includes("Profit");
-        if (!includeOnlyProfitStopLoss) return DEFAULT_WAIT_SIGNAL;
-    }
+    if (!onlyProfitStopLoss && isFreeFall) return DEFAULT_WAIT_SIGNAL;
     // END CHECK FREE FALL
 
     const isUnreliableBuySignal = handleUnreliableBuySignal({
@@ -170,4 +162,11 @@ const isStrongStreak =
     isLastStreakBearish || firstFoundValidStrategy.strategy === "soloThor";
 if (isBuySignal && !isStrongStreak) return DEFAULT_WAIT_SIGNAL;
 // END CHECK STREAKS
+
+// CHECK EMA UPTREND STOPLOSS
+    if (turnOtherStrategiesOff) {
+        if (!sellSignal) return DEFAULT_WAIT_SIGNAL;
+        return sellSignal;
+    }
+    // END CHECK EMA UPTREND STOPLOSS
 */

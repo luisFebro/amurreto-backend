@@ -2,11 +2,15 @@ const AmurretoOrders = require("../../../models/Orders");
 const getLiveCandle = require("../../live-candle/liveCandle");
 // the goal is the maximize profit by tracking netProfitPerc and decide when to buy/sell based on the min and especially the max profit
 
-async function watchProfitTracker() {
+async function watchProfitTracker({ liveCandle }) {
     const profitsData = await getLiveProfitsPerc();
     const watching = Boolean(profitsData.transactionId);
 
-    if (watching) await registerProfitTracker(profitsData);
+    const atrLimits = liveCandle.atrLimits;
+    console.log("atrLimits", atrLimits);
+    if (watching) {
+        await registerProfitTracker(profitsData, { atrLimits });
+    }
 
     return {
         watching,
@@ -87,7 +91,7 @@ async function getLiveProfitsPerc() {
         maxPerc: max,
         netPerc: net,
         minPerc: min,
-        priorPercs: profitTracker,
+        priorDbData: profitTracker,
     });
 
     return {
@@ -99,12 +103,27 @@ async function getLiveProfitsPerc() {
         minPerc,
         diffMax: Math.abs((maxPerc - netPerc).toFixed(2)),
         diffVolat: Math.abs((maxPerc - minPerc).toFixed(2)),
+        atrLimit: profitTracker && profitTracker.atrLimit,
+        atrUpperLimit: profitTracker && profitTracker.atrUpperLimit,
+        atrLowerLimit: profitTracker && profitTracker.atrLowerLimit,
     };
 }
 
-async function registerProfitTracker(data) {
+async function registerProfitTracker(data = {}, options = {}) {
+    const { atrLimits = {} } = options;
     const { transactionId, maxPerc, netPerc, minPerc, diffMax, diffVolat } =
         data;
+
+    // compare so that only the first atr parameters are registered, when buying...
+    const gotPriorDbAtr = Boolean(data.atrLimit);
+
+    const atrUpdate = gotPriorDbAtr
+        ? {}
+        : {
+              "profitTracker.atrUpperLimit": atrLimits.atrUpperLimit,
+              "profitTracker.atrLowerLimit": atrLimits.atrLowerLimit,
+              "profitTracker.atrLimit": atrLimits.atrLimit,
+          };
 
     const updateData = {
         "profitTracker.diffMax": diffMax,
@@ -112,22 +131,23 @@ async function registerProfitTracker(data) {
         "profitTracker.netPerc": netPerc,
         "profitTracker.minPerc": minPerc,
         "profitTracker.diffVolat": diffVolat,
+        ...atrUpdate,
     };
 
     await AmurretoOrders.findByIdAndUpdate(transactionId, updateData);
 }
 
 function compareAndSetHigherPerc(data) {
-    const { maxPerc, minPerc, netPerc, priorPercs } = data;
+    const { maxPerc, minPerc, netPerc, priorDbData } = data;
 
-    if (!priorPercs)
+    if (!priorDbData)
         return {
             maxPerc: netPerc || 0,
             netPerc: netPerc || 0,
         };
 
-    const priorMaxPerc = priorPercs.maxPerc;
-    const priorMinPerc = priorPercs.minPerc;
+    const priorMaxPerc = priorDbData.maxPerc;
+    const priorMinPerc = priorDbData.minPerc;
 
     return {
         maxPerc: maxPerc > priorMaxPerc ? maxPerc : priorMaxPerc,
