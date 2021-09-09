@@ -64,12 +64,13 @@ function getTrackerStrategy(profitTracker) {
     // MIN AND MAX DOWNTREND PROFIT
     const allowedTrends = ["downtrend", "bullReversal", "bearReversal"];
     const primaryCond = isProfit && allowedTrends.includes(currEmaTrend);
+
     const minDownProfitRange = maxPerc >= 1 && maxPerc < 1.5;
     const MAX_DIFF_MINIMUM_PROFIT = 0.4;
 
     const isMinDowntrendProfit =
         minDownProfitRange && diffMax >= MAX_DIFF_MINIMUM_PROFIT;
-    if (isMinDowntrendProfit) {
+    if (primaryCond && isMinDowntrendProfit) {
         return {
             signal: "SELL",
             strategy: "minDownTrendProfit",
