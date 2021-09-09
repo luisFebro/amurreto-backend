@@ -87,8 +87,8 @@ function getTrackerStrategy(profitTracker) {
         };
     }
     // END MIN AND MAX DOWNTREND PROFIT
-
-    const MAX_DIFF_START_PROFIT = 1.5;
+    const highBearReversalZone = maxPerc >= 0 && maxPerc < 0.45;
+    const MAX_DIFF_START_PROFIT = highBearReversalZone ? 0.5 : 1.5;
     const MAX_DIFF_MID_PROFIT = 1;
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
