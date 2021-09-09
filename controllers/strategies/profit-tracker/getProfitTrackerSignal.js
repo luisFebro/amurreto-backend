@@ -42,7 +42,7 @@ function getTrackerStrategy(profitTracker) {
         diffMax,
         netPerc,
         currEmaTrend,
-        // diffVolat,
+        diffVolat,
         // minPerc,
     } = profitTracker;
 
@@ -51,7 +51,7 @@ function getTrackerStrategy(profitTracker) {
     // 2% is about -3.000 in price including 0.60% buy/sell fees.
     // 0.4 of profit is the minimum to breakeven, thus not earning or losing anything.
     const MAX_STOP_LOSS_PERC = 2.5;
-    const maxProfitStopLoss = !isProfit && netPerc <= MAX_STOP_LOSS_PERC;
+    const maxProfitStopLoss = !isProfit && diffVolat >= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
