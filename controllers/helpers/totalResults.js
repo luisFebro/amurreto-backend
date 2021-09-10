@@ -52,10 +52,16 @@ function getAmountPriceResults(file = "totalResults") {
 
     const finalBalanceAmount = endNetProfitPrice;
 
+    const netProfitPerc = getIncreasedPerc(
+        startNetProfitPrice,
+        finalBalanceAmount
+    );
+
     const dataForTotalResults = {
         startNetProfitPrice,
         finalBalanceAmount,
         netProfitAmount,
+        netProfitPerc,
         startQuotePrice,
         sellMarketPrice: "$$sellMarketPrice",
     };
@@ -64,6 +70,7 @@ function getAmountPriceResults(file = "totalResults") {
         startNetProfitPrice,
         finalBalanceAmount,
         grossProfitAmount,
+        netProfitPerc,
         netProfitAmount,
         startQuotePrice,
     };
