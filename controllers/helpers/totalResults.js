@@ -40,11 +40,8 @@ function getAmountPriceResults(file = "totalResults") {
     // $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
     // };
 
-    const totalFeeAmount = getTotalFee("amount");
-
     const grossProfitAmount = { $subtract: [endQuotePrice, startQuotePrice] };
-    // if grossProfitAmount is NEGATIVE, then FEES is ADDED. e.g -1.00 - 0.40 (total fee) ==> - plus - equal +
-    // if grossProfitAmount is POSITIVE, then FEES is SUBTRACTED. e.g 1.00 - 0.40 (total fee) + plus - equal -
+
     const startNetProfitPrice = {
         $subtract: [startQuotePrice, startFeeAmount],
     };
@@ -56,16 +53,18 @@ function getAmountPriceResults(file = "totalResults") {
     const finalBalanceAmount = endNetProfitPrice;
 
     const dataForTotalResults = {
+        startNetProfitPrice,
+        finalBalanceAmount,
         netProfitAmount,
         startQuotePrice,
         sellMarketPrice: "$$sellMarketPrice",
-        finalBalanceAmount,
     };
 
     const dataForDbTrades = {
+        startNetProfitPrice,
+        finalBalanceAmount,
         grossProfitAmount,
         netProfitAmount,
-        finalBalanceAmount,
         startQuotePrice,
     };
 
@@ -138,9 +137,9 @@ async function getTotalResults() {
 
     const finalTotalResult = allOrdersList.map((currResults) => {
         const {
+            startNetProfitPrice,
             finalBalanceAmount,
             netProfitAmount,
-            startQuotePrice,
             sellMarketPrice,
         } = currResults;
 
@@ -153,7 +152,7 @@ async function getTotalResults() {
         }
 
         const netProfitPerc = getIncreasedPerc(
-            startQuotePrice,
+            startNetProfitPrice,
             finalBalanceAmount
         );
 
@@ -179,7 +178,7 @@ async function getTotalResults() {
     };
 }
 
-// getTotalResults().then(console.log);
+getTotalResults().then(console.log);
 
 module.exports = {
     getAmountPriceResults,

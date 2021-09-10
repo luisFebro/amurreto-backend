@@ -28,6 +28,7 @@ async function getLiveCandle(options = {}) {
         baseAmount: buyBaseAmount,
         marketPrice: buyMarketPrice,
     });
+
     const endQuotePrice = getQuotePrice({
         baseAmount: buyBaseAmount,
         marketPrice: livePrice,
@@ -47,23 +48,28 @@ async function getLiveCandle(options = {}) {
     });
     // END FEE
 
+    const startNetProfitPrice = Number(
+        (startQuotePrice - buyFeeAmount).toFixed(2)
+    );
+    const endNetProfitPrice = Number(
+        (endQuotePrice - sellFeeAmount).toFixed(2)
+    );
+
     const { grossProfitAmount, netProfitAmount } = getProfitAmount({
         endQuotePrice,
         startQuotePrice,
-        totalFeeAmount,
+        startNetProfitPrice,
+        endNetProfitPrice,
     });
 
-    // IMPORTANT: the actual balance in the exchange is higher since the liveCandle already discount buy/sell fees all together so that we can have an accurate profit amount.
-    // And yet, the actual balance in exchange can differ a bit.
-    const balanceAmount = Number(
-        (startQuotePrice + netProfitAmount).toFixed(2)
-    );
+    // IMPORTANT: the actual balance while in a pending live transaction in the exchange is higher since the liveCandle already discount buy/sell fees all together so that we can have an accurate profit amount.
+    const balanceAmount = endNetProfitPrice;
 
     const grossBalanceAmount = Number(
         (startQuotePrice + grossProfitAmount).toFixed(2)
     );
 
-    const netProfitPerc = getIncreasedPerc(startQuotePrice, balanceAmount);
+    const netProfitPerc = getIncreasedPerc(startNetProfitPrice, balanceAmount);
 
     if (onlyNetProfitPerc)
         return Number.isNaN(netProfitPerc) ? false : netProfitPerc; // sometimes it returns NaN
@@ -71,6 +77,7 @@ async function getLiveCandle(options = {}) {
     return {
         liveCandleClose: livePrice,
         startQuotePrice,
+        startNetProfitPrice,
         fee: {
             perc: totalFeePerc,
             amount: totalFeeAmount,
@@ -95,13 +102,18 @@ function getFeeTotal({ buyVal, sellVal }) {
     return Number((buyVal + sellVal).toFixed(2));
 }
 
-function getProfitAmount({ endQuotePrice, startQuotePrice, totalFeeAmount }) {
+function getProfitAmount({
+    endQuotePrice,
+    startQuotePrice,
+    startNetProfitPrice,
+    endNetProfitPrice,
+}) {
     const grossProfitAmount = Number(
         (endQuotePrice - startQuotePrice).toFixed(2)
     );
 
     const netProfitAmount = Number(
-        (grossProfitAmount - totalFeeAmount).toFixed(2)
+        (startNetProfitPrice - endNetProfitPrice).toFixed(2)
     );
 
     return {
