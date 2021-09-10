@@ -75,7 +75,9 @@ function strategiesHandler(allSignals = [], options = {}) {
     const firstFoundValidStrategy = allSignals.find(
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
     );
+
     if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
+    const foundStrategy = firstFoundValidStrategy.strategy;
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     // const isSellSignal = !isBuySignal;
@@ -85,7 +87,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const onlyProfitStopLoss =
         firstFoundValidStrategy.strategy.includes("Profit");
 
-    // CHECK PROFIT STRATAGY
+    // CHECK PROFIT STRATEGY
     const isAtrStrategy = profitStrategy === "atr";
     if (!onlyProfitStopLoss && isAtrStrategy) return DEFAULT_WAIT_SIGNAL;
     // END CHECK PROFIT STRATAGY
@@ -101,9 +103,10 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     const isUnreliableBuySignal = handleUnreliableBuySignal({
         isBuy: isBuySignal,
-        foundStrategy: firstFoundValidStrategy,
+        foundStrategy,
         isCurrReliable: isCurrCandleReliable,
     });
+
     if (isUnreliableBuySignal) return DEFAULT_WAIT_SIGNAL;
 
     return firstFoundValidStrategy;

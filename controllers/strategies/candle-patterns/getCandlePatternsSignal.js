@@ -10,7 +10,7 @@ async function getCandlePatternsSignal({
     const oneCandleType = liveCandle.oneCandleType || " ";
 
     // THREE CANDLES
-    const runThunderingChange = twoCandleType.includes("thunderingChange");
+    const runThunderingChange = threeCandleType.includes("thunderingChange");
     if (runThunderingChange) {
         return {
             signal: "BUY",
