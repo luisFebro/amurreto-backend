@@ -24,15 +24,18 @@ function getTotalFee(type = "amount") {
 }
 
 function getAmountPriceResults(file = "totalResults") {
-    // for better precision in price and being in sync with DB value which was registered, now we fetch directly that price from quote currency
     const startQuotePrice = {
         $last: "$$elem.buyPrices.amounts.quote",
     };
-    // $trunc: [{ $multiply: ["$$buyBasePrice", "$$buyMarketPrice"] }, 2],
-    // };
+    const startFeeAmount = {
+        $last: "$$elem.buyPrices.fee.amount",
+    };
 
     const endQuotePrice = {
         $last: "$$elem.sellPrices.amounts.quote",
+    };
+    const endFeeAmount = {
+        $last: "$$elem.sellPrices.fee.amount",
     };
     // $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
     // };
@@ -42,13 +45,15 @@ function getAmountPriceResults(file = "totalResults") {
     const grossProfitAmount = { $subtract: [endQuotePrice, startQuotePrice] };
     // if grossProfitAmount is NEGATIVE, then FEES is ADDED. e.g -1.00 - 0.40 (total fee) ==> - plus - equal +
     // if grossProfitAmount is POSITIVE, then FEES is SUBTRACTED. e.g 1.00 - 0.40 (total fee) + plus - equal -
+    const startNetProfitPrice = {
+        $subtract: [startQuotePrice, startFeeAmount],
+    };
+    const endNetProfitPrice = { $subtract: [endQuotePrice, endFeeAmount] };
     const netProfitAmount = {
-        $subtract: [grossProfitAmount, totalFeeAmount],
+        $subtract: [startNetProfitPrice, endNetProfitPrice],
     };
 
-    const finalBalanceAmount = {
-        $add: [startQuotePrice, netProfitAmount],
-    };
+    const finalBalanceAmount = endNetProfitPrice;
 
     const dataForTotalResults = {
         netProfitAmount,
