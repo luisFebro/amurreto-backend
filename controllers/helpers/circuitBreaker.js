@@ -45,7 +45,7 @@ async function needCircuitBreaker() {
         },
     ]);
 
-    const data = lastTransactionData && lastTransactionData[0].list;
+    const data = lastTransactionData[0] && lastTransactionData[0].list;
     if (!data) return false;
 
     const lastSellData = data.sellPrices.slice(-1)[0];
