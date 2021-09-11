@@ -180,7 +180,7 @@ async function getTotalResults() {
     };
 }
 
-getTotalResults().then(console.log);
+// getTotalResults().then(console.log);
 
 module.exports = {
     getAmountPriceResults,

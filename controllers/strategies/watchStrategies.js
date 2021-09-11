@@ -50,6 +50,7 @@ async function watchStrategies(options = {}) {
         profitTracker,
         profitStrategy,
     });
+
     console.log("finalSignal", finalSignal);
     return finalSignal;
 }

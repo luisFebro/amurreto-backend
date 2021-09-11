@@ -10,7 +10,7 @@ const {
     cancelDbOrderBack,
     checkAlreadyExecutedStrategy,
 } = require("./dbOrders");
-const AmurretoOrders = require("../../models/Orders");
+const LiveCandleHistory = require("../../models/LiveCandleHistory");
 const { TAKER_MARKET_FEE } = require("../fees");
 const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
@@ -43,7 +43,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, { status: "pending", side }),
-        checkOpeningOrderNotDoneExchange({ symbol, maxIterateCount: 0 }),
+        checkOpeningOrderNotDoneExchange({ symbol, maxIterateCount: 5 }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
         needCircuitBreaker(),
         // findTransactionSidePerc({ symbol }),
@@ -66,7 +66,9 @@ async function createOrderBySignal(signalData = {}, options = {}) {
     if (condBuy) {
         return await createOrderBack({
             side: "BUY",
-            type: "MARKET",
+            type: "LIMIT",
+            offsetPrice: 600,
+            forcePrice: true, // force price for ask pricing which is the most favorable price of sellers with a offset to get a bargain under the current price
             symbol,
             strategy,
             capitalPositionPerc,
@@ -150,6 +152,7 @@ async function createOrderBack(payload = {}) {
 
     // REGISTRATION DB AND EXCHANGE
     if (IS_PROD) {
+        // IS_PROD
         await novadax
             .createOrder(
                 symbol,
@@ -179,13 +182,26 @@ async function createOrderBack(payload = {}) {
             fallback,
         });
 
+        const isOpenOrderInExchange =
+            mostRecentData && mostRecentData.status === "PROCESSING";
+        // do not record on DB as long as the order is not filled in the exchange.
+        if (isOpenOrderInExchange) return null;
         await setDbOrderBack({ side, mostRecentData, moreData });
     }
     // END REGISTRATION DB AND EXCHANGE
 
     return null;
 }
-// createOrderBack()
+// createOrderBack({
+//     side: "BUY",
+//     type: "LIMIT",
+//     offsetPrice: 600,
+//     forcePrice: true,
+//     symbol: "BTC/BRL",
+//     strategy: "fuck you",
+//     capitalPositionPerc: 100,
+//     transactionPositionPerc: 100,
+// })
 // .then(console.log)
 
 /*
@@ -206,12 +222,15 @@ async function cancelOrderBack(payload = {}) {
 
     const [dataExchange] = await Promise.all([
         novadax.cancelOrder(finalOrderId),
-        cancelDbOrderBack(timestamp, { symbol, side: foundOrder.side }),
+        cancelDbOrderBack(timestamp, {
+            symbol,
+            side: foundOrder && foundOrder.side,
+        }),
     ]);
 
     return dataExchange.info; // returns { result: true }
 }
-// cancelOrderBack({ symbol: "BTC/BRL", timestamp: 1626109430265 })
+// cancelOrderBack({ symbol: "BTC/BRL", cancelLast: true })
 // .then(console.log)
 
 async function getOrdersList(payload = {}) {
@@ -305,16 +324,20 @@ async function getOrdersList(payload = {}) {
 
     return treatListData(data);
 }
-// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 5 })
-// .then(console.log)
+getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 2 }).then(
+    console.log
+);
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
 // .then(console.log)
 
-async function checkOpeningOrderNotDoneExchange({ symbol, maxIterateCount }) {
+async function checkOpeningOrderNotDoneExchange({
+    symbol,
+    maxIterateCount = 1,
+}) {
     // verify if there is open order
     // after detect the open order, the order is cancelled and new order will be made after the algo iterate the below number of time.
     // if maxIterateCount is zero, the opening order is cancelled in the next algo iteration and attempt a new order if any buy/sell signal
-    // e.g if the algo is updating every 15 minutes and maxIterateCount is equal to 1, then first makes the initial that there is open order (1 times), then it iterates more 1 time (30 minutes) and then cancel the current opening order to attempt a new order
+    // e.g if the algo is updating every 15 minutes and maxIterateCount is equal to 1, then first makes the initial that there is open order (1 times), and then cancel the current opening order to attempt a new order
     const openOrdersList = await getOrdersList({
         symbol,
         type: "open",
@@ -324,29 +347,44 @@ async function checkOpeningOrderNotDoneExchange({ symbol, maxIterateCount }) {
 
     if (gotOpenOrder) {
         const { side, timestamp } = openOrdersList[0];
-        const list = side === "BUY" ? "buyPrices" : "sellPrices";
+        // const list = side === "BUY" ? "buyPrices" : "sellPrices";
 
-        const dataMaxIterationCount = await AmurretoOrders.findOne({
-            symbol,
-            [`${list}.timestamp`]: timestamp,
-        }).select("_id checkPendingOrderCount");
+        const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+        const dataMaxIterationCount = await LiveCandleHistory.findById(
+            LIVE_CANDLE_ID
+        ).select("_id checkPendingOrderCount");
         const priorMaxIterationCount = !dataMaxIterationCount
             ? 0
             : dataMaxIterationCount.checkPendingOrderCount || 0;
-        const needCancelOrder = maxIterateCount === priorMaxIterationCount;
+        console.log("priorMaxIterationCount", priorMaxIterationCount);
+
+        const incIteratorCounter = async (status) => {
+            let dataToUpdate = { $inc: { checkPendingOrderCount: 1 } };
+            if (!status) dataToUpdate = { checkPendingOrderCount: 0 };
+
+            await LiveCandleHistory.findByIdAndUpdate(
+                LIVE_CANDLE_ID,
+                dataToUpdate
+            );
+        };
+
+        const needCancelOrder = maxIterateCount === priorMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
         if (needCancelOrder) {
-            await cancelOrderBack({ symbol, timestamp });
+            await Promise.all([
+                cancelOrderBack({ symbol, timestamp }),
+                incIteratorCounter(false),
+            ]);
             return false;
         }
 
-        const dataToUpdate = { $inc: { checkPendingOrderCount: 1 } };
-        await AmurretoOrders.findOneAndUpdate(
-            {
-                symbol,
-                [`${list}.timestamp`]: timestamp,
-            },
-            dataToUpdate
-        );
+        await incIteratorCounter(true);
+
+        /*
+        {
+            symbol,
+            [`${list}.timestamp`]: timestamp,
+        },
+         */
     }
 
     return gotOpenOrder;
