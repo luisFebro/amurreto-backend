@@ -137,7 +137,7 @@ async function getTotalResults() {
 
     const finalTotalResult = allOrdersList.map((currResults) => {
         const {
-            startNetProfitPrice,
+            startQuotePrice,
             finalBalanceAmount,
             netProfitAmount,
             sellMarketPrice,

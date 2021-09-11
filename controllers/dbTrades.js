@@ -149,7 +149,6 @@ async function getPendingListData({ tradeData }) {
 
         const {
             startQuotePrice,
-            startNetProfitPrice,
             liveCandleClose,
             fee: liveFee,
             liveResult,
@@ -181,8 +180,7 @@ async function getPendingListData({ tradeData }) {
                 netProfitPerc,
                 finalBalanceAmount: balanceAmount,
                 finalGrossBalanceAmount: grossBalanceAmount,
-                startQuotePrice, // gross
-                startNetProfitPrice, // net
+                startQuotePrice,
             },
         });
     };

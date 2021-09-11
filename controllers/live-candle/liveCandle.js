@@ -77,7 +77,6 @@ async function getLiveCandle(options = {}) {
     return {
         liveCandleClose: livePrice,
         startQuotePrice,
-        startNetProfitPrice,
         fee: {
             perc: totalFeePerc,
             amount: totalFeeAmount,
