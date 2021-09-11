@@ -1,6 +1,34 @@
 const AmurretoOrders = require("../../models/Orders");
 const { pushFIFO } = require("../../utils/mongodb/fifo");
+const LiveCandleHistory = require("../../models/LiveCandleHistory");
 // const getPercentage = require("../utils/number/perc/getPercentage");
+
+async function recordFinalDbOrder({
+    needLimitTypeOnly = false,
+    side,
+    mostRecentData,
+    moreData,
+}) {
+    const handleLimitTypeOnly = async () => {
+        if (!needLimitTypeOnly) return null;
+        const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+
+        const dataToUpdate = {
+            "pendingLimitOrder.signal": null,
+            "pendingLimitOrder.count": 0,
+        };
+
+        return await LiveCandleHistory.findByIdAndUpdate(
+            LIVE_CANDLE_ID,
+            dataToUpdate
+        );
+    };
+
+    return await Promise.all([
+        setDbOrderBack({ side, mostRecentData, moreData }),
+        handleLimitTypeOnly(),
+    ]);
+}
 
 async function setDbOrderBack({ side, mostRecentData, moreData }) {
     const {
@@ -238,7 +266,7 @@ async function getDataTransaction({ symbol, side }) {
 
 module.exports = {
     checkAlreadyExecutedStrategy,
-    setDbOrderBack,
+    recordFinalDbOrder,
     cancelDbOrderBack,
     getOrderTransactionPerc,
     findTransactionSidePerc,

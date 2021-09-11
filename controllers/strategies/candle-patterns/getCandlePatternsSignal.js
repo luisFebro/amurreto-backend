@@ -64,7 +64,7 @@ async function getCandlePatternsSignal({
     // END TWO CANDLES
 
     // ONE CANDLE
-    const isNearSupport = lowerWing20 <= 3500; // allow run this only near the support
+    const isNearSupport = lowerWing20 <= 7000; // 3500 allow run this only near the support
     const runSoloPowerThor =
         isNearSupport && oneCandleType.includes("soloThor");
     if (runSoloPowerThor) {

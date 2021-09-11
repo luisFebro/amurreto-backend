@@ -307,7 +307,7 @@ async function getCandlesticksData(payload = {}) {
     });
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION
-    await createOrderBySignal(finalSignalData, { symbol });
+    await createOrderBySignal({ symbol, ...finalSignalData });
 
     // const lastIsOverbought = lastRsi >= 70;
     const indicators = {

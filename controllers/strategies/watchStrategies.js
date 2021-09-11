@@ -43,13 +43,29 @@ async function watchStrategies(options = {}) {
     const profitStrategy = allStrategySignals[0].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
-    const finalSignal = strategiesHandler(allStrategySignals, {
+    const essentialData = strategiesHandler(allStrategySignals, {
         isCurrCandleReliable,
         sequenceStreaks,
         liveCandle,
         profitTracker,
         profitStrategy,
     });
+
+    // TYPE ORDER HANDLING
+    const isCurrSideBullish = liveCandle.isBullish;
+    const needLimitType =
+        isCurrSideBullish || (essentialData && essentialData.signal === "BUY");
+    const orderType = needLimitType ? "LIMIT" : "MARKET";
+    const offsetPrice = needLimitType ? 600 : 0;
+    const forcePrice = needLimitType;
+    // END TYPE ORDER HANDLING
+
+    const finalSignal = {
+        ...essentialData,
+        offsetPrice, // some difference from the current market price.
+        forcePrice, // force price for ask pricing which is the most favorable price of sellers with a offset to get a bargain under the current price
+        type: orderType,
+    };
 
     console.log("finalSignal", finalSignal);
     return finalSignal;
