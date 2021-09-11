@@ -398,9 +398,10 @@ async function checkOpeningOrderNotDoneExchange({
 
     const isPendingTypeLimit = Boolean(dbMaxIterationCount);
 
-    // need to refuse if no pending order in exchange, if null side (which means it is a WAIT signal) or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
+    // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
     const refuseToContinue =
-        !gotOpenOrderExchange || orderType === "MARKET" || !side; // if null, it means WAIT signal
+        !gotOpenOrderExchange ||
+        (!gotOpenOrderExchange && orderType === "MARKET");
     if (refuseToContinue)
         return {
             gotOpenOrderExchange,
@@ -413,9 +414,15 @@ async function checkOpeningOrderNotDoneExchange({
         // const list = side === "BUY" ? "buyPrices" : "sellPrices";
 
         const incIteratorCounter = async (status) => {
+            const signalInclusion = !side
+                ? {}
+                : {
+                      "pendingLimitOrder.signal": side,
+                  };
+
             let dataToUpdate = {
-                "pendingLimitOrder.signal": side,
                 $inc: { "pendingLimitOrder.count": 1 },
+                ...signalInclusion,
             };
             if (!status)
                 dataToUpdate = {
