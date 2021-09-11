@@ -52,16 +52,10 @@ function getAmountPriceResults(file = "totalResults") {
 
     const finalBalanceAmount = endNetProfitPrice;
 
-    const netProfitPerc = getIncreasedPerc(
-        startNetProfitPrice,
-        finalBalanceAmount
-    );
-
+    // since the getPercentage Increment is a method detached from DB, it can not be used here
     const dataForTotalResults = {
         startNetProfitPrice,
         finalBalanceAmount,
-        netProfitAmount,
-        netProfitPerc,
         startQuotePrice,
         sellMarketPrice: "$$sellMarketPrice",
     };
@@ -70,7 +64,6 @@ function getAmountPriceResults(file = "totalResults") {
         startNetProfitPrice,
         finalBalanceAmount,
         grossProfitAmount,
-        netProfitPerc,
         netProfitAmount,
         startQuotePrice,
     };
@@ -159,7 +152,7 @@ async function getTotalResults() {
         }
 
         const netProfitPerc = getIncreasedPerc(
-            startNetProfitPrice,
+            startQuotePrice,
             finalBalanceAmount
         );
 

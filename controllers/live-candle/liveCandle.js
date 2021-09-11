@@ -69,7 +69,7 @@ async function getLiveCandle(options = {}) {
         (startQuotePrice + grossProfitAmount).toFixed(2)
     );
 
-    const netProfitPerc = getIncreasedPerc(startNetProfitPrice, balanceAmount);
+    const netProfitPerc = getIncreasedPerc(startQuotePrice, balanceAmount);
 
     if (onlyNetProfitPerc)
         return Number.isNaN(netProfitPerc) ? false : netProfitPerc; // sometimes it returns NaN
