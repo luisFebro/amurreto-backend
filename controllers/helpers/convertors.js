@@ -19,12 +19,12 @@ async function getConvertedMarketPrice(symbol = "BTC/BRL", options = {}) {
 // getConvertedMarketPrice("BTC/BRL", { quote: 44.03, side: "sell" })
 // .then(console.log)
 
-function getConvertedPrice(price, options = {}) {
+function getConvertedPrice(marketPrice, options = {}) {
     const { base, quote } = options;
     const toBase = Boolean(quote);
-    if (toBase) return (Number(quote) / Number(price)).toFixed(8);
+    if (toBase) return (Number(quote) / Number(marketPrice)).toFixed(8);
     // crypto value fraction need to have all decimals
-    else return (Number(base) * Number(price)).toFixed(2);
+    else return (Number(base) * Number(marketPrice)).toFixed(2);
 }
 
 function getBaseQuoteCurrencyFromSymbol(pair = "BTC/BRL", options = {}) {

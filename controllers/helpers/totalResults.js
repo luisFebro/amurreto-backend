@@ -1,6 +1,5 @@
 const AmurretoOrders = require("../../models/Orders");
 const reduceQuery = require("../../utils/mongodb/reduceQuery");
-// const { TAKER_MARKET_FEE } = require("../fees");
 const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 
 // LESSON: do not confuse the perc fee with actual perc amount when adding both buy/sell fees

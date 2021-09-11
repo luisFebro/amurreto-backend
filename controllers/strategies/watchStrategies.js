@@ -3,6 +3,7 @@ const watchProfitTracker = require("./profit-tracker/profitTracker");
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
 const getLowerWingSignal = require("./lower-wing/getLowerWingSignal");
+const { checkCondLimitOrder } = require("../fees");
 // const analyseEmaSignals = require("./ema/analyseEmaSignals");
 // end strategy types
 
@@ -52,9 +53,12 @@ async function watchStrategies(options = {}) {
     });
 
     // TYPE ORDER HANDLING
-    const isCurrSideBullish = liveCandle.isBullish;
-    const needLimitType =
-        isCurrSideBullish || (essentialData && essentialData.signal === "BUY");
+    const currCandleSize = liveCandle.candleBodySize;
+    const needLimitType = checkCondLimitOrder({
+        signal: essentialData && essentialData.signal,
+        currCandleSize,
+    });
+
     const orderType = needLimitType ? "LIMIT" : "MARKET";
     const offsetPrice = needLimitType ? 600 : 0;
     const forcePrice = needLimitType;
@@ -75,7 +79,7 @@ async function watchStrategies(options = {}) {
 function strategiesHandler(allSignals = [], options = {}) {
     const {
         isCurrCandleReliable,
-        liveCandle,
+        liveCandle = {},
         profitTracker,
         profitStrategy,
         // sequenceStreaks,

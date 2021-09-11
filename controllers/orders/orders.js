@@ -1,7 +1,5 @@
 const novadax = require("../exchangeAPI");
-const getPercentage = require("../../utils/number/perc/getPercentage");
 const sortValue = require("../../utils/number/sortNumbers");
-const { getConvertedPrice } = require("../helpers/convertors");
 const { getTradingSymbolBack } = require("../basicInfo");
 const {
     getOrderTransactionPerc,
@@ -12,7 +10,7 @@ const {
     checkAlreadyExecutedStrategy,
 } = require("./dbOrders");
 const LiveCandleHistory = require("../../models/LiveCandleHistory");
-const { TAKER_MARKET_FEE } = require("../fees");
+const { getTransactionFees } = require("../fees");
 const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
@@ -321,22 +319,20 @@ async function getOrdersList(payload = {}) {
                     Number(info.value) ||
                     fallbackQuote;
 
-                const filledFee = isBuy
-                    ? getConvertedPrice(price, {
-                          base: info.filledFee,
-                      })
-                    : Number(info.filledFee);
-
-                const feePerc = isMarket
-                    ? TAKER_MARKET_FEE
-                    : getPercentage(quote, Number(filledFee));
+                const { feeAmount, feePerc } = getTransactionFees({
+                    isBuy,
+                    isMarket,
+                    marketPrice: price,
+                    quotePrice: quote,
+                    filledFee: info.filledFee,
+                });
 
                 return {
                     ...info,
                     timestamp,
                     // convert buy crypto fee to quote currency so that it makes simple to calculate total buy-sell fees. Sell side doesn't require because it is already in quote currency
                     price,
-                    filledFee,
+                    filledFee: feeAmount,
                     feePerc,
                     quote,
                     base,
