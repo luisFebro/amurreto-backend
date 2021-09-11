@@ -30,7 +30,7 @@ async function getLiveCandle(options = {}) {
         currCandleSize,
     });
 
-    const orderType = needLimitOrder ? MAKER_LIMIT_FEE : TAKER_MARKET_FEE;
+    const orderTypePerc = needLimitOrder ? MAKER_LIMIT_FEE : TAKER_MARKET_FEE;
 
     const candlePriceTypes = ["close", "highest", "lowest"];
     if (!candlePriceTypes.includes(candlePriceType))
@@ -55,16 +55,26 @@ async function getLiveCandle(options = {}) {
     });
 
     // FEE
-    const sellFeeAmount = getPercentage(endQuotePrice, TAKER_MARKET_FEE, {
+    const sellFeeAmount = getPercentage(endQuotePrice, orderTypePerc, {
         mode: "value",
     });
+
     const totalFeeAmount = getFeeTotal({
         buyVal: buyFeeAmount,
         sellVal: sellFeeAmount,
     });
+
+    const buyFeePerc = getPercentage(startQuotePrice, orderTypePerc, {
+        mode: "perc",
+    });
+
+    const sellFeePerc = getPercentage(endQuotePrice, orderTypePerc, {
+        mode: "perc",
+    });
+
     const totalFeePerc = getFeeTotal({
-        buyVal: orderType,
-        sellVal: orderType,
+        buyVal: buyFeePerc,
+        sellVal: sellFeePerc,
     });
     // END FEE
 
