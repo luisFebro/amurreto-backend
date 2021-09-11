@@ -151,6 +151,7 @@ async function getTotalResults() {
             };
         }
 
+        // netProfitPerc takes initial investiment and subtract with final balance which discounts the fees in both buy/sell prices.
         const netProfitPerc = getIncreasedPerc(
             startQuotePrice,
             finalBalanceAmount

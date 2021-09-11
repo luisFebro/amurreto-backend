@@ -42,7 +42,6 @@ function getTrackerStrategy(profitTracker) {
         diffMax,
         netPerc,
         currEmaTrend,
-        diffVolat,
         // minPerc,
     } = profitTracker;
 
@@ -50,8 +49,8 @@ function getTrackerStrategy(profitTracker) {
     // FACTS
     // 2% is about -3.000 in price including 0.60% buy/sell fees.
     // 0.4 of profit is the minimum to breakeven, thus not earning or losing anything.
-    const MAX_STOP_LOSS_PERC = 2.5;
-    const maxProfitStopLoss = !isProfit && diffVolat >= MAX_STOP_LOSS_PERC;
+    const MAX_STOP_LOSS_PERC = -2.5;
+    const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
@@ -87,7 +86,7 @@ function getTrackerStrategy(profitTracker) {
         };
     }
     // END MIN AND MAX DOWNTREND PROFIT
-    const highBearReversalZone = maxPerc >= 0 && maxPerc < 0.45;
+    const highBearReversalZone = maxPerc >= 0 && maxPerc < 0.5;
     const MAX_DIFF_START_PROFIT = highBearReversalZone ? 0.5 : 1.5;
     const MAX_DIFF_MID_PROFIT = 1;
     const MAX_DIFF_LONG_PROFIT = 0.5;
@@ -154,6 +153,6 @@ module.exports = getProfitTrackerSignal;
   netPerc: -2.02,
   minPerc: -2.03,
   diffMax: 2.31,
-  diffVolat: 2.32 }
+ }
 
  */

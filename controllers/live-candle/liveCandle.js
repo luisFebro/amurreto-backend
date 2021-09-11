@@ -62,13 +62,13 @@ async function getLiveCandle(options = {}) {
         endNetProfitPrice,
     });
 
-    // IMPORTANT: the actual balance while in a pending live transaction in the exchange is higher since the liveCandle already discount buy/sell fees all together so that we can have an accurate profit amount.
     const balanceAmount = endNetProfitPrice;
 
     const grossBalanceAmount = Number(
         (startQuotePrice + grossProfitAmount).toFixed(2)
     );
 
+    // netProfitPerc takes initial investiment and subtract with final balance which discounts the fees in both buy/sell prices.
     const netProfitPerc = getIncreasedPerc(startQuotePrice, balanceAmount);
 
     if (onlyNetProfitPerc)

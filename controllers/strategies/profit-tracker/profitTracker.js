@@ -102,7 +102,8 @@ async function getLiveProfitsPerc() {
         netPerc,
         minPerc,
         diffMax: Math.abs((maxPerc - netPerc).toFixed(2)),
-        diffVolat: Math.abs((maxPerc - minPerc).toFixed(2)),
+        // diffVolat detected wrongly near the profit zone.
+        // diffVolat: Math.abs((maxPerc - minPerc).toFixed(2)),
         atrLimit: profitTracker && profitTracker.atrLimit,
         atrUpperLimit: profitTracker && profitTracker.atrUpperLimit,
         atrLowerLimit: profitTracker && profitTracker.atrLowerLimit,
@@ -111,8 +112,7 @@ async function getLiveProfitsPerc() {
 
 async function registerProfitTracker(data = {}, options = {}) {
     const { atrLimits = {} } = options;
-    const { transactionId, maxPerc, netPerc, minPerc, diffMax, diffVolat } =
-        data;
+    const { transactionId, maxPerc, netPerc, minPerc, diffMax } = data;
 
     // compare so that only the first atr parameters are registered, when buying...
     const gotPriorDbAtr = Boolean(data.atrLimit);
@@ -130,7 +130,6 @@ async function registerProfitTracker(data = {}, options = {}) {
         "profitTracker.maxPerc": maxPerc,
         "profitTracker.netPerc": netPerc,
         "profitTracker.minPerc": minPerc,
-        "profitTracker.diffVolat": diffVolat,
         ...atrUpdate,
     };
 
