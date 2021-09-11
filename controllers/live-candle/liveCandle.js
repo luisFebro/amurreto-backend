@@ -112,7 +112,7 @@ function getProfitAmount({
     );
 
     const netProfitAmount = Number(
-        (startNetProfitPrice - endNetProfitPrice).toFixed(2)
+        (endNetProfitPrice - startNetProfitPrice).toFixed(2)
     );
 
     return {

@@ -47,7 +47,7 @@ function getAmountPriceResults(file = "totalResults") {
     };
     const endNetProfitPrice = { $subtract: [endQuotePrice, endFeeAmount] };
     const netProfitAmount = {
-        $subtract: [startNetProfitPrice, endNetProfitPrice],
+        $subtract: [endNetProfitPrice, startNetProfitPrice],
     };
 
     const finalBalanceAmount = endNetProfitPrice;
@@ -57,6 +57,7 @@ function getAmountPriceResults(file = "totalResults") {
         startNetProfitPrice,
         finalBalanceAmount,
         startQuotePrice,
+        netProfitAmount,
         sellMarketPrice: "$$sellMarketPrice",
     };
 
