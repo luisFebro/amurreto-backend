@@ -53,11 +53,11 @@ async function setHistoricalLiveCandle({
     // return { status: true, reason: "thunderingChange" }
     // it is here because use percentage from live candle
     const candleReliability = checkLiveCandleReliability({
-        currTimeSidesStreak: sidesStreak,
-        lastTimeCandle: history && history[0],
-        bullSidePerc,
-        bearSidePerc,
         currBodySize,
+        currTimeSidesStreak: sidesStreak,
+        bullSidePerc,
+        // lastTimeCandle: history && history[0],
+        // bearSidePerc,
     });
 
     return candleReliability;

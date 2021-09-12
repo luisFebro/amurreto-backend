@@ -46,9 +46,6 @@ function getTrackerStrategy(profitTracker) {
     } = profitTracker;
 
     // MAX STOP LOSS
-    // FACTS
-    // 2% is about -3.000 in price including 0.60% buy/sell fees.
-    // 0.4 of profit is the minimum to breakeven, thus not earning or losing anything.
     const MAX_STOP_LOSS_PERC = -2.5;
     const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {

@@ -5,10 +5,9 @@ function checkLiveCandleReliability({
     bullSidePerc = 0,
     currBodySize,
     currTimeSidesStreak = [],
-    // bearSidePerc = 0,
-    // lastTimeCandle,
 }) {
     const currSide = currTimeSidesStreak && currTimeSidesStreak[0];
+
     if (currSide === "bear") {
         return {
             status: false,
@@ -19,7 +18,7 @@ function checkLiveCandleReliability({
     const totalSides = currTimeSidesStreak.length;
 
     // cond 1
-    const gotAlmostAllSides = totalSides === 5; // total is 6
+    const gotAlmostAllSides = totalSides === 5; // total is 6 but the last actual last only one minute and may not be detected
     const gotLastCandleBullish =
         currSide === "bull" || currTimeSidesStreak[0] === "bull";
     if (gotAlmostAllSides && gotLastCandleBullish) {
