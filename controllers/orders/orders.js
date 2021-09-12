@@ -40,7 +40,7 @@ async function createOrderBySignal(signalData = {}) {
         symbol,
         orderType: type,
         side,
-        maxIterateCount: 5,
+        maxIterateCount: 2,
     });
 
     const { gotOpenOrderExchange, isPendingTypeLimit, recordedSignal } =

@@ -86,8 +86,16 @@ function getTrackerStrategy(profitTracker) {
         };
     }
     // END MIN AND MAX DOWNTREND PROFIT
-    const highBearReversalZone = maxPerc >= 0 && maxPerc < 0.5;
-    const MAX_DIFF_START_PROFIT = highBearReversalZone ? 0.5 : 1.5;
+    const handleZones = () => {
+        const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.5;
+        const highBearReversalZoneB = maxPerc >= 1 && maxPerc < 1.2;
+        if (highBearReversalZoneA) return 0.5;
+        if (highBearReversalZoneB) return 0.3;
+
+        return 1.5;
+    };
+
+    const MAX_DIFF_START_PROFIT = handleZones();
     const MAX_DIFF_MID_PROFIT = 1;
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
