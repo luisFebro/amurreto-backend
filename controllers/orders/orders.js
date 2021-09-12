@@ -217,12 +217,8 @@ async function createOrderBack(payload = {}) {
                     );
             });
 
-        const isOpenOrderInExchange =
-            mostRecentData && mostRecentData.status === "PROCESSING";
-        // do not record on DB as long as the order is not filled in the exchange.
-        if (isOpenOrderInExchange) return null;
-
         // MARKET TYPE RECORD
+        if (type !== "MARKET") return null;
         await recordFinalDbOrder({ side, mostRecentData, moreData });
     }
     // END REGISTRATION DB AND EXCHANGE
@@ -427,7 +423,6 @@ async function checkOpeningOrderNotDoneExchange({
         Boolean(dbMaxIterationCount);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
-    console.log("!gotOpenOrderExchange", !gotOpenOrderExchange);
     const refuseToContinue =
         !gotOpenOrderExchange ||
         (!gotOpenOrderExchange && orderType === "MARKET");
