@@ -43,20 +43,19 @@ async function createOrderBySignal(signalData = {}) {
         maxIterateCount: 5,
     });
 
-    const { gotOpenOrderExchange, isPendingTypeLimit, recordedSignal } =
+    const { gotOpenOrderExchange, needRecordOnly, recordedSignal } =
         openOrderExchange;
 
     // if there is no order in exchange and there is a count available, it means a pending transaction was recently filled and ready to be recorded in the DB.
     // note that, after registration, the count and signal are set to 0 and null respectively.
-    const needOnlyRecordLimitOrderDB =
-        !gotOpenOrderExchange && isPendingTypeLimit;
+    const needOnlyRecordLimitOrderDB = !gotOpenOrderExchange && needRecordOnly;
     const needRecordLimitBuyOnly =
         needOnlyRecordLimitOrderDB && recordedSignal === "BUY";
     const needRecordLimitSellOnly =
         needOnlyRecordLimitOrderDB && recordedSignal === "SELL";
 
-    const validSide = side || isPendingTypeLimit;
-    const validStrategy = strategy || isPendingTypeLimit;
+    const validSide = side || needRecordOnly;
+    const validStrategy = strategy || needRecordOnly;
 
     if (!validSide || !validStrategy || IS_DEV) return null;
 
@@ -380,16 +379,25 @@ async function checkOpeningOrderNotDoneExchange({
     // after detect the open order, the order is cancelled and new order will be made after the algo iterate the below number of time.
     // if maxIterateCount is zero, the opening order is cancelled in the next algo iteration and attempt a new order if any buy/sell signal
     // e.g if the algo is updating every 15 minutes and maxIterateCount is equal to 1, then first makes the initial that there is open order (1 times), and then cancel the current opening order to attempt a new order
-    const openOrdersList = await getOrdersList({
-        symbol,
-        type: "open",
-        limit: 1,
-    });
+    const [openOrdersList, closeOrdersList] = await Promise.all([
+        getOrdersList({
+            symbol,
+            type: "open",
+            limit: 1,
+        }),
+        getOrdersList({
+            symbol,
+            type: "closed",
+            limit: 1,
+        }),
+    ]);
+    console.log("openOrdersList", openOrdersList);
+    console.log("closeOrdersList", closeOrdersList);
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
     const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
-    const incIteratorCounter = async (status) => {
+    const incIteratorCounter = async (status, currOpenId) => {
         const signalInclusion = !side
             ? {}
             : {
@@ -398,6 +406,7 @@ async function checkOpeningOrderNotDoneExchange({
 
         let dataToUpdate = {
             $inc: { "pendingLimitOrder.count": 1 },
+            "pendingLimitOrder.lastOpenId": currOpenId,
             ...signalInclusion,
         };
         if (!status)
@@ -419,10 +428,15 @@ async function checkOpeningOrderNotDoneExchange({
 
     const dbMaxIterationCount = dbData ? dbData.pendingLimitOrder.count : 0;
     const recordedSignal = dbData ? dbData.pendingLimitOrder.signal : null;
+    const lastDbOpenId = dbData ? dbData.pendingLimitOrder.lastOpenId : null;
 
-    // need check if there is a side (BUY/SELL) because if suddently the strategy is no longer being detected and some count is set to DB, the algo will think that need record to DB the last transaction which is a critical error
-    // when side is null it means is WAIT signal.
-    const isPendingTypeLimit = side && Boolean(dbMaxIterationCount);
+    const currOpenId = openOrdersList[0] && openOrdersList[0].id;
+    console.log("currOpenId", currOpenId);
+    const lastCloseId = closeOrdersList[0] && closeOrdersList[0].id;
+    console.log("lastCloseId", lastCloseId);
+
+    const needRecordOnly =
+        lastDbOpenId !== null && lastDbOpenId === lastCloseId;
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
     const refuseToContinue =
@@ -431,7 +445,7 @@ async function checkOpeningOrderNotDoneExchange({
     if (refuseToContinue)
         return {
             gotOpenOrderExchange,
-            isPendingTypeLimit, // ignore pendingTypeLimit check if market so that it ain't gonna count in the DB.
+            needRecordOnly, // ignore pendingTypeLimit check if market so that it ain't gonna count in the DB.
             recordedSignal,
         };
 
@@ -448,7 +462,7 @@ async function checkOpeningOrderNotDoneExchange({
             return false;
         }
 
-        await incIteratorCounter(true);
+        await incIteratorCounter(true, currOpenId);
 
         /*
         {
@@ -462,7 +476,7 @@ async function checkOpeningOrderNotDoneExchange({
         gotOpenOrderExchange,
         // if there is a number of dbMaxIterationCount, it means the current open limit order was executed by the exchange and need to be recorded in the DB properly.
         // the dbMaxIterationCount should be zero again after db registration of the LIMIT transaction.
-        isPendingTypeLimit,
+        needRecordOnly,
         recordedSignal, // identify which side to execute either BUY or SELL
     };
 }
