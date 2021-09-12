@@ -397,7 +397,7 @@ async function checkOpeningOrderNotDoneExchange({
     const recordedSignal = dbData ? dbData.pendingLimitOrder.signal : null;
 
     // need check if there is a side (BUY/SELL) because if suddently the strategy is no longer being detected and some count is set to DB, the algo will think that need record to DB the last transaction which is a critical error
-    // is side is null it means is WAIT signal.
+    // when side is null it means is WAIT signal.
     const isPendingTypeLimit = side && Boolean(dbMaxIterationCount);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
