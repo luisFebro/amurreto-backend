@@ -16,7 +16,6 @@ const mainData = {
     pendingLimitOrder: {
         signal: { type: String, enum: ["BUY", "SELL"] },
         count: Number,
-        lastOpenId: String,
     },
     // emaUptrendStopLoss: Object,
 };

@@ -379,25 +379,17 @@ async function checkOpeningOrderNotDoneExchange({
     // after detect the open order, the order is cancelled and new order will be made after the algo iterate the below number of time.
     // if maxIterateCount is zero, the opening order is cancelled in the next algo iteration and attempt a new order if any buy/sell signal
     // e.g if the algo is updating every 15 minutes and maxIterateCount is equal to 1, then first makes the initial that there is open order (1 times), and then cancel the current opening order to attempt a new order
-    const [openOrdersList, closeOrdersList] = await Promise.all([
-        getOrdersList({
-            symbol,
-            type: "open",
-            limit: 1,
-        }),
-        getOrdersList({
-            symbol,
-            type: "closed",
-            limit: 1,
-        }),
-    ]);
-    console.log("openOrdersList", openOrdersList);
-    console.log("closeOrdersList", closeOrdersList);
+    const openOrdersList = await getOrdersList({
+        symbol,
+        type: "open",
+        limit: 1,
+    });
+
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
     const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
-    const incIteratorCounter = async (status, currOpenId) => {
+    const incIteratorCounter = async (status) => {
         const signalInclusion = !side
             ? {}
             : {
@@ -406,7 +398,6 @@ async function checkOpeningOrderNotDoneExchange({
 
         let dataToUpdate = {
             $inc: { "pendingLimitOrder.count": 1 },
-            "pendingLimitOrder.lastOpenId": currOpenId,
             ...signalInclusion,
         };
         if (!status)
@@ -428,15 +419,11 @@ async function checkOpeningOrderNotDoneExchange({
 
     const dbMaxIterationCount = dbData ? dbData.pendingLimitOrder.count : 0;
     const recordedSignal = dbData ? dbData.pendingLimitOrder.signal : null;
-    const lastDbOpenId = dbData ? dbData.pendingLimitOrder.lastOpenId : null;
 
-    const currOpenId = openOrdersList[0] && openOrdersList[0].id;
-    console.log("currOpenId", currOpenId);
-    const lastCloseId = closeOrdersList[0] && closeOrdersList[0].id;
-    console.log("lastCloseId", lastCloseId);
-
-    const needRecordOnly =
-        lastDbOpenId !== null && lastDbOpenId === lastCloseId;
+    // need check if there is a side (BUY/SELL) because if suddently the strategy is no longer being detected and some count is set to DB, the algo will think that need record to DB the last transaction which is a critical error
+    // when side is null it means is WAIT signal.
+    // if there is a count pending, it will resume from when it left off until complete the rest of cycle 'till cancelling and start a new one.
+    const needRecordOnly = side && Boolean(dbMaxIterationCount);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
     const refuseToContinue =
@@ -462,7 +449,7 @@ async function checkOpeningOrderNotDoneExchange({
             return false;
         }
 
-        await incIteratorCounter(true, currOpenId);
+        await incIteratorCounter(true);
 
         /*
         {
