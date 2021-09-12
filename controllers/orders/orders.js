@@ -388,6 +388,31 @@ async function checkOpeningOrderNotDoneExchange({
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
     const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+
+    const incIteratorCounter = async (status) => {
+        const signalInclusion = !side
+            ? {}
+            : {
+                  "pendingLimitOrder.signal": side,
+              };
+
+        let dataToUpdate = {
+            $inc: { "pendingLimitOrder.count": 1 },
+            ...signalInclusion,
+        };
+        if (!status)
+            dataToUpdate = {
+                "pendingLimitOrder.signal": null,
+                "pendingLimitOrder.count": 0,
+            };
+
+        await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, dataToUpdate);
+    };
+
+    // clean up count when WAIT and no pending orders so that algo can record the right order
+    const detectedCleanableSide = !side && !gotOpenOrderExchange;
+    if (detectedCleanableSide) await incIteratorCounter(false);
+
     const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID).select(
         "_id pendingLimitOrder"
     );
@@ -398,7 +423,7 @@ async function checkOpeningOrderNotDoneExchange({
 
     // need check if there is a side (BUY/SELL) because if suddently the strategy is no longer being detected and some count is set to DB, the algo will think that need record to DB the last transaction which is a critical error
     // when side is null it means is WAIT signal.
-    // if there is a count pending, it will resume from when it left off until complete the rest of cycle 'till cancelling and start a new one.
+    // if there is a count pending, it will take up (begin something, consume, fill in) from when it left off until complete the rest of cycle 'till start a new one.
     const isPendingTypeLimit = side && Boolean(dbMaxIterationCount);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
@@ -415,29 +440,6 @@ async function checkOpeningOrderNotDoneExchange({
     if (gotOpenOrderExchange) {
         const { timestamp } = openOrdersList[0];
         // const list = side === "BUY" ? "buyPrices" : "sellPrices";
-
-        const incIteratorCounter = async (status) => {
-            const signalInclusion = !side
-                ? {}
-                : {
-                      "pendingLimitOrder.signal": side,
-                  };
-
-            let dataToUpdate = {
-                $inc: { "pendingLimitOrder.count": 1 },
-                ...signalInclusion,
-            };
-            if (!status)
-                dataToUpdate = {
-                    "pendingLimitOrder.signal": null,
-                    "pendingLimitOrder.count": 0,
-                };
-
-            await LiveCandleHistory.findByIdAndUpdate(
-                LIVE_CANDLE_ID,
-                dataToUpdate
-            );
-        };
 
         const needCancelOrder = maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
         if (needCancelOrder) {
