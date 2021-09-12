@@ -22,10 +22,10 @@ function checkLiveCandleReliability({
     const gotAlmostAllSides = totalSides === 5; // total is 6
     if (gotAlmostAllSides) {
         const isAtLeastHalfBull = bullSidePerc >= 50;
-        const gotLastCandlesBullish = currTimeSidesStreak
-            .slice(0, 2)
+        const gotLastCandleBullish = currTimeSidesStreak
+            .slice(0, 1)
             .every((side) => side === "bull");
-        if (isAtLeastHalfBull && gotLastCandlesBullish) {
+        if (isAtLeastHalfBull && gotLastCandleBullish) {
             return {
                 status: true,
                 reason: "atLeastHalfLastBulls",
@@ -51,10 +51,10 @@ function checkLiveCandleReliability({
     }
 
     // cond 3
-    const isLast3SidesBullish = currTimeSidesStreak
-        .slice(0, 3)
+    const isLast2SidesBullish = currTimeSidesStreak
+        .slice(0, 2)
         .every((side) => side === "bull" && totalSides >= 3);
-    if (isLast3SidesBullish && currBodySize === "medium") {
+    if (isLast2SidesBullish && currBodySize === "medium") {
         return {
             status: true,
             reason: "twoMediumBullish",
