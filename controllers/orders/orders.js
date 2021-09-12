@@ -428,7 +428,6 @@ async function checkOpeningOrderNotDoneExchange({
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
     console.log("!gotOpenOrderExchange", !gotOpenOrderExchange);
-    console.log("refuseToContinue", refuseToContinue);
     const refuseToContinue =
         !gotOpenOrderExchange ||
         (!gotOpenOrderExchange && orderType === "MARKET");
