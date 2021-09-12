@@ -436,7 +436,7 @@ async function checkOpeningOrderNotDoneExchange({
             );
         };
 
-        const needCancelOrder = maxIterateCount === dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
+        const needCancelOrder = maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
         if (needCancelOrder) {
             await Promise.all([
                 cancelOrderBack({ symbol, timestamp }),
