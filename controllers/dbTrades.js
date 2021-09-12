@@ -175,8 +175,8 @@ async function getPendingListData({ tradeData }) {
             totalFeeSellAmount: sellFeeAmount,
             totalFeePerc,
             results: {
-                grossProfitAmount: grossProfitAmount,
-                netProfitAmount: netProfitAmount,
+                grossProfitAmount,
+                netProfitAmount,
                 netProfitPerc,
                 finalBalanceAmount: balanceAmount,
                 finalGrossBalanceAmount: grossBalanceAmount,

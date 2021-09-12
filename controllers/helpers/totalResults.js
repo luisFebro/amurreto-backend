@@ -45,11 +45,11 @@ function getAmountPriceResults(file = "totalResults") {
         $subtract: [startQuotePrice, startFeeAmount],
     };
     const endNetProfitPrice = { $subtract: [endQuotePrice, endFeeAmount] };
-    const netProfitAmount = {
-        $subtract: [endNetProfitPrice, startNetProfitPrice],
-    };
-
     const finalBalanceAmount = endNetProfitPrice;
+
+    const netProfitAmount = {
+        $subtract: [finalBalanceAmount, startQuotePrice],
+    };
 
     // since the getPercentage Increment is a method detached from DB, it can not be used here
     const dataForTotalResults = {
