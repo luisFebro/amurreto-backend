@@ -48,11 +48,8 @@ async function createOrderBySignal(signalData = {}) {
 
     // if there is no order in exchange and there is a count available, it means a pending transaction was recently filled and ready to be recorded in the DB.
     // note that, after registration, the count and signal are set to 0 and null respectively.
-    const needOnlyRecordLimitOrderDB = !gotOpenOrderExchange && needRecordOnly;
-    const needRecordLimitBuyOnly =
-        needOnlyRecordLimitOrderDB && recordedSignal === "BUY";
-    const needRecordLimitSellOnly =
-        needOnlyRecordLimitOrderDB && recordedSignal === "SELL";
+    const needRecordLimitBuyOnly = needRecordOnly && recordedSignal === "BUY";
+    const needRecordLimitSellOnly = needRecordOnly && recordedSignal === "SELL";
 
     const validSide = side || needRecordOnly;
     const validStrategy = strategy || needRecordOnly;
@@ -97,7 +94,7 @@ async function createOrderBySignal(signalData = {}) {
             transactionPositionPerc,
             offsetPrice,
             forcePrice,
-            needOnlyRecordLimitOrderDB,
+            needOnlyRecordLimitOrderDB: needRecordLimitBuyOnly,
         });
     }
 
@@ -113,7 +110,7 @@ async function createOrderBySignal(signalData = {}) {
             transactionPositionPerc,
             offsetPrice,
             forcePrice,
-            needOnlyRecordLimitOrderDB,
+            needOnlyRecordLimitOrderDB: needRecordLimitSellOnly,
         });
     }
 
@@ -423,9 +420,15 @@ async function checkOpeningOrderNotDoneExchange({
     // need check if there is a side (BUY/SELL) because if suddently the strategy is no longer being detected and some count is set to DB, the algo will think that need record to DB the last transaction which is a critical error
     // when side is null it means is WAIT signal.
     // if there is a count pending, it will resume from when it left off until complete the rest of cycle 'till cancelling and start a new one.
-    const needRecordOnly = side && Boolean(dbMaxIterationCount);
+    const needRecordOnly =
+        recordedSignal &&
+        !gotOpenOrderExchange &&
+        side &&
+        Boolean(dbMaxIterationCount);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
+    console.log("!gotOpenOrderExchange", !gotOpenOrderExchange);
+    console.log("refuseToContinue", refuseToContinue);
     const refuseToContinue =
         !gotOpenOrderExchange ||
         (!gotOpenOrderExchange && orderType === "MARKET");
