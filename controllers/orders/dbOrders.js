@@ -120,16 +120,17 @@ async function checkAlreadyExecutedStrategy(symbol, options = {}) {
     // for symbol and status pending only
 
     // In the most recent algo v1.15, only need verify if a SELL/BUY transaction is already taken by any strategy since we are now dealing with multiple patterns as strategy
-    // also check if the last done strategy for the side is equal to the current to avoid errors in exchange transaction if the signal lingers
-    const [dataPending, dataDone] = await Promise.all([
+
+    // last done prevension to stop equal strategies to execute can cause confusion and if selling is important and the last done is the same, we have a problem. The errors caused are not critical.
+    const [dataPending] = await Promise.all([
         getDataTransaction({ symbol, side }),
-        getDataTransaction({ symbol, side, lastDone: true }),
+        // getDataTransaction({ symbol, side, lastDone: true }),
     ]);
 
-    const lastStrategy = dataDone && dataDone[0] && dataDone[0].strategy;
-    const isLastDoneSameStrategy = lastStrategy === strategy;
+    // const lastStrategy = dataDone && dataDone[0] && dataDone[0].strategy;
+    // const isLastDoneSameStrategy = lastStrategy === strategy;
 
-    const finalResult = dataPending.length || isLastDoneSameStrategy;
+    const finalResult = dataPending.length; // || isLastDoneSameStrategy
     return finalResult;
 }
 
