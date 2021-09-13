@@ -59,7 +59,7 @@ async function watchStrategies(options = {}) {
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
-    const needLimitType = true; //checkCondLimitOrder({
+    const needLimitType = false; //checkCondLimitOrder({
     //     signal: essentialData && essentialData.signal,
     //     currCandleSize,
     // });
