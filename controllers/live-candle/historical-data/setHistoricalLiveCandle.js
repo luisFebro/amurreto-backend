@@ -147,8 +147,12 @@ function needPushCurrSide({ currMin, totalAllSides }) {
 function getSidePercs(dbSidesStreak) {
     const totalAllSides = dbSidesStreak ? dbSidesStreak.length : 0;
 
-    const totalBulls = dbSidesStreak.filter((side) => side === "bull").length;
-    const totalBears = dbSidesStreak.filter((side) => side === "bear").length;
+    const totalBulls = dbSidesStreak
+        ? dbSidesStreak.filter((side) => side === "bull").length
+        : 0;
+    const totalBears = dbSidesStreak
+        ? dbSidesStreak.filter((side) => side === "bear").length
+        : 0;
 
     return {
         bullSidePerc: getPercentage(totalAllSides, totalBulls),
