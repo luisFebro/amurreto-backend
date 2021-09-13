@@ -15,6 +15,8 @@ const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
 
+const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+
 async function createOrderBySignal(signalData = {}) {
     const {
         symbol = "BTC/BRL",
@@ -179,7 +181,7 @@ async function createOrderBack(payload = {}) {
     if (IS_PROD) {
         // after set transaction exchange, fetch that data to register in DB
         // in case of limit order, the transaction need only be registered in the DB because previously already was filled
-        const mostRecentData = await getOrdersList({
+        const lastRecentData = await getOrdersList({
             symbol,
             mostRecent: true,
             fallback,
@@ -190,7 +192,7 @@ async function createOrderBack(payload = {}) {
             return await recordFinalDbOrder({
                 needLimitTypeOnly: true,
                 side,
-                mostRecentData,
+                mostRecentData: lastRecentData,
                 moreData,
             });
         }
@@ -217,8 +219,32 @@ async function createOrderBack(payload = {}) {
                     );
             });
 
+        const mostRecentData = await getOrdersList({
+            symbol,
+            mostRecent: true,
+            fallback,
+        });
+
+        // LATEST OPEN ORDER ID
+        // make sure register open order id right away in case of pending order takes less than a minute and before the id can be set on DB to record the data properly
+        const isLimit = type === "LIMIT";
+        if (isLimit) {
+            const newFoundOpenOrderId = `${mostRecentData.quote}||${mostRecentData.base}`;
+            const dataToUpdate = {
+                "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
+            };
+
+            await LiveCandleHistory.findByIdAndUpdate(
+                LIVE_CANDLE_ID,
+                dataToUpdate
+            );
+
+            return null;
+        }
+
+        // END LATEST OPEN ORDER ID
+
         // MARKET TYPE RECORD
-        if (type !== "MARKET") return null;
         await recordFinalDbOrder({ side, mostRecentData, moreData });
     }
     // END REGISTRATION DB AND EXCHANGE
@@ -395,8 +421,6 @@ async function checkOpeningOrderNotDoneExchange({
     ]);
 
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
-
-    const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
 
     const incIteratorCounter = async (status, openOrderId) => {
         const signalInclusion = !side
