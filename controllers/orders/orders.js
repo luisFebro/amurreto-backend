@@ -59,10 +59,12 @@ async function createOrderBySignal(signalData = {}) {
     // IS_DEV
     if (!validSide || !validStrategy || false) return null;
 
+    // TEST
+    const isBlockedByCurcuitBreak = false;
     const [
         alreadyExecutedStrategyForSide,
         transactionPositionPerc, // 100 for 100% of money exchange or 50 for 50% of money exchange available in quote currency BRL
-        isBlockedByCurcuitBreak,
+        // isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, {
