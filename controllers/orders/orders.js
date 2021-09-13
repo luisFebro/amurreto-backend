@@ -442,10 +442,11 @@ async function checkOpeningOrderNotDoneExchange({
     console.log("lastOpenOrderId", lastOpenOrderId);
     console.log("lastCloseOrderId", lastCloseOrderId);
 
-    const needRecordOnly =
+    const needRecordOnly = Boolean(
         !gotOpenOrderExchange &&
-        dbOpenOrderId &&
-        dbOpenOrderId === lastCloseOrderId;
+            dbOpenOrderId &&
+            dbOpenOrderId === lastCloseOrderId
+    );
     console.log("needRecordOnly", needRecordOnly);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
