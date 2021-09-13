@@ -92,6 +92,8 @@ async function createOrderBySignal(signalData = {}) {
     const condBuy =
         needRecordLimitBuyOnly ||
         (defaultCond && !isBlockedByCurcuitBreak && signal === "BUY"); // signal === "HOLD" || isHoldWithoutPriorSell
+    console.log("condBuy", condBuy);
+    console.log("needRecordLimitBuyOnly", needRecordLimitBuyOnly);
 
     if (condBuy) {
         return await createOrderBack({
@@ -109,6 +111,8 @@ async function createOrderBySignal(signalData = {}) {
 
     const condSell =
         needRecordLimitSellOnly || (defaultCond && signal === "SELL"); // isWaitWithBuyingPosition
+    console.log("condSell", condSell);
+    console.log("needRecordLimitSellOnly", needRecordLimitSellOnly);
     if (condSell) {
         return await createOrderBack({
             side: "SELL",
@@ -245,6 +249,7 @@ async function createOrderBack(payload = {}) {
         if (isLimit) {
             const newFoundOpenOrderId = `${mostRecentData.quote}||${mostRecentData.base}`;
             const dataToUpdate = {
+                "pendingLimitOrder.signal": side,
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
