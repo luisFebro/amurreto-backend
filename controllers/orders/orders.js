@@ -288,6 +288,7 @@ async function getOrdersList(payload = {}) {
     let data = [];
 
     const treatListData = (data) => {
+        console.log("data ORDER READ", data);
         const includesCancel = mostRecent;
         const neededCancel = includesCancel ? "CANCELED" : undefined;
 
@@ -431,10 +432,10 @@ async function checkOpeningOrderNotDoneExchange({
     const lastOpenOrderId =
         openOrdersList[0] &&
         `${openOrdersList[0].quote}||${openOrdersList[0].base}`;
-    console.log("lastOpenOrderId", lastOpenOrderId);
     const lastCloseOrderId =
         closeOrdersList[0] &&
         `${closeOrdersList[0].quote}||${closeOrdersList[0].base}`;
+    console.log("dbOpenOrderId", dbOpenOrderId);
     console.log("lastCloseOrderId", lastCloseOrderId);
 
     // sometimes occurs that lastClose is undefined and there is a pending order which need to be cleared
@@ -446,6 +447,7 @@ async function checkOpeningOrderNotDoneExchange({
         !gotOpenOrderExchange &&
         dbOpenOrderId &&
         dbOpenOrderId === lastCloseOrderId;
+    console.log("needRecordOnly", needRecordOnly);
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
     const refuseToContinue =
