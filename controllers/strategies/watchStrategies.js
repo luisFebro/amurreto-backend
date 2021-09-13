@@ -45,8 +45,8 @@ async function watchStrategies(options = {}) {
     console.log("profitStrategy", profitStrategy);
 
     const essentialData = {
-        signal: "BUY",
-        strategy: "test A",
+        signal: "SELL",
+        strategy: "test B",
         transactionPerc: 100,
     };
     // const essentialData = strategiesHandler(allStrategySignals, {
