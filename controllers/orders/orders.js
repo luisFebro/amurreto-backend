@@ -56,7 +56,8 @@ async function createOrderBySignal(signalData = {}) {
     const validSide = side || needRecordOnly;
     const validStrategy = strategy || needRecordOnly;
 
-    if (!validSide || !validStrategy || IS_DEV) return null;
+    // IS_DEV
+    if (!validSide || !validStrategy || false) return null;
 
     const [
         alreadyExecutedStrategyForSide,
@@ -64,7 +65,11 @@ async function createOrderBySignal(signalData = {}) {
         isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
-        checkAlreadyExecutedStrategy(symbol, { status: "pending", side }),
+        checkAlreadyExecutedStrategy(symbol, {
+            status: "pending",
+            side,
+            strategy,
+        }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
         needCircuitBreaker(),
         // findTransactionSidePerc({ symbol }),
@@ -179,6 +184,7 @@ async function createOrderBack(payload = {}) {
 
     // REGISTRATION DB AND EXCHANGE
     if (IS_PROD) {
+        const isLimit = type === "LIMIT";
         // after set transaction exchange, fetch that data to register in DB
         // in case of limit order, the transaction need only be registered in the DB because previously already was filled
         const lastRecentData = await getOrdersList({
@@ -195,6 +201,13 @@ async function createOrderBack(payload = {}) {
                 mostRecentData: lastRecentData,
                 moreData,
             });
+        }
+
+        // need cancel any pending order if suddently change from Limit to Market Order
+        const suddenChangeFromLimitToMarket =
+            !isLimit && lastRecentData.status === "PROCESSING";
+        if (suddenChangeFromLimitToMarket) {
+            await cancelOrderBack({ symbol, cancelLast: true });
         }
 
         await novadax
@@ -227,7 +240,6 @@ async function createOrderBack(payload = {}) {
 
         // LATEST OPEN ORDER ID
         // make sure register open order id right away in case of pending order takes less than a minute and before the id can be set on DB to record the data properly
-        const isLimit = type === "LIMIT";
         if (isLimit) {
             const newFoundOpenOrderId = `${mostRecentData.quote}||${mostRecentData.base}`;
             const dataToUpdate = {
@@ -241,7 +253,6 @@ async function createOrderBack(payload = {}) {
 
             return null;
         }
-
         // END LATEST OPEN ORDER ID
 
         // MARKET TYPE RECORD
@@ -541,6 +552,14 @@ module.exports = {
 };
 
 /* n1
+Price x AveragePrice
+- Price or marketPrice is the intended and set price in the exchange. In the case of the market does not need to specify it, just in case of LIMIT.
+- AveragePrice is the actual filled price and it can be slightly different from the intended market price. In case of LIMIT ORDER, if you are selling, the average Price will always be the best price - the highest price, if buying, the lowest price than the market price.
+
+ABOUT MARKET ORDER:
+The exchange will close your market order for the best price available. You are not guaranteed though, that the order will be executed for the price you observe prior to placing your order. There can be a slight change of the price for the traded market while your order is being executed, also known as price slippage (derrapagme). The price can slip because of networking roundtrip latency, high loads on the exchange, price volatility and other factors. When placing a market order you don’t need to specify the price of the order.
+https://ccxt.readthedocs.io/en/latest/manual.html#orders
+
 real example:
 { amount: '0.00025349',
   averagePrice: null,
@@ -593,9 +612,4 @@ CANCELING：This order is being canceled, but it is unfinished at the moment and
 Order’s role(order.role)
 MAKER：Brings liquidity
 TAKER：Takes liquidity
-
-
-ABOUT MARKET ORDER:
-The exchange will close your market order for the best price available. You are not guaranteed though, that the order will be executed for the price you observe prior to placing your order. There can be a slight change of the price for the traded market while your order is being executed, also known as price slippage (derrapagme). The price can slip because of networking roundtrip latency, high loads on the exchange, price volatility and other factors. When placing a market order you don’t need to specify the price of the order.
-https://ccxt.readthedocs.io/en/latest/manual.html#orders
  */

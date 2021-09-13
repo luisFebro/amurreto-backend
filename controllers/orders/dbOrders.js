@@ -114,14 +114,23 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 }
 
 async function checkAlreadyExecutedStrategy(symbol, options = {}) {
-    const { side } = options;
+    const { side, strategy } = options;
     // there will be only one pending status for
     // each asset/security so it is safe to query
     // for symbol and status pending only
 
     // In the most recent algo v1.15, only need verify if a SELL/BUY transaction is already taken by any strategy since we are now dealing with multiple patterns as strategy
-    const dataTransaction = await getDataTransaction({ symbol, side });
-    return dataTransaction.length ? true : false;
+    // also check if the last done strategy for the side is equal to the current to avoid errors in exchange transaction if the signal lingers
+    const [dataPending, dataDone] = await Promise.all([
+        getDataTransaction({ symbol, side }),
+        getDataTransaction({ symbol, side, lastDone: true }),
+    ]);
+
+    const lastStrategy = dataDone && dataDone[0] && dataDone[0].strategy;
+    const isLastDoneSameStrategy = lastStrategy === strategy;
+
+    const finalResult = dataPending.length || isLastDoneSameStrategy;
+    return finalResult;
 }
 
 async function cancelDbOrderBack(timestamp, options = {}) {
@@ -242,23 +251,36 @@ async function getOrderTransactionPerc({ symbol, side, defaultPerc }) {
         : defaultPerc;
 }
 
-async function getDataTransaction({ symbol, side }) {
+async function getDataTransaction({ symbol, side, lastDone = false }) {
     const target = side === "BUY" ? "buy" : "sell";
     const list = `${target}Prices`;
+
+    let doneQuery = {
+        $match: {},
+    };
+    if (lastDone) {
+        doneQuery = {
+            $sort: {
+                updatedAt: -1,
+            },
+        };
+    }
 
     const dataTransaction = await AmurretoOrders.aggregate([
         {
             $match: {
                 symbol,
-                status: "pending",
+                status: lastDone ? "done" : "pending",
             },
         },
         {
             $project: {
                 _id: 0,
                 [list]: { $ifNull: [`$${list}`, []] },
+                updatedAt: 1,
             },
         },
+        doneQuery,
     ]);
 
     return dataTransaction[0] ? dataTransaction[0][list] : [];
