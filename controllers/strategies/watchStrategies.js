@@ -45,7 +45,7 @@ async function watchStrategies(options = {}) {
     console.log("profitStrategy", profitStrategy);
 
     const essentialData = {
-        signal: "BUY",
+        signal: "SELL",
         strategy: "teste 40",
         transactionPerc: 100,
     };
@@ -59,7 +59,7 @@ async function watchStrategies(options = {}) {
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
-    const needLimitType = false; //checkCondLimitOrder({
+    const needLimitType = true; //checkCondLimitOrder({
     //     signal: essentialData && essentialData.signal,
     //     currCandleSize,
     // });
