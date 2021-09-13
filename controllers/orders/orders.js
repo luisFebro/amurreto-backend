@@ -56,15 +56,12 @@ async function createOrderBySignal(signalData = {}) {
     const validSide = side || needRecordOnly;
     const validStrategy = strategy || needRecordOnly;
 
-    // IS_DEV
-    if (!validSide || !validStrategy || false) return null;
+    if (!validSide || !validStrategy || IS_DEV) return null;
 
-    // TEST
-    const isBlockedByCurcuitBreak = false;
     const [
         alreadyExecutedStrategyForSide,
         transactionPositionPerc, // 100 for 100% of money exchange or 50 for 50% of money exchange available in quote currency BRL
-        // isBlockedByCurcuitBreak,
+        isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, {
@@ -92,8 +89,6 @@ async function createOrderBySignal(signalData = {}) {
     const condBuy =
         needRecordLimitBuyOnly ||
         (defaultCond && !isBlockedByCurcuitBreak && signal === "BUY"); // signal === "HOLD" || isHoldWithoutPriorSell
-    console.log("condBuy", condBuy);
-    console.log("needRecordLimitBuyOnly", needRecordLimitBuyOnly);
 
     if (condBuy) {
         return await createOrderBack({
@@ -111,8 +106,7 @@ async function createOrderBySignal(signalData = {}) {
 
     const condSell =
         needRecordLimitSellOnly || (defaultCond && signal === "SELL"); // isWaitWithBuyingPosition
-    console.log("condSell", condSell);
-    console.log("needRecordLimitSellOnly", needRecordLimitSellOnly);
+
     if (condSell) {
         return await createOrderBack({
             side: "SELL",
@@ -255,7 +249,10 @@ async function createOrderBack(payload = {}) {
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
-            const validStatus = mostRecentData === "PROCESSING";
+            console.log("mostRecentData.status", mostRecentData.status);
+            console.log("mostRecentData.quote", mostRecentData.quote);
+            console.log("mostRecentData.base", mostRecentData.base);
+            const validStatus = mostRecentData.status === "PROCESSING";
             if (validStatus)
                 await LiveCandleHistory.findByIdAndUpdate(
                     LIVE_CANDLE_ID,
@@ -485,7 +482,6 @@ async function checkOpeningOrderNotDoneExchange({
         `${closeOrdersList[0].quote}||${closeOrdersList[0].base}`;
 
     console.log("dbOpenOrderId", dbOpenOrderId);
-    console.log("lastOpenOrderId", lastOpenOrderId);
     console.log("lastCloseOrderId", lastCloseOrderId);
 
     const needRecordOnly = Boolean(
@@ -519,7 +515,12 @@ async function checkOpeningOrderNotDoneExchange({
             return false;
         }
 
-        const validStatus = openOrdersList[0].status === "PROCESSING";
+        console.log(
+            "openOrdersList[0] && openOrdersList[0].status",
+            openOrdersList[0] && openOrdersList[0].status
+        );
+        const validStatus =
+            openOrdersList[0] && openOrdersList[0].status === "PROCESSING";
         if (validStatus) await incIteratorCounter(true, lastOpenOrderId);
 
         /*
