@@ -58,12 +58,10 @@ async function createOrderBySignal(signalData = {}) {
 
     if (!validSide || !validStrategy || IS_DEV) return null;
 
-    // TEST
-    const isBlockedByCurcuitBreak = false;
     const [
         alreadyExecutedStrategyForSide,
         transactionPositionPerc, // 100 for 100% of money exchange or 50 for 50% of money exchange available in quote currency BRL
-        // isBlockedByCurcuitBreak,
+        isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, {
@@ -252,6 +250,10 @@ async function createOrderBack(payload = {}) {
             };
 
             const validStatusList = ["SUBMITTED", "PROCESSING"];
+            console.log(
+                "mostRecentData.status after exchange async",
+                mostRecentData.status
+            );
             const validStatus = validStatusList.includes(mostRecentData.status);
             if (validStatus)
                 await LiveCandleHistory.findByIdAndUpdate(
