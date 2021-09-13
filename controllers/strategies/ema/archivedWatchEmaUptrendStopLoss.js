@@ -1,5 +1,5 @@
 const LiveCandleHistory = require("../../../models/LiveCandleHistory");
-const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+// const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 
 // NOW HANDLING WITH ATR AND EMA TO CHECK PROFIT RANGE IN WATCHSTRATEGIES...
 /*

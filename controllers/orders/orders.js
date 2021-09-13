@@ -15,7 +15,7 @@ const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
 
-const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 
 async function createOrderBySignal(signalData = {}) {
     const {

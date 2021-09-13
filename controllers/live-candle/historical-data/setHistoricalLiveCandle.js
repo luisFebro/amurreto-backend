@@ -4,7 +4,7 @@ const getPercentage = require("../../../utils/number/perc/getPercentage");
 const checkLiveCandleReliability = require("./checkLiveCandleReliability");
 const { IS_DEV } = require("../../../config");
 
-const LIVE_CANDLE_ID = "612b272114f951135c1938a0";
+const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 
 async function setHistoricalLiveCandle({
     side,
