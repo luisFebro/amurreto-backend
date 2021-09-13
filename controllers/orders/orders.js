@@ -58,10 +58,12 @@ async function createOrderBySignal(signalData = {}) {
 
     if (!validSide || !validStrategy || IS_DEV) return null;
 
+    // TEST
+    const isBlockedByCurcuitBreak = false;
     const [
         alreadyExecutedStrategyForSide,
         transactionPositionPerc, // 100 for 100% of money exchange or 50 for 50% of money exchange available in quote currency BRL
-        isBlockedByCurcuitBreak,
+        // isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, {
@@ -249,10 +251,6 @@ async function createOrderBack(payload = {}) {
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
-            console.log("mostRecentData", mostRecentData);
-            console.log("mostRecentData.status", mostRecentData.status);
-            console.log("mostRecentData.quote", mostRecentData.quote);
-            console.log("mostRecentData.base", mostRecentData.base);
             const validStatusList = ["SUBMITTED", "PROCESSING"];
             const validStatus = validStatusList.includes(mostRecentData.status);
             if (validStatus)
@@ -483,6 +481,7 @@ async function checkOpeningOrderNotDoneExchange({
         closeOrdersList[0] &&
         `${closeOrdersList[0].quote}||${closeOrdersList[0].base}`;
 
+    console.log("openOrdersList[0]", openOrdersList[0]);
     console.log("dbOpenOrderId", dbOpenOrderId);
     console.log("lastCloseOrderId", lastCloseOrderId);
 
