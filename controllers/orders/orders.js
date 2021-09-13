@@ -406,7 +406,7 @@ async function getOrdersList(payload = {}) {
 
     return treatListData(data);
 }
-// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 2 }).then(
+// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 4 }).then(
 //     console.log
 // );
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
@@ -605,6 +605,8 @@ real example:
 The quote currency (counter currency) is the SECOND CURRENCY in both a direct and indirect currency pair and is used to value the base currency. Currency quotes show many units of the quote currency they will need to exchange for one unit of the first (base) currency.
 
 Order status(order.status)
+parcialmente executado (PARTIAL_FILLED) x parcialmente cancelado (PARTIAL_CANCELED)
+- when there is PARTIAL_FILLED and if you cancel it, then we have a PARTIAL_CANCELED transaction with what partially was traded.
 // cancellable
 PROCESSING：The order has been submitted and is in the matching queue, waiting for deal. The order is unfinished.
 PARTIAL_FILLED：The order is already in the matching queue and partially traded, and is waiting for further matching and trade. The order is unfinished
