@@ -23,7 +23,7 @@ async function createOrderBySignal(signalData = {}) {
         type = "MARKET",
         signal,
         strategy,
-        transactionPerc,
+        transactionPerc = 100,
         capitalPositionPerc = 100,
         forcePrice = false,
         offsetPrice = 0,
@@ -255,10 +255,12 @@ async function createOrderBack(payload = {}) {
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
-            await LiveCandleHistory.findByIdAndUpdate(
-                LIVE_CANDLE_ID,
-                dataToUpdate
-            );
+            const validStatus = mostRecentData === "PROCESSING";
+            if (validStatus)
+                await LiveCandleHistory.findByIdAndUpdate(
+                    LIVE_CANDLE_ID,
+                    dataToUpdate
+                );
 
             return null;
         }
@@ -517,7 +519,8 @@ async function checkOpeningOrderNotDoneExchange({
             return false;
         }
 
-        await incIteratorCounter(true, lastOpenOrderId);
+        const validStatus = openOrdersList[0].status === "PROCESSING";
+        if (validStatus) await incIteratorCounter(true, lastOpenOrderId);
 
         /*
         {

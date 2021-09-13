@@ -45,8 +45,12 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 
     const isBuy = side === "BUY";
 
-    const { capitalPositionPerc, strategy, transactionPositionPerc, symbol } =
-        moreData;
+    const {
+        capitalPositionPerc = 100,
+        strategy,
+        transactionPositionPerc = 100,
+        symbol,
+    } = moreData;
 
     const status = await getTransactionStatus({
         symbol,
@@ -175,7 +179,9 @@ async function getTransactionStatus({ symbol, transactionPerc, side }) {
 
     const isSell = side === "SELL";
 
-    const isFullSelling = transactionPerc === 100 && isSell;
+    // sometimes transactionPerc === 100 is 0
+    const isFullSelling =
+        transactionPerc === 100 || (transactionPerc === 0 && isSell);
     const isLastPartSelling = doneSellPerc + transactionPerc === 100 && isSell;
 
     const isTransationDone = isFullSelling || isLastPartSelling;
