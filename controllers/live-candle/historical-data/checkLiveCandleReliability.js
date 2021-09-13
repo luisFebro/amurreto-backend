@@ -4,9 +4,10 @@
 function checkLiveCandleReliability({
     bullSidePerc = 0,
     currBodySize,
-    currTimeSidesStreak = [],
+    currTimeSidesStreak,
 }) {
-    const currSide = currTimeSidesStreak && currTimeSidesStreak[0];
+    const sidesStreak = currTimeSidesStreak ? currTimeSidesStreak : [];
+    const currSide = sidesStreak && sidesStreak[0];
 
     if (currSide === "bear") {
         return {
@@ -15,12 +16,12 @@ function checkLiveCandleReliability({
         };
     }
 
-    const totalSides = currTimeSidesStreak.length;
+    const totalSides = sidesStreak.length;
 
     // cond 1
     const gotAlmostAllSides = totalSides === 5; // total is 6 but the last actual last only one minute and may not be detected
     const gotLastCandleBullish =
-        currSide === "bull" || currTimeSidesStreak[0] === "bull";
+        currSide === "bull" || (sidesStreak && sidesStreak[0] === "bull");
     if (gotAlmostAllSides && gotLastCandleBullish) {
         if (gotLastCandleBullish) {
             return {
@@ -34,7 +35,7 @@ function checkLiveCandleReliability({
     const isMajorityBull = bullSidePerc >= 66;
     const keepBullish = totalSides >= 4 && currSide === "bull";
     const cond2BodySizes = ["small", "tiny"];
-    const isLast3SidesBullish = currTimeSidesStreak
+    const isLast3SidesBullish = sidesStreak
         .slice(0, 3)
         .every((side) => side === "bull");
     if (
@@ -51,7 +52,7 @@ function checkLiveCandleReliability({
 
     // cond 3
     const minCandles = totalSides >= 3;
-    const isLast2SidesBullish = currTimeSidesStreak
+    const isLast2SidesBullish = sidesStreak
         .slice(0, 2)
         .every((side) => side === "bull");
     if (minCandles && isLast2SidesBullish && currBodySize === "medium") {
