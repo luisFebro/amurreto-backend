@@ -249,10 +249,12 @@ async function createOrderBack(payload = {}) {
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
+            console.log("mostRecentData", mostRecentData);
             console.log("mostRecentData.status", mostRecentData.status);
             console.log("mostRecentData.quote", mostRecentData.quote);
             console.log("mostRecentData.base", mostRecentData.base);
-            const validStatus = mostRecentData.status === "PROCESSING";
+            const validStatusList = ["SUBMITTED", "PROCESSING"];
+            const validStatus = validStatusList.includes(mostRecentData.status);
             if (validStatus)
                 await LiveCandleHistory.findByIdAndUpdate(
                     LIVE_CANDLE_ID,
@@ -519,8 +521,11 @@ async function checkOpeningOrderNotDoneExchange({
             "openOrdersList[0] && openOrdersList[0].status",
             openOrdersList[0] && openOrdersList[0].status
         );
-        const validStatus =
-            openOrdersList[0] && openOrdersList[0].status === "PROCESSING";
+
+        const validStatusList = ["SUBMITTED", "PROCESSING"];
+        const validStatus = validStatusList.includes(
+            openOrdersList[0] && openOrdersList[0].status
+        );
         if (validStatus) await incIteratorCounter(true, lastOpenOrderId);
 
         /*
@@ -616,12 +621,11 @@ The quote currency (counter currency) is the SECOND CURRENCY in both a direct an
 Order status(order.status)
 parcialmente executado (PARTIAL_FILLED) x parcialmente cancelado (PARTIAL_CANCELED)
 - when there is PARTIAL_FILLED and if you cancel it, then we have a PARTIAL_CANCELED transaction with what partially was traded.
-// cancellable
-PROCESSING：The order has been submitted and is in the matching queue, waiting for deal. The order is unfinished.
-PARTIAL_FILLED：The order is already in the matching queue and partially traded, and is waiting for further matching and trade. The order is unfinished
-FILLED：This order has been completely traded, finished and no longer in the matching queue.
-//
 SUBMITTED：The order has been submitted but not processed, not in the matching queue yet. The order is unfinished.
+PROCESSING：The order has been submitted and is in the matching queue, waiting for deal. The order is unfinished.
+FILLED：This order has been completely traded, finished and no longer in the matching queue.
+PARTIAL_FILLED：The order is already in the matching queue and partially traded, and is waiting for further matching and trade. The order is unfinished
+//
 PARTIAL_CANCELED：The order has been partially traded and canceled by the user and is no longer in the matching queue. This order is finished.
 PARTIAL_REJECTED：The order has been rejected by the system after being partially traded. Now it is finished and no longer in the matching queue.
 CANCELED：This order has been canceled by the user before being traded. It is finished now and no longer in the matching queue.
