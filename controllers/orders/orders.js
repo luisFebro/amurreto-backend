@@ -280,6 +280,7 @@ async function getOrdersList(payload = {}) {
         limit = 10,
         mostRecent = false, // get either open or close order right after order request
         fallback = {}, // // fallback is used as the last value in case of the exchange did not process the order. need to register the value in DB.
+        removeCancel = false,
     } = payload;
     const fallbackPrice = !fallback.price ? 0 : Number(fallback.price);
     const fallbackQuote = !fallback.quote ? 0 : Number(fallback.quote);
@@ -288,8 +289,7 @@ async function getOrdersList(payload = {}) {
     let data = [];
 
     const treatListData = (data) => {
-        console.log("data ORDER READ", data);
-        const includesCancel = mostRecent;
+        const includesCancel = mostRecent && !removeCancel;
         const neededCancel = includesCancel ? "CANCELED" : undefined;
 
         const list = data
@@ -383,11 +383,13 @@ async function checkOpeningOrderNotDoneExchange({
         getOrdersList({
             symbol,
             type: "open",
+            removeCancel: true,
             limit: 1,
         }),
         getOrdersList({
             symbol,
             type: "closed",
+            removeCancel: true,
             limit: 1,
         }),
     ]);
@@ -435,13 +437,10 @@ async function checkOpeningOrderNotDoneExchange({
     const lastCloseOrderId =
         closeOrdersList[0] &&
         `${closeOrdersList[0].quote}||${closeOrdersList[0].base}`;
-    console.log("dbOpenOrderId", dbOpenOrderId);
-    console.log("lastCloseOrderId", lastCloseOrderId);
 
-    // sometimes occurs that lastClose is undefined and there is a pending order which need to be cleared
-    const needCancelCurrOrders = lastOpenOrderId && !lastCloseOrderId;
-    if (needCancelCurrOrders)
-        return await cancelOrderBack({ symbol, cancelLast: true });
+    console.log("dbOpenOrderId", dbOpenOrderId);
+    console.log("lastOpenOrderId", lastOpenOrderId);
+    console.log("lastCloseOrderId", lastCloseOrderId);
 
     const needRecordOnly =
         !gotOpenOrderExchange &&
