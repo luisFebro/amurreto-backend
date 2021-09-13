@@ -211,7 +211,9 @@ async function createOrderBack(payload = {}) {
 
         // need cancel any pending order if suddently change from Limit to Market Order
         const suddenChangeFromLimitToMarket =
-            !isLimit && lastRecentData.status === "PROCESSING";
+            !isLimit &&
+            lastRecentData &&
+            lastRecentData.status === "PROCESSING";
         if (suddenChangeFromLimitToMarket) {
             await cancelOrderBack({ symbol, cancelLast: true });
         }
@@ -246,7 +248,7 @@ async function createOrderBack(payload = {}) {
 
         // LATEST OPEN ORDER ID
         // make sure register open order id right away in case of pending order takes less than a minute and before the id can be set on DB to record the data properly
-        if (isLimit) {
+        if (isLimit && mostRecentData) {
             const newFoundOpenOrderId = `${mostRecentData.quote}||${mostRecentData.base}`;
             const dataToUpdate = {
                 "pendingLimitOrder.signal": side,
@@ -503,7 +505,10 @@ async function checkOpeningOrderNotDoneExchange({
         };
 
     if (gotOpenOrderExchange) {
-        const needCancelOrder = maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
+        // if last open is undefined is because there is no order.
+        // But also because it can be a partially filled or canceled type of order which the system can not handle. Only cancel the order if there is a whole open order
+        const needCancelOrder =
+            lastOpenOrderId && maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
         if (needCancelOrder) {
             await Promise.all([
                 cancelOrderBack({ symbol, cancelLast: true }),
