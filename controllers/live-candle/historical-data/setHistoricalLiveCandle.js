@@ -13,16 +13,19 @@ async function setHistoricalLiveCandle({
     emaTrend,
 }) {
     const {
-        side,
+        isBullish,
+        volFullCandle,
         atr,
         timestamp,
-        openPrice,
-        currBodySize,
-        wholeCandleSize,
+        open,
+        candleBodySize,
         oneCandleType,
         twoCandleType,
         threeCandleType,
     } = liveCandle;
+
+    const side = isBullish ? "bull" : "bear";
+    const wholeCandleSize = volFullCandle;
 
     // the data will be mingled with current local dev, so only in prod.
     if (IS_DEV) return { candleReliability: {}, dbEmaUptrend: {} };
@@ -45,7 +48,7 @@ async function setHistoricalLiveCandle({
     // return { status: true, reason: "thunderingChange" }
     // it is here because use percentage from live candle
     const candleReliability = checkLiveCandleReliability({
-        currBodySize,
+        currBodySize: candleBodySize,
         currTimeSidesStreak: sidesStreak,
         bullSidePerc,
         bearSidePerc,
@@ -59,8 +62,8 @@ async function setHistoricalLiveCandle({
         bullSidePerc,
         bearSidePerc,
         history,
-        openPrice,
-        bodySize: currBodySize,
+        openPrice: open,
+        bodySize: candleBodySize,
         lowerWing20,
         sequenceStreaks,
         wholeCandleSize,
