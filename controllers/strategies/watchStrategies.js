@@ -27,7 +27,7 @@ async function watchStrategies(options = {}) {
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker({ liveCandle });
 
-    // this currCandleReliable is to verify if the BUY SIGNAL is reliable based on the time sidesStreak which verify how many times in every X minutes the candle was actually bullish
+    // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
     const isCurrCandleReliable = candleReliability.status;
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
@@ -101,16 +101,21 @@ function strategiesHandler(allSignals = [], options = {}) {
     const foundStrategy = firstFoundValidStrategy.strategy;
 
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
-    // const isSellSignal = !isBuySignal;
+    const isSellSignal = !isBuySignal;
 
     // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
-
-    const onlyProfitStopLoss =
+    const isProfitLimitSignal =
         firstFoundValidStrategy.strategy.includes("Profit");
 
-    // CHECK PROFIT STRATEGY
+    // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
     const isAtrStrategy = profitStrategy === "atr";
-    if (!onlyProfitStopLoss && isAtrStrategy) return DEFAULT_WAIT_SIGNAL;
+    const exceptionAtrPatterns = foundStrategy === "candleEater";
+
+    const allowedSignals =
+        isBuySignal ||
+        (isSellSignal && isProfitLimitSignal) ||
+        exceptionAtrPatterns;
+    if (isAtrStrategy && !allowedSignals) return DEFAULT_WAIT_SIGNAL;
     // END CHECK PROFIT STRATAGY
 
     // CHECK FREE FALL (only exception to buy in a bear market)
@@ -119,12 +124,12 @@ function strategiesHandler(allSignals = [], options = {}) {
     const denyBuySignal = !isFreeFall && disableATR;
     if (denyBuySignal) return DEFAULT_WAIT_SIGNAL;
 
-    if (!onlyProfitStopLoss && isFreeFall) return DEFAULT_WAIT_SIGNAL;
+    if (!isProfitLimitSignal && isFreeFall) return DEFAULT_WAIT_SIGNAL;
     // END CHECK FREE FALL
 
     const isUnreliableBuySignal = handleUnreliableBuySignal({
-        isBuy: isBuySignal,
         foundStrategy,
+        isProfitLimitSignal,
         isCurrReliable: isCurrCandleReliable,
     });
 
@@ -133,11 +138,20 @@ function strategiesHandler(allSignals = [], options = {}) {
     return firstFoundValidStrategy;
 }
 
-function handleUnreliableBuySignal({ isBuy, foundStrategy, isCurrReliable }) {
-    const exceptionToReliability = ["freeFall", "thunderingChange"];
-    if (exceptionToReliability.includes(foundStrategy)) return false;
+function handleUnreliableBuySignal({
+    foundStrategy,
+    isCurrReliable,
+    isProfitLimitSignal,
+}) {
+    const exceptionToReliability = [
+        "freeFall",
+        "thunderingChange",
+        "atrProfitStopLoss",
+    ];
+    const isPatternException = exceptionToReliability.includes(foundStrategy);
+    if (isProfitLimitSignal || isPatternException) return false;
 
-    return isBuy && !isCurrReliable;
+    return !isCurrReliable;
 }
 // END HELPERS
 

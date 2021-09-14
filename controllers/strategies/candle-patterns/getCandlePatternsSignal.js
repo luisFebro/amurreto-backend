@@ -4,6 +4,7 @@ async function getCandlePatternsSignal({
     lowerWing20,
 }) {
     const liveBodySize = liveCandle.candleBodySize;
+    const isCurrBullish = liveCandle.isBullish;
 
     const threeCandleType = liveCandle.threeCandleType || " ";
     const twoCandleType = liveCandle.twoCandleType || " ";
@@ -38,6 +39,14 @@ async function getCandlePatternsSignal({
     // END THREE CANDLES
 
     // TWO CANDLES
+    const runCandleEater = twoCandleType.includes("candleEater");
+    if (runCandleEater) {
+        return {
+            signal: isCurrBullish ? "BUY" : "SELL",
+            strategy: "candleEater",
+            transactionPerc: 100,
+        };
+    }
     const runFreeFall = twoCandleType.includes("freeFall");
     if (runFreeFall) {
         return {

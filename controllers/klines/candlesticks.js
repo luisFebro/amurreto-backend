@@ -37,8 +37,8 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-05-12T22:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 2, // default 250 last candles
-        noList: false, // default true
+        sinceCount: 100, // default 250 last candles
+        noList: true, // default true
         reverseData: false,
     }).then(console.log);
 }
@@ -360,7 +360,7 @@ async function getCandlesticksData(payload = {}) {
 function setAtrBoundaries({ json = false, close, atr }) {
     const MULTIPLIER = 2;
     const atrDefaultBoundary = atr * MULTIPLIER;
-    const disableATR = atr >= 3500; // 3000
+    const disableATR = atr >= 4000; // 3000
 
     const data = {
         atrUpperLimit: Number((close + atrDefaultBoundary).toFixed(2)),

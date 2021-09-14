@@ -4,6 +4,7 @@ const {
     isHarami,
     isEngulfing,
     isFreeFall,
+    isCandleEater,
 } = require("./two-candles/twoCandles");
 const {
     isThreeInside,
@@ -39,6 +40,9 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // 2 candles
     const checkHarami = isHarami(defaultData);
     if (checkHarami) twoCandleType = JSON.stringify(checkHarami);
+
+    const checkCandleEater = isCandleEater(defaultData);
+    if (checkCandleEater) twoCandleType = JSON.stringify(checkCandleEater);
 
     const checkTweezers = areTweezers(defaultData);
     if (checkTweezers) twoCandleType = JSON.stringify(checkTweezers);

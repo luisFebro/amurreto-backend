@@ -3,62 +3,79 @@
 
 function checkLiveCandleReliability({
     bullSidePerc = 0,
+    bearSidePerc = 0,
     currBodySize,
     currTimeSidesStreak,
 }) {
     const sidesStreak = currTimeSidesStreak ? currTimeSidesStreak : [];
     const currSide = sidesStreak && sidesStreak[0];
+    const totalSides = sidesStreak.length;
 
-    if (currSide === "bear") {
+    // less than 30 min are unreliable, every sidesStreak represents 10 min.
+    if (!currSide || totalSides < 3) {
         return {
             status: false,
-            reason: "bearsDisabled",
+            reason: "less30minSidesStreak",
         };
     }
 
-    const totalSides = sidesStreak.length;
+    const isCurrBullish = currSide === "bull";
+    // 66% of hasReliableStrength represents at least 30 minutes (3 side streaks) of the analysed side
+    const hasReliableStrength = isCurrBullish
+        ? bullSidePerc >= 66
+        : bearSidePerc >= 66;
 
-    // cond 1
+    // BEARISH TRUST COND
+    const keepReliable = totalSides >= 4 && !isCurrBullish;
+    if (hasReliableStrength && keepReliable) {
+        return {
+            status: true,
+            reason: "40minBearishReliable",
+        };
+    }
+    // BEARISH TRUST COND
+
+    // cond 1 - min 50 minutes from candle duration to be reliable
     const gotAlmostAllSides = totalSides === 5; // total is 6 but the last actual last only one minute and may not be detected
-    const gotLastCandleBullish =
-        currSide === "bull" || (sidesStreak && sidesStreak[0] === "bull");
-    if (gotAlmostAllSides && gotLastCandleBullish) {
-        if (gotLastCandleBullish) {
-            return {
-                status: true,
-                reason: "almostAllSidesLastBull",
-            };
-        }
+    if (gotAlmostAllSides && isCurrBullish) {
+        return {
+            status: true,
+            reason: "finalReliable",
+        };
     }
 
-    // cond 2
-    const isMajorityBull = bullSidePerc >= 66;
-    const keepBullish = totalSides >= 4 && currSide === "bull";
+    // cond 2 - min 40 minutes from candle duration to be reliable
+    const keepReliable = totalSides >= 4 && isCurrBullish;
     const cond2BodySizes = ["small", "tiny"];
-    const isLast3SidesBullish = sidesStreak
+    const isLast3SidesReliable = sidesStreak
         .slice(0, 3)
-        .every((side) => side === "bull");
+        .every((side) => side === currSide);
     if (
-        keepBullish &&
-        isMajorityBull &&
-        isLast3SidesBullish &&
+        keepReliable &&
+        hasReliableStrength &&
+        isLast3SidesReliable &&
         cond2BodySizes.includes(currBodySize)
     ) {
         return {
             status: true,
-            reason: "threeSmallBullish",
+            reason: "40minReliable",
         };
     }
 
-    // cond 3
+    // cond 3 - min 30 minutes from candle duration to be reliable
     const minCandles = totalSides >= 3;
-    const isLast2SidesBullish = sidesStreak
+    const reliable30MinSizes = ["small", "medium"];
+    const isLast2SidesReliable = sidesStreak
         .slice(0, 2)
-        .every((side) => side === "bull");
-    if (minCandles && isLast2SidesBullish && currBodySize === "medium") {
+        .every((side) => side === currSide);
+    if (
+        minCandles &&
+        isLast2SidesReliable &&
+        reliable30MinSizes.includes(currBodySize)
+    ) {
         return {
             status: true,
-            reason: "twoMediumBullish",
+            reason: "30minReliable",
         };
     }
 

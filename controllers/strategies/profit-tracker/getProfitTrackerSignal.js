@@ -125,14 +125,12 @@ function getAtrStrategy(profitTracker) {
     const {
         atrLowerLimit,
         currPrice,
-        netPerc,
         maxPerc,
+        // netPerc,
         // atrLimit,
     } = profitTracker;
-    const minRangeForSellNetPerc = maxPerc >= 1.5;
-    const condMinimizeLoss = minRangeForSellNetPerc && netPerc <= -1;
-
-    const atrSellCond = condMinimizeLoss || currPrice <= atrLowerLimit;
+    const minRangeForSellNetPerc = maxPerc >= 2.5;
+    const atrSellCond = minRangeForSellNetPerc || currPrice <= atrLowerLimit;
 
     if (atrSellCond) {
         return {

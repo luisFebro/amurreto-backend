@@ -34,6 +34,16 @@ async function setHistoricalLiveCandle({
             dbData,
         });
 
+    // return { status: true, reason: "thunderingChange" }
+    // it is here because use percentage from live candle
+    const candleReliability = checkLiveCandleReliability({
+        currBodySize,
+        currTimeSidesStreak: sidesStreak,
+        bullSidePerc,
+        bearSidePerc,
+        // lastTimeCandle: history && history[0],
+    });
+
     const newData = {
         timestamp,
         emaTrend,
@@ -46,19 +56,10 @@ async function setHistoricalLiveCandle({
         lowerWing20,
         sequenceStreaks,
         wholeCandleSize,
+        candleReliability,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
-
-    // return { status: true, reason: "thunderingChange" }
-    // it is here because use percentage from live candle
-    const candleReliability = checkLiveCandleReliability({
-        currBodySize,
-        currTimeSidesStreak: sidesStreak,
-        bullSidePerc,
-        // lastTimeCandle: history && history[0],
-        // bearSidePerc,
-    });
 
     return candleReliability;
 }
@@ -134,12 +135,12 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
 // 6 sides for hour.
 // after adding one side in a cond which is true, the totalAllSides will read the next value which range will only be true when the currMin is within.
 function needPushCurrSide({ currMin, totalAllSides }) {
-    if (totalAllSides === 0 && currMin < 10) return true;
-    if (totalAllSides === 1 && currMin >= 10 && currMin < 20) return true;
-    if (totalAllSides === 2 && currMin >= 20 && currMin < 30) return true;
-    if (totalAllSides === 3 && currMin >= 30 && currMin < 40) return true;
-    if (totalAllSides === 4 && currMin >= 40 && currMin < 50) return true;
     if (totalAllSides === 5 && currMin >= 59) return true; // this one is closer so that we can have a more accurate and closer result of the current candle final state
+    if (totalAllSides === 4 && currMin >= 50) return true;
+    if (totalAllSides === 3 && currMin >= 40) return true;
+    if (totalAllSides === 2 && currMin >= 30) return true;
+    if (totalAllSides === 1 && currMin >= 20) return true;
+    if (totalAllSides === 0 && currMin >= 10) return true;
 
     return false;
 }
