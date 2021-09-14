@@ -15,6 +15,7 @@ const mainData = {
     wholeCandleSize: String,
     pendingLimitOrder: {
         signal: { type: String, enum: ["BUY", "SELL"] },
+        strategy: String,
         count: Number,
         openOrderId: String,
     },

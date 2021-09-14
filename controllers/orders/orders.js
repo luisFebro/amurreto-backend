@@ -44,18 +44,22 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         orderType: type,
         side,
         maxIterateCount: 5,
+        strategy,
     });
 
-    const { gotOpenOrderExchange, needRecordOnly, recordedSignal } =
+    const { gotOpenOrderExchange, needRecordOnly, dbSignal, dbStrategy } =
         openOrderExchange;
 
     // if there is no order in exchange and there is a count available, it means a pending transaction was recently filled and ready to be recorded in the DB.
     // note that, after registration, the count and signal are set to 0 and null respectively.
-    const needRecordLimitBuyOnly = needRecordOnly && recordedSignal === "BUY";
-    const needRecordLimitSellOnly = needRecordOnly && recordedSignal === "SELL";
+    const needRecordLimitBuyOnly = needRecordOnly && dbSignal === "BUY";
+    const needRecordLimitSellOnly = needRecordOnly && dbSignal === "SELL";
+
+    // dbStrategy is the fallback value when the signal is available only for a few seconds and it is null the next algo reading.
+    const thisStrategy = strategy || dbStrategy;
 
     const validSide = side || needRecordOnly;
-    const validStrategy = strategy || needRecordOnly;
+    const validStrategy = thisStrategy || needRecordOnly;
 
     if (!validSide || !validStrategy || IS_DEV) return null;
 
@@ -67,7 +71,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         checkAlreadyExecutedStrategy(symbol, {
             status: "pending",
             side,
-            strategy,
+            strategy: thisStrategy,
         }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
         // findTransactionSidePerc({ symbol }),
@@ -85,7 +89,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
             side: "BUY",
             type, // order type LIMIT or MARKET
             symbol,
-            strategy,
+            strategy: thisStrategy,
             capitalPositionPerc,
             transactionPositionPerc,
             offsetPrice,
@@ -102,7 +106,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
             side: "SELL",
             type,
             symbol,
-            strategy,
+            strategy: thisStrategy,
             capitalPositionPerc,
             transactionPositionPerc,
             offsetPrice,
@@ -268,7 +272,7 @@ async function createOrderBack(payload = {}) {
 //     offsetPrice: 600,
 //     forcePrice: true,
 //     symbol: "BTC/BRL",
-//     strategy: "fuck you",
+//     strategy: "",
 //     capitalPositionPerc: 100,
 //     transactionPositionPerc: 100,
 // })
@@ -411,6 +415,7 @@ async function checkOpeningOrderNotDoneExchange({
     maxIterateCount = 1,
     orderType,
     side,
+    strategy,
 }) {
     // verify if there is open order
     // after detect the open order, the order is cancelled and new order will be made after the algo iterate the below number of time.
@@ -434,11 +439,13 @@ async function checkOpeningOrderNotDoneExchange({
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
     const incIteratorCounter = async (status, openOrderId) => {
-        const signalInclusion = !side
-            ? {}
-            : {
-                  "pendingLimitOrder.signal": side,
-              };
+        const signalInclusion =
+            !side || !strategy
+                ? {}
+                : {
+                      "pendingLimitOrder.signal": side,
+                      "pendingLimitOrder.strategy": strategy,
+                  };
 
         let dataToUpdate = {
             $inc: { "pendingLimitOrder.count": 1 },
@@ -460,11 +467,12 @@ async function checkOpeningOrderNotDoneExchange({
     if (detectedCleanableSide) await incIteratorCounter(false);
 
     const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID).select(
-        "_id pendingLimitOrder"
+        "-_id pendingLimitOrder"
     );
 
     const dbMaxIterationCount = dbData ? dbData.pendingLimitOrder.count : 0;
-    const recordedSignal = dbData ? dbData.pendingLimitOrder.signal : null;
+    const dbSignal = dbData ? dbData.pendingLimitOrder.signal : null;
+    const dbStrategy = dbData ? dbData.pendingLimitOrder.strategy : null;
     const dbOpenOrderId = dbData ? dbData.pendingLimitOrder.openOrderId : null;
 
     const lastOpenOrderId =
@@ -489,7 +497,8 @@ async function checkOpeningOrderNotDoneExchange({
         return {
             gotOpenOrderExchange,
             needRecordOnly, // ignore pendingTypeLimit check if market so that it ain't gonna count in the DB.
-            recordedSignal,
+            dbSignal,
+            dbStrategy,
         };
 
     if (gotOpenOrderExchange) {
@@ -524,7 +533,8 @@ async function checkOpeningOrderNotDoneExchange({
         // if there is a number of dbMaxIterationCount, it means the current open limit order was executed by the exchange and need to be recorded in the DB properly.
         // the dbMaxIterationCount should be zero again after db registration of the LIMIT transaction.
         needRecordOnly,
-        recordedSignal, // identify which side to execute either BUY or SELL
+        dbSignal, // identify which side to execute either BUY or SELL
+        dbStrategy,
     };
 }
 

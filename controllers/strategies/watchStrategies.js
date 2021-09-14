@@ -124,7 +124,9 @@ function strategiesHandler(allSignals = [], options = {}) {
     const denyBuySignal = !isFreeFall && disableATR;
     if (denyBuySignal) return DEFAULT_WAIT_SIGNAL;
 
-    if (!isProfitLimitSignal && isFreeFall) return DEFAULT_WAIT_SIGNAL;
+    const isBlockMaxProfitSignal = foundStrategy === "maxDowntrendProfit";
+    if (isFreeFall && (!isProfitLimitSignal || isBlockMaxProfitSignal))
+        return DEFAULT_WAIT_SIGNAL;
     // END CHECK FREE FALL
 
     const isUnreliableBuySignal = handleUnreliableBuySignal({

@@ -17,6 +17,7 @@ async function recordFinalDbOrder({
             "pendingLimitOrder.signal": null,
             "pendingLimitOrder.count": 0,
             "pendingLimitOrder.openOrderId": null,
+            "pendingLimitOrder.strategy": null,
         };
 
         return await LiveCandleHistory.findByIdAndUpdate(
