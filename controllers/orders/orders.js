@@ -11,13 +11,12 @@ const {
 } = require("./dbOrders");
 const LiveCandleHistory = require("../../models/LiveCandleHistory");
 const { getTransactionFees } = require("../fees");
-const needCircuitBreaker = require("../helpers/circuitBreaker");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 
-async function createOrderBySignal(signalData = {}) {
+async function createOrderBySignal(signalData = {}, options = {}) {
     const {
         symbol = "BTC/BRL",
         type = "MARKET",
@@ -28,6 +27,8 @@ async function createOrderBySignal(signalData = {}) {
         forcePrice = false,
         offsetPrice = 0,
     } = signalData;
+
+    const { isCircuitBreakerBlock } = options;
 
     const handleSide = () => {
         // BUY and SELL sides from signal is valid. Others 2 are ignored
@@ -61,7 +62,6 @@ async function createOrderBySignal(signalData = {}) {
     const [
         alreadyExecutedStrategyForSide,
         transactionPositionPerc, // 100 for 100% of money exchange or 50 for 50% of money exchange available in quote currency BRL
-        isBlockedByCurcuitBreak,
         // priorSidePerc,
     ] = await Promise.all([
         checkAlreadyExecutedStrategy(symbol, {
@@ -70,25 +70,15 @@ async function createOrderBySignal(signalData = {}) {
             strategy,
         }),
         getOrderTransactionPerc({ symbol, side, defaultPerc: transactionPerc }),
-        needCircuitBreaker(),
         // findTransactionSidePerc({ symbol }),
     ]);
-    // const { priorSellingPerc, priorBuyingPerc } = priorSidePerc;
-
-    // just in case of a drastic of fall happens and an uptrend goes right straight to downtrend.
-    // if got some buying position and WAIT is current sign, it is Sell sign.
-    // const gotBuyPosition = priorBuyingPerc > 0;
-    // const isWaitWithBuyingPosition = signal === "WAIT" && gotBuyPosition;
-
-    // in order to use HOLD, it should be only a BUY if there is no prior SELL transaction in the current trade. That's because the robot will buy again after a SELL back to HOLD during an uptrend.
-    // const isHoldWithoutPriorSell = signal === "BUY" && priorSellingPerc === 0;
 
     const defaultCond =
         !gotOpenOrderExchange && !alreadyExecutedStrategyForSide;
     // circuit break only apply to Buy cond because if we block sell of current transaction, the algo will be stuck and a sudden plunge in price will be ignored
     const condBuy =
         needRecordLimitBuyOnly ||
-        (defaultCond && !isBlockedByCurcuitBreak && signal === "BUY"); // signal === "HOLD" || isHoldWithoutPriorSell
+        (defaultCond && !isCircuitBreakerBlock && signal === "BUY"); // signal === "HOLD" || isHoldWithoutPriorSell
 
     if (condBuy) {
         return await createOrderBack({
@@ -458,7 +448,8 @@ async function checkOpeningOrderNotDoneExchange({
         if (!status)
             dataToUpdate = {
                 "pendingLimitOrder.count": 0,
-                "pendingLimitOrder.signal": null,
+                // signal is only set to null in recordFinalDbOrder to avoid issues with not recorded transaction. The needRecord param will do well
+                // "pendingLimitOrder.signal": null,
             };
 
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, dataToUpdate);
@@ -482,10 +473,6 @@ async function checkOpeningOrderNotDoneExchange({
     const lastCloseOrderId =
         closeOrdersList[0] &&
         `${closeOrdersList[0].quote}||${closeOrdersList[0].base}`;
-
-    console.log("openOrdersList[0]", openOrdersList[0]);
-    console.log("dbOpenOrderId", dbOpenOrderId);
-    console.log("lastCloseOrderId", lastCloseOrderId);
 
     const needRecordOnly = Boolean(
         !gotOpenOrderExchange &&
@@ -517,11 +504,6 @@ async function checkOpeningOrderNotDoneExchange({
             ]);
             return false;
         }
-
-        console.log(
-            "openOrdersList[0] && openOrdersList[0].status",
-            openOrdersList[0] && openOrdersList[0].status
-        );
 
         const validStatusList = ["SUBMITTED", "PROCESSING"];
         const validStatus = validStatusList.includes(

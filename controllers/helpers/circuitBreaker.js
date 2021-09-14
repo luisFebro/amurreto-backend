@@ -12,8 +12,8 @@ only applicable for buy order since if we block selling the current transaction 
  */
 
 async function needCircuitBreaker() {
-    const MIN_PRICE_DIFF = 1000;
-    const MIN_TIME_AFTER_LAST_TRANS = 30; // in minute
+    const MIN_PRICE_DIFF = 300;
+    const MIN_TIME_AFTER_LAST_TRANS = 60; // in minute
 
     const livePrice = await getLivePrice("BTC/BRL");
 
@@ -51,15 +51,23 @@ async function needCircuitBreaker() {
     const lastSellData = data.sellPrices.slice(-1)[0];
     const lastTransactionSellDate = new Date(lastSellData.timestamp);
     const lastTransactionSellMarketPrice = lastSellData.amounts.market;
-    const diffPriceLastTransaction = Math.abs(
-        livePrice - lastTransactionSellMarketPrice
+    const diffPriceLastTransaction = Number(
+        Math.abs(livePrice - lastTransactionSellMarketPrice).toFixed(2)
     );
 
+    console.log("diffPriceCircuitBlockedForPrice", diffPriceLastTransaction);
     const isBlockedForPrice = diffPriceLastTransaction <= MIN_PRICE_DIFF;
     const isBlockedForTime =
         getDiffInMinutes(lastTransactionSellDate) <= MIN_TIME_AFTER_LAST_TRANS;
 
-    return isBlockedForPrice || isBlockedForTime;
+    const circuitBreakerData = {
+        diffPriceLastTransaction,
+    };
+
+    return {
+        isBlock: isBlockedForPrice || isBlockedForTime,
+        circuitBreakerData,
+    };
 }
 
 module.exports = needCircuitBreaker;

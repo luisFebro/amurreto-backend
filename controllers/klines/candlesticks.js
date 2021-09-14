@@ -8,6 +8,7 @@ const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 const detectSequenceStreaks = require("./algo/candle/algo/detectSequenceStreaks");
+const needCircuitBreaker = require("../helpers/circuitBreaker");
 // indicators
 const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const calculateATR = require("../indicators/atr");
@@ -287,11 +288,15 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
+    const { isBlock: isCircuitBreakerBlock, circuitBreakerData } =
+        await needCircuitBreaker();
     const candleReliability = await setHistoricalLiveCandle({
         liveCandle,
         emaTrend: lastEmaTrend,
         lowerWing20,
         sequenceStreaks,
+        isCircuitBreakerBlock,
+        circuitBreakerData,
     });
 
     const finalSignalData = await watchStrategies({
@@ -303,7 +308,10 @@ async function getCandlesticksData(payload = {}) {
     });
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION
-    await createOrderBySignal({ symbol, ...finalSignalData });
+    const signalOpts = {
+        isCircuitBreakerBlock,
+    };
+    await createOrderBySignal({ symbol, ...finalSignalData }, signalOpts);
 
     // const lastIsOverbought = lastRsi >= 70;
     const indicators = {
@@ -337,7 +345,7 @@ async function getCandlesticksData(payload = {}) {
             threeCandleType: liveCandle.threeCandleType,
             // incPrice: lastIncPrice,
         },
-        sequenceStreaks,
+        isCircuitBreakerBlock,
         indicators,
         list: handleListData(candlestickData, {
             noList,

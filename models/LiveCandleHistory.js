@@ -23,6 +23,8 @@ const mainData = {
     oneCandleType: String,
     twoCandleType: String,
     threeCandleType: String,
+    isCircuitBreakerBlock: Boolean,
+    circuitBreakerData: Object,
 };
 
 const HistoryData = new Schema(mainData, { _id: true });

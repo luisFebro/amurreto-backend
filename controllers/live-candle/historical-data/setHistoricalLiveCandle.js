@@ -11,6 +11,8 @@ async function setHistoricalLiveCandle({
     sequenceStreaks,
     lowerWing20,
     emaTrend,
+    isCircuitBreakerBlock,
+    circuitBreakerData,
 }) {
     const {
         isBullish,
@@ -72,6 +74,8 @@ async function setHistoricalLiveCandle({
         oneCandleType,
         twoCandleType,
         threeCandleType,
+        isCircuitBreakerBlock,
+        circuitBreakerData,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
@@ -114,6 +118,8 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
                 oneCandleType: dbData && dbData.oneCandleType,
                 twoCandleType: dbData && dbData.twoCandleType,
                 threeCandleType: dbData && dbData.threeCandleType,
+                isCircuitBreakerBlock: dbData && dbData.isCircuitBreakerBlock,
+                circuitBreakerData: dbData && dbData.circuitBreakerData,
                 ...percData,
             },
             ...dbHistory,
