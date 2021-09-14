@@ -1,7 +1,7 @@
 /*
 Indication: Bullish reversal
 Reliability: Medium (My own)
-Description: Two heavily bullish candle with a gap in the lower shadow indicates a huge profit opportunity.
+Description: Detect a plummet (fall or drop straight down at high speed.) in the market. Two heavily bullish candle with a gap in the lower shadow indicates a huge profit opportunity.
 e.g 2021-09-07T14:00:00.000Z && 2021-09-07T15:00:00.000Z
  */
 

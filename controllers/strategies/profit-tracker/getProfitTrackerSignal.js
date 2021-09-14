@@ -3,6 +3,7 @@ async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
         watching,
         atrLimit,
         atrUpperLimit,
+        maxCurrPrice,
         // maxPerc,
         // atrLowerLimit,
     } = profitTracker;
@@ -10,10 +11,10 @@ async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
     if (!watching || !atrLimit)
         return { signal: null, whichStrategy: "tracker" };
 
-    const currPrice = liveCandle.close;
+    const livePrice = liveCandle.close;
     const currEmaTrend = liveCandle.emaTrend;
 
-    const hasPassedAtrUpperLimit = currPrice >= atrUpperLimit;
+    const hasPassedAtrUpperLimit = maxCurrPrice >= atrUpperLimit;
     const atrTrends = ["uptrend"];
     // const MAX_DIFF_SPLITTER = 0.8;
 
@@ -24,12 +25,16 @@ async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
     if (whichStrategy === "atr")
         return {
             whichStrategy: "atr",
-            ...getAtrStrategy({ ...profitTracker, currPrice }),
+            ...getAtrStrategy({ ...profitTracker, livePrice }),
         };
 
     return {
         whichStrategy: "tracker",
-        ...getTrackerStrategy({ ...profitTracker, currEmaTrend }),
+        ...getTrackerStrategy({
+            ...profitTracker,
+            currEmaTrend,
+            hasPassedAtrUpperLimit,
+        }),
     };
 }
 
@@ -43,7 +48,10 @@ function getTrackerStrategy(profitTracker) {
         netPerc,
         currEmaTrend,
         // minPerc,
+        hasPassedAtrUpperLimit,
     } = profitTracker;
+
+    const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
     const MAX_STOP_LOSS_PERC = -2.5;
@@ -51,7 +59,7 @@ function getTrackerStrategy(profitTracker) {
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
-            strategy: "maxProfitStopLoss",
+            strategy: `maxProfitStopLoss${nextLevel}`,
             transactionPerc: 100,
         };
     }
@@ -69,7 +77,7 @@ function getTrackerStrategy(profitTracker) {
     if (primaryCond && isMinDowntrendProfit) {
         return {
             signal: "SELL",
-            strategy: "minDownTrendProfit",
+            strategy: `minDownTrendProfit${nextLevel}`,
             transactionPerc: 100,
         };
     }
@@ -101,11 +109,17 @@ function getTrackerStrategy(profitTracker) {
     const longProfitRange = maxPerc >= 4;
 
     const isStartProfit =
-        startProfitRange && diffMax >= MAX_DIFF_START_PROFIT && "startProfit";
+        startProfitRange &&
+        diffMax >= MAX_DIFF_START_PROFIT &&
+        `startProfit${nextLevel}`;
     const isMidProfit =
-        midProfitRange && diffMax >= MAX_DIFF_MID_PROFIT && "midProfit";
+        midProfitRange &&
+        diffMax >= MAX_DIFF_MID_PROFIT &&
+        `midProfit${nextLevel}`;
     const isLongProfit =
-        longProfitRange && diffMax >= MAX_DIFF_LONG_PROFIT && "longProfit";
+        longProfitRange &&
+        diffMax >= MAX_DIFF_LONG_PROFIT &&
+        `longProfit${nextLevel}`;
     const profitRange = isStartProfit || isMidProfit || isLongProfit;
 
     if (isProfit && profitRange) {
@@ -121,16 +135,16 @@ function getTrackerStrategy(profitTracker) {
 }
 
 // automatically activate in an uptrend
-function getAtrStrategy(profitTracker) {
+function getAtrStrategy(data) {
     const {
         atrLowerLimit,
-        currPrice,
+        livePrice,
         maxPerc,
         // netPerc,
         // atrLimit,
-    } = profitTracker;
+    } = data;
     const minRangeForSellNetPerc = maxPerc >= 2.5;
-    const atrSellCond = minRangeForSellNetPerc || currPrice <= atrLowerLimit;
+    const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
 
     if (atrSellCond) {
         return {

@@ -48,6 +48,7 @@ const data = {
         atrUpperLimit: Number, // used for stoploss
         atrLowerLimit: Number,
         atrLimit: Number,
+        maxCurrPrice: Number, // max close
     },
 };
 

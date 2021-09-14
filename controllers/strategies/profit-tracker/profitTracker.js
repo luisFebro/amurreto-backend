@@ -3,10 +3,13 @@ const getLiveCandle = require("../../live-candle/liveCandle");
 // the goal is the maximize profit by tracking netProfitPerc and decide when to buy/sell based on the min and especially the max profit
 
 async function watchProfitTracker({ liveCandle }) {
-    const profitsData = await getLiveProfitsPerc();
-    const watching = Boolean(profitsData.transactionId);
-
     const atrLimits = liveCandle.atrLimits;
+    const maxCurrPrice = liveCandle.close;
+
+    const profitsData = await getLiveProfitsPerc({
+        maxClosePrice: maxCurrPrice,
+    });
+    const watching = Boolean(profitsData.transactionId);
 
     if (watching) {
         await registerProfitTracker(profitsData, { atrLimits });
@@ -19,7 +22,7 @@ async function watchProfitTracker({ liveCandle }) {
 }
 
 // HELPERS
-async function getLiveProfitsPerc() {
+async function getLiveProfitsPerc({ maxClosePrice }) {
     const transactionData = await AmurretoOrders.aggregate([
         {
             $match: {
@@ -84,6 +87,7 @@ async function getLiveProfitsPerc() {
     ]);
 
     const {
+        maxCurrPrice = 0,
         maxPerc = 0,
         minPerc = 0,
         netPerc,
@@ -91,6 +95,7 @@ async function getLiveProfitsPerc() {
         maxPerc: max,
         netPerc: net,
         minPerc: min,
+        maxClosePrice,
         priorDbData: profitTracker,
     });
 
@@ -98,6 +103,7 @@ async function getLiveProfitsPerc() {
         transactionId,
         strategy: currStrategy,
         isProfit: netPerc >= 0,
+        maxCurrPrice,
         maxPerc,
         netPerc,
         minPerc,
@@ -112,7 +118,8 @@ async function getLiveProfitsPerc() {
 
 async function registerProfitTracker(data = {}, options = {}) {
     const { atrLimits = {} } = options;
-    const { transactionId, maxPerc, netPerc, minPerc, diffMax } = data;
+    const { transactionId, maxCurrPrice, maxPerc, netPerc, minPerc, diffMax } =
+        data;
 
     // compare so that only the first atr parameters are registered, when buying...
     const gotPriorDbAtr = Boolean(data.atrLimit);
@@ -130,6 +137,7 @@ async function registerProfitTracker(data = {}, options = {}) {
         "profitTracker.maxPerc": maxPerc,
         "profitTracker.netPerc": netPerc,
         "profitTracker.minPerc": minPerc,
+        "profitTracker.maxCurrPrice": maxCurrPrice,
         ...atrUpdate,
     };
 
@@ -137,18 +145,25 @@ async function registerProfitTracker(data = {}, options = {}) {
 }
 
 function compareAndSetHigherPerc(data) {
-    const { maxPerc, minPerc, netPerc, priorDbData } = data;
+    const { maxPerc, minPerc, netPerc, maxClosePrice, priorDbData } = data;
 
     if (!priorDbData)
         return {
+            maxCurrPrice: 0,
             maxPerc: netPerc || 0,
             netPerc: netPerc || 0,
+            minPerc: 0,
         };
 
+    const priorMaxCurrPrice = priorDbData.maxCurrPrice;
     const priorMaxPerc = priorDbData.maxPerc;
     const priorMinPerc = priorDbData.minPerc;
 
     return {
+        maxCurrPrice:
+            maxClosePrice > priorMaxCurrPrice
+                ? maxClosePrice
+                : priorMaxCurrPrice,
         maxPerc: maxPerc > priorMaxPerc ? maxPerc : priorMaxPerc,
         netPerc, // it does not need to compare with prior because it should be always results in the live value instead of replace it with the prior oneisBlockedByCurcuitBreak
         minPerc: minPerc < priorMinPerc ? minPerc : priorMinPerc,
