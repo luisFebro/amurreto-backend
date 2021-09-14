@@ -7,15 +7,23 @@ const { IS_DEV } = require("../../../config");
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 
 async function setHistoricalLiveCandle({
-    side,
-    timestamp,
-    emaTrend,
-    openPrice,
-    currBodySize,
-    wholeCandleSize,
-    lowerWing20,
+    liveCandle,
     sequenceStreaks,
+    lowerWing20,
+    emaTrend,
 }) {
+    const {
+        side,
+        atr,
+        timestamp,
+        openPrice,
+        currBodySize,
+        wholeCandleSize,
+        oneCandleType,
+        twoCandleType,
+        threeCandleType,
+    } = liveCandle;
+
     // the data will be mingled with current local dev, so only in prod.
     if (IS_DEV) return { candleReliability: {}, dbEmaUptrend: {} };
 
@@ -57,6 +65,10 @@ async function setHistoricalLiveCandle({
         sequenceStreaks,
         wholeCandleSize,
         candleReliability,
+        atr,
+        oneCandleType,
+        twoCandleType,
+        threeCandleType,
     };
 
     await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, newData);
@@ -94,6 +106,11 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
                 lowerWing20: dbData && dbData.lowerWing20,
                 sequenceStreaks: dbData && dbData.sequenceStreaks,
                 wholeCandleSize: dbData && dbData.wholeCandleSize,
+                candleReliability: dbData && dbData.candleReliability,
+                atr: dbData && dbData.atr,
+                oneCandleType: dbData && dbData.oneCandleType,
+                twoCandleType: dbData && dbData.twoCandleType,
+                threeCandleType: dbData && dbData.threeCandleType,
                 ...percData,
             },
             ...dbHistory,

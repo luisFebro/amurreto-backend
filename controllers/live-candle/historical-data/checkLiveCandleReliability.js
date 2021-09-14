@@ -26,8 +26,8 @@ function checkLiveCandleReliability({
         : bearSidePerc >= 66;
 
     // BEARISH TRUST COND
-    const keepReliable = totalSides >= 4 && !isCurrBullish;
-    if (hasReliableStrength && keepReliable) {
+    const keepReliableBear = totalSides >= 4 && !isCurrBullish;
+    if (hasReliableStrength && keepReliableBear) {
         return {
             status: true,
             reason: "40minBearishReliable",
@@ -45,13 +45,13 @@ function checkLiveCandleReliability({
     }
 
     // cond 2 - min 40 minutes from candle duration to be reliable
-    const keepReliable = totalSides >= 4 && isCurrBullish;
+    const keepReliable40Min = totalSides >= 4 && isCurrBullish;
     const cond2BodySizes = ["small", "tiny"];
     const isLast3SidesReliable = sidesStreak
         .slice(0, 3)
         .every((side) => side === currSide);
     if (
-        keepReliable &&
+        keepReliable40Min &&
         hasReliableStrength &&
         isLast3SidesReliable &&
         cond2BodySizes.includes(currBodySize)

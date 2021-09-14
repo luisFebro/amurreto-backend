@@ -13,13 +13,16 @@ const mainData = {
     lowerWing20: Object, // { closePrice, timestamp, diffCurrPrice } so that we can detect buy opportunities in case of other strategies failed to detect.
     sequenceStreaks: String,
     wholeCandleSize: String,
-    candleReliability: Object,
     pendingLimitOrder: {
         signal: { type: String, enum: ["BUY", "SELL"] },
         count: Number,
         openOrderId: String,
     },
-    // emaUptrendStopLoss: Object,
+    candleReliability: Object,
+    atr: Number,
+    oneCandleType: String,
+    twoCandleType: String,
+    threeCandleType: String,
 };
 
 const HistoryData = new Schema(mainData, { _id: true });

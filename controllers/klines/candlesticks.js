@@ -288,12 +288,8 @@ async function getCandlesticksData(payload = {}) {
     });
 
     const candleReliability = await setHistoricalLiveCandle({
-        side: liveCandle.isBullish ? "bull" : "bear",
-        timestamp: liveCandle.timestamp,
+        liveCandle,
         emaTrend: lastEmaTrend,
-        openPrice: liveCandle.open,
-        currBodySize: liveCandle.candleBodySize,
-        wholeCandleSize: liveCandle.volFullCandle,
         lowerWing20,
         sequenceStreaks,
     });
