@@ -28,7 +28,7 @@ async function setHistoricalLiveCandle({
     const wholeCandleSize = volFullCandle;
 
     // the data will be mingled with current local dev, so only in prod.
-    if (IS_DEV) return { candleReliability: {}, dbEmaUptrend: {} };
+    if (IS_DEV) return { status: false, reason: "devModeBlock" };
 
     // liveCandleSideStreak
     // it will be added every 10 min in the DB in the current live candle and empty every new one// it will be added every 10 min in the DB in the current live candle and empty every new one

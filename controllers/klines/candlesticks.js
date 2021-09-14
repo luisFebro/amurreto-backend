@@ -309,6 +309,7 @@ async function getCandlesticksData(payload = {}) {
     const indicators = {
         emaTrend: lastEmaTrend,
         atr: lastAtr && lastAtr.atr,
+        lowerWing20,
         // ema9: lastEma9,
         // ema20: lastEma20,
         // ema50: lastEma50,
@@ -324,31 +325,24 @@ async function getCandlesticksData(payload = {}) {
 
     return {
         symbol,
+        timestamp: candlestickData[0] && candlestickData[0].timestamp,
         candles: {
+            candleReliability: JSON.stringify(candleReliability),
             count: candlesCount,
-            startTimestamp: candlestickData[0] && candlestickData[0].timestamp,
-            endTimestamp: liveCandle.timestamp,
-            isBullish: liveCandle.isBullish,
+            side: liveCandle.isBullish ? "bull" : "bear",
+            wholeBodySize: liveCandle.volFullCandle,
+            bodySize: liveCandle.candleBodySize,
             oneCandleType: liveCandle.oneCandleType,
             twoCandleType: liveCandle.twoCandleType,
             threeCandleType: liveCandle.threeCandleType,
             // incPrice: lastIncPrice,
         },
+        sequenceStreaks,
         indicators,
         list: handleListData(candlestickData, {
             noList,
             reverseData,
         }),
-        // borders: {
-        //     nextResistence,
-        //     nextSupport,
-        //     keyResistence,
-        //     keySupport,
-        //     isHigherWing: liveCandle.isHigherWing,
-        //     isLowerWing: liveCandle.isLowerWing,
-        //     isKeySupport: liveCandle.isKeySupport,
-        //     isKeyResistence: liveCandle.isKeyResistence,
-        // },
     };
 }
 
