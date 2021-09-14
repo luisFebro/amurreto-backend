@@ -38,17 +38,40 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end single candle
 
     // 2 candles
+    const areBullBros = (data) => {
+        const { candleA, candleB } = data;
+
+        const gotAllCandlesData = candleA.openPrice && candleB.openPrice;
+        if (!gotAllCandlesData) return false;
+
+        const matchSides = candleB.side === "bull" && candleA.side === "bull";
+        if (!matchSides) return false;
+
+        const sizesCandleA = ["small", "medium", "big", "huge"];
+        const matchSizes = sizesCandleA.includes(candleA.bodySize);
+        if (!matchSizes) return false;
+
+        return {
+            type: "broBulls",
+            variant: "bullish",
+            pressureA: candleA.pressure,
+        };
+    };
+
+    const checkBullBros = areBullBros(defaultData);
+    if (checkBullBros) twoCandleType = JSON.stringify(checkBullBros);
+
     const checkHarami = isHarami(defaultData);
     if (checkHarami) twoCandleType = JSON.stringify(checkHarami);
 
     const checkCandleEater = isCandleEater(defaultData);
     if (checkCandleEater) twoCandleType = JSON.stringify(checkCandleEater);
 
-    const checkTweezers = areTweezers(defaultData);
-    if (checkTweezers) twoCandleType = JSON.stringify(checkTweezers);
-
     const checkEngulfing = isEngulfing(defaultData);
     if (checkEngulfing) twoCandleType = JSON.stringify(checkEngulfing);
+
+    const checkTweezers = areTweezers(defaultData);
+    if (checkTweezers) twoCandleType = JSON.stringify(checkTweezers);
 
     const checkFreeFall = isFreeFall(defaultData);
     if (checkFreeFall) twoCandleType = JSON.stringify(checkFreeFall);

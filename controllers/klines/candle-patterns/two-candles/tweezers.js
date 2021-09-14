@@ -10,7 +10,7 @@ const areTweezers = (data) => {
     if (!matchSides) return false;
 
     const sizesCandleA = ["small", "medium", "big", "huge"];
-    const sizesCandleB = ["small", "medium", "big", "huge"];
+    const sizesCandleB = ["tiny", "small", "medium", "big", "huge"];
     const matchSizes =
         sizesCandleA.includes(candleA.bodySize) &&
         sizesCandleB.includes(candleB.bodySize);
@@ -18,9 +18,9 @@ const areTweezers = (data) => {
 
     const openA = candleA.openPrice;
     const closeB = candleB.closePrice;
-    const MAX_DIFF = 45;
-    const matchSimilarPrices =
-        Math.abs(openA - closeB) <= MAX_DIFF && closeB <= openA;
+
+    const MAX_DIFF = 55;
+    const matchSimilarPrices = Math.abs(openA - closeB) <= MAX_DIFF; //&& closeB <= openA;
     if (!matchSimilarPrices) return false;
 
     return {

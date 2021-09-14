@@ -39,7 +39,7 @@ if (IS_DEV) {
         sinceType: "count", // count, date
         customDate: "2021-05-12T22:00:00.000Z", // if hour less than 9, put 0 in front
         sinceCount: 100, // default 250 last candles
-        noList: true, // default true
+        noList: false, // default true
         reverseData: false,
     }).then(console.log);
 }
