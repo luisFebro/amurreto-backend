@@ -1,15 +1,24 @@
-async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
+async function getProfitTrackerSignal({
+    profitTracker = {},
+    liveCandle,
+    isContTrend,
+}) {
     const {
         watching,
         atrLimit,
         atrUpperLimit,
         maxCurrPrice,
-        // maxPerc,
+        maxPerc,
         // atrLowerLimit,
     } = profitTracker;
-
     if (!watching || !atrLimit)
         return { signal: null, whichStrategy: "tracker" };
+
+    const contTrendSignal = getContTrendStrategy({
+        profitTracker,
+        isContTrend,
+    });
+    if (contTrendSignal) return contTrendSignal;
 
     const livePrice = liveCandle.close;
     const currEmaTrend = liveCandle.emaTrend;
@@ -18,7 +27,10 @@ async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
     const atrTrends = ["uptrend"];
     // const MAX_DIFF_SPLITTER = 0.8;
 
-    const condAtr = !hasPassedAtrUpperLimit && atrTrends.includes(currEmaTrend);
+    const condAtr =
+        maxPerc >= 0.5 &&
+        !hasPassedAtrUpperLimit &&
+        atrTrends.includes(currEmaTrend);
 
     const whichStrategy = condAtr ? "atr" : "tracker";
 
@@ -34,13 +46,31 @@ async function getProfitTrackerSignal({ profitTracker = {}, liveCandle }) {
             ...profitTracker,
             currEmaTrend,
             hasPassedAtrUpperLimit,
+            liveCandle,
         }),
     };
 }
 
 // PROFIT STRATEGIES
+function getContTrendStrategy({ profitTracker, isContTrend }) {
+    if (!isContTrend) return false;
+
+    const { maxPerc, netPerc } = profitTracker;
+
+    const nextProfitGoalPerc = Math.round(maxPerc);
+    const isGoSignal = netPerc >= nextProfitGoalPerc && nextProfitGoalPerc >= 1;
+    if (!isGoSignal) return false;
+
+    return {
+        whichStrategy: "contTrend",
+        signal: "SELL",
+        strategy: `contTrendLevel${nextProfitGoalPerc}`,
+        transactionPerc: 100,
+    };
+}
+
 // tracker is automatically activate in downtrend, bullReversal and bearReversal
-function getTrackerStrategy(profitTracker) {
+function getTrackerStrategy(data) {
     const {
         maxPerc,
         isProfit,
@@ -49,12 +79,13 @@ function getTrackerStrategy(profitTracker) {
         currEmaTrend,
         // minPerc,
         hasPassedAtrUpperLimit,
-    } = profitTracker;
+        liveCandle,
+    } = data;
 
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
-    const MAX_STOP_LOSS_PERC = -2.5;
+    const MAX_STOP_LOSS_PERC = -2;
     const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
@@ -83,7 +114,14 @@ function getTrackerStrategy(profitTracker) {
     }
 
     const MAX_PROFIT_DOWNTREND_PERC = 1.5;
-    if (primaryCond && netPerc >= MAX_PROFIT_DOWNTREND_PERC) {
+    const candleBodySize = liveCandle.candleBodySize;
+    const largeSizes = ["big", "huge"];
+    const includesLargeSizes = largeSizes.includes(candleBodySize);
+    if (
+        primaryCond &&
+        netPerc >= MAX_PROFIT_DOWNTREND_PERC &&
+        !includesLargeSizes
+    ) {
         return {
             signal: "SELL",
             strategy: "maxDowntrendProfit",
@@ -91,7 +129,7 @@ function getTrackerStrategy(profitTracker) {
         };
     }
     // END MIN AND MAX DOWNTREND PROFIT
-    const handleZones = () => {
+    const handleMaxDiffZones = () => {
         const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.5;
         const highBearReversalZoneB = maxPerc >= 1 && maxPerc < 1.2;
         if (highBearReversalZoneA) return 0.5;
@@ -100,12 +138,12 @@ function getTrackerStrategy(profitTracker) {
         return 1.5;
     };
 
-    const MAX_DIFF_START_PROFIT = handleZones();
+    const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
     const MAX_DIFF_MID_PROFIT = 1;
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
-    const startProfitRange = maxPerc >= 0 && maxPerc < 0.8;
-    const midProfitRange = maxPerc >= 0.8 && maxPerc < 4;
+    const startProfitRange = maxPerc >= 0 && maxPerc < 1.5;
+    const midProfitRange = maxPerc >= 1.5 && maxPerc < 4;
     const longProfitRange = maxPerc >= 4;
 
     const isStartProfit =

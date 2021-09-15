@@ -7,7 +7,8 @@ const { createOrderBySignal } = require("../orders/orders");
 const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
-const detectSequenceStreaks = require("./algo/candle/algo/detectSequenceStreaks");
+const detectSequenceStreaks = require("./algo/candle/detectSequenceStreaks");
+const isContinuationTrend = require("./algo/candle/isContinuationTrend");
 const needCircuitBreaker = require("../helpers/circuitBreaker");
 // indicators
 const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
@@ -37,10 +38,10 @@ if (IS_DEV) {
         symbol: "BTC/BRL",
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
-        customDate: "2021-05-12T22:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 100, // default 250 last candles
+        customDate: "2021-09-07T13:00:00.000Z", // if hour less than 9, put 0 in front
+        sinceCount: 20, // default 250 last candles
         noList: true, // default true
-        reverseData: false,
+        reverseData: true,
     }).then(console.log);
 }
 
@@ -116,6 +117,7 @@ async function getCandlesticksData(payload = {}) {
         const volUpperWick = getWickVolume("upper", allPriceData);
         const volLowerWick = getWickVolume("lower", allPriceData);
         const volFullCandle = Number((highest - lowest).toFixed(2));
+        // console.log("volFullCandle", volFullCandle);
         const volRealBodyPerc = Math.abs(
             getPercentage(volFullCandle, volRealBody)
         );
@@ -153,6 +155,7 @@ async function getCandlesticksData(payload = {}) {
             count: ind + 1,
             open,
             close, // do not remove
+            highest, // do not remove
             // candle
             timestamp,
             isBullish,
@@ -274,6 +277,12 @@ async function getCandlesticksData(payload = {}) {
         dataForSequenceStreak
     );
 
+    // continuation trend
+    const MAX_CONT_TREND = 4;
+    const contTrendData = candlestickData.slice(`-${MAX_CONT_TREND}`);
+    const isContTrend = isContinuationTrend(contTrendData);
+    // end continuation trend
+
     const liveCandle = candlestickData.slice(-1)[0] || {};
     const lastLiveCandle = candlestickData.slice(-2)[0] || {};
     const lastEma9 = dataEma9.slice(-1)[0];
@@ -305,6 +314,7 @@ async function getCandlesticksData(payload = {}) {
         candleReliability,
         lowerWing20,
         sequenceStreaks,
+        isContTrend,
     });
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION
@@ -316,6 +326,7 @@ async function getCandlesticksData(payload = {}) {
     // const lastIsOverbought = lastRsi >= 70;
     const indicators = {
         emaTrend: lastEmaTrend,
+        isContTrend,
         atr: lastAtr && lastAtr.atr,
         lowerWing20,
         // ema9: lastEma9,

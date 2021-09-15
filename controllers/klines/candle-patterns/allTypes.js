@@ -5,6 +5,7 @@ const {
     isEngulfing,
     isFreeFall,
     isCandleEater,
+    areBullBros,
 } = require("./two-candles/twoCandles");
 const {
     isThreeInside,
@@ -38,26 +39,6 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end single candle
 
     // 2 candles
-    const areBullBros = (data) => {
-        const { candleA, candleB } = data;
-
-        const gotAllCandlesData = candleA.openPrice && candleB.openPrice;
-        if (!gotAllCandlesData) return false;
-
-        const matchSides = candleB.side === "bull" && candleA.side === "bull";
-        if (!matchSides) return false;
-
-        const sizesCandleA = ["small", "medium", "big", "huge"];
-        const matchSizes = sizesCandleA.includes(candleA.bodySize);
-        if (!matchSizes) return false;
-
-        return {
-            type: "broBulls",
-            variant: "bullish",
-            pressureA: candleA.pressure,
-        };
-    };
-
     const checkBullBros = areBullBros(defaultData);
     if (checkBullBros) twoCandleType = JSON.stringify(checkBullBros);
 

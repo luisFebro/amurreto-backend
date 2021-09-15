@@ -22,17 +22,19 @@ async function watchStrategies(options = {}) {
         candleReliability,
         lowerWing20,
         sequenceStreaks,
+        isContTrend,
     } = options;
 
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker({ liveCandle });
+    console.log("profitTracker", profitTracker);
 
     // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
     const isCurrCandleReliable = candleReliability.status;
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
-        getProfitTrackerSignal({ profitTracker, liveCandle }),
+        getProfitTrackerSignal({ profitTracker, liveCandle, isContTrend }),
         getCandlePatternsSignal({
             liveCandle,
             lastLiveCandle,
@@ -87,10 +89,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     } = options;
 
     const signalStrategy = (profitTracker && profitTracker.strategy) || null;
-    const currATR = liveCandle && liveCandle.atr;
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
-    console.log("signalStrategy", signalStrategy);
-    console.log("currATR", currATR);
 
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(

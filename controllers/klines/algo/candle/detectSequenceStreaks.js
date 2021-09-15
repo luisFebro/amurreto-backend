@@ -1,6 +1,6 @@
-const sortArray = require("../../../../../utils/array/sortArray");
-const sortDates = require("../../../../../utils/dates/sortDates");
-const { getDiffInMinutes } = require("../../../../../utils/dates/dateFnsBack");
+const sortArray = require("../../../../utils/array/sortArray");
+const sortDates = require("../../../../utils/dates/sortDates");
+const { getDiffInMinutes } = require("../../../../utils/dates/dateFnsBack");
 // const { findResistenceSupportWings } = require("./findResistenceSupportWings");
 
 /* e.g

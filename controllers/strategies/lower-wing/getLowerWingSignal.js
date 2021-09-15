@@ -11,8 +11,6 @@ async function getLowerWingSignal({ lowerWing20, sequenceStreaks }) {
         };
 
     const diffCurrPrice = lowerWing20.diffCurrPrice;
-    console.log("sequenceStreaks", sequenceStreaks);
-    console.log("diffCurrPrice", diffCurrPrice);
 
     const MAX_PRICE_DIFF = 3500;
     const MIN_PRICE_DIFF = 1500;
