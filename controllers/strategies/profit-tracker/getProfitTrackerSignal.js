@@ -130,10 +130,12 @@ function getTrackerStrategy(data) {
     }
     // END MIN AND MAX DOWNTREND PROFIT
     const handleMaxDiffZones = () => {
-        const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.5;
-        const highBearReversalZoneB = maxPerc >= 1 && maxPerc < 1.2;
+        const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.4;
+        const highBearReversalZoneB = maxPerc >= 0.4 && maxPerc < 0.8;
+        const highBearReversalZoneC = maxPerc >= 0.8 && maxPerc < 1.2;
         if (highBearReversalZoneA) return 0.5;
-        if (highBearReversalZoneB) return 0.3;
+        if (highBearReversalZoneB) return 0.4;
+        if (highBearReversalZoneC) return 0.3;
 
         return 1.5;
     };
