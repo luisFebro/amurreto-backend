@@ -18,8 +18,14 @@ const partialFilled = {
     update: async ({ lastHistory, currHistory }) => {
         const history = [...lastHistory, currHistory];
 
-        const { marketPrice, quotePrice, basePrice, feeAmount, feePerc } =
-            currHistory;
+        const {
+            strategy,
+            marketPrice,
+            quotePrice,
+            basePrice,
+            feeAmount,
+            feePerc,
+        } = currHistory;
 
         // increment inc just in case there are multiple partial filled orders side by side.
         const dataToUpdate = {
@@ -31,6 +37,7 @@ const partialFilled = {
                 "pendingLimitOrder.partialFilled.feeAmount": feeAmount,
             },
             "pendingLimitOrder.partialFilled.marketPrice": marketPrice,
+            "pendingLimitOrder.partialFilled.strategy": strategy,
             "pendingLimitOrder.partialFilled.history": history,
         };
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, dataToUpdate);

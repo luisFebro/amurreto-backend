@@ -29,9 +29,6 @@ async function watchStrategies(options = {}) {
     const profitTracker = await watchProfitTracker({ liveCandle });
     console.log("profitTracker", profitTracker);
 
-    // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
-    const isCurrCandleReliable = candleReliability.status;
-
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
         getProfitTrackerSignal({ profitTracker, liveCandle, isContTrend }),
@@ -47,7 +44,7 @@ async function watchStrategies(options = {}) {
     console.log("profitStrategy", profitStrategy);
 
     const essentialData = strategiesHandler(allStrategySignals, {
-        isCurrCandleReliable,
+        candleReliability,
         sequenceStreaks,
         liveCandle,
         profitTracker,
@@ -80,7 +77,7 @@ async function watchStrategies(options = {}) {
 // HELPERS
 function strategiesHandler(allSignals = [], options = {}) {
     const {
-        isCurrCandleReliable,
+        candleReliability,
         liveCandle = {},
         profitTracker,
         profitStrategy,
@@ -129,9 +126,10 @@ function strategiesHandler(allSignals = [], options = {}) {
     // END CHECK FREE FALL
 
     const isUnreliableBuySignal = handleUnreliableBuySignal({
+        isBuySignal,
         foundStrategy,
         isProfitLimitSignal,
-        isCurrReliable: isCurrCandleReliable,
+        candleReliability,
     });
 
     if (isUnreliableBuySignal) return DEFAULT_WAIT_SIGNAL;
@@ -141,9 +139,15 @@ function strategiesHandler(allSignals = [], options = {}) {
 
 function handleUnreliableBuySignal({
     foundStrategy,
-    isCurrReliable,
     isProfitLimitSignal,
+    isBuySignal,
+    candleReliability,
 }) {
+    // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
+    const isCurrReliable = candleReliability.status;
+    const reliableReason = candleReliability.reason;
+    console.log("reliableReason", reliableReason);
+
     const exceptionToReliability = [
         "freeFall",
         "thunderingChange",
@@ -151,6 +155,8 @@ function handleUnreliableBuySignal({
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
+
+    if (isBuySignal && reliableReason === "40minBearishReliable") return true;
 
     return !isCurrReliable;
 }

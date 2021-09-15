@@ -30,6 +30,7 @@ function checkLiveCandleReliability({
     if (hasReliableStrength && keepReliableBear) {
         return {
             status: true,
+            // do not change this name, effects handleUnreliableBuySignal in warchStrategies
             reason: "40minBearishReliable",
         };
     }

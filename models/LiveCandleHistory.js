@@ -21,6 +21,7 @@ const mainData = {
         partialFilled: {
             count: Number, // total orders
             basePrice: Number,
+            strategy: String,
             quotePrice: Number,
             marketPrice: Number,
             feePerc: Number,

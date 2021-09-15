@@ -1,7 +1,7 @@
 const AmurretoOrders = require("../../models/Orders");
 const { pushFIFO } = require("../../utils/mongodb/fifo");
 const LiveCandleHistory = require("../../models/LiveCandleHistory");
-const partialFilled = require("./dbOrders");
+const partialFilled = require("./partialFilled");
 // const getPercentage = require("../utils/number/perc/getPercentage");
 
 async function recordFinalDbOrder({
@@ -48,7 +48,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
     const partialOrderData = await partialFilled.read();
 
     const thisQuote = partialOrderData
-        ? Number(quote + partialOrderData.quotePrice)
+        ? Number((quote + partialOrderData.quotePrice).toFixed(2))
         : quote;
     const thisBase = partialOrderData
         ? Number(base + partialOrderData.basePrice)
@@ -81,7 +81,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         strategy,
         type,
         timestamp: timestamp,
-        transactionPositionPerc,
+        transactionPositionPerc: 100,
         amounts: {
             base: thisBase,
             quote: thisQuote,
@@ -136,8 +136,28 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
     return "done";
 }
 
+const moreData = {
+    symbol: "BTC/BRL",
+    strategy: "powerSoloHighWave",
+    transactionPositionPerc: 100,
+    capitalPositionPerc: 100,
+};
+
+const mostRecentData = {
+    quote: 78.9,
+    base: 0.00031276,
+    price: 252270.11,
+    filledFee: 0.08,
+    feePerc: 0.1,
+    type: "LIMIT",
+    timestamp: 1631739160263,
+    status: "FILLED",
+};
+
+setDbOrderBack({ side: "BUY", mostRecentData, moreData }).then(console.log);
+
 async function checkAlreadyExecutedStrategy(symbol, options = {}) {
-    const { side, strategy } = options;
+    const { side } = options; // strategy
     // there will be only one pending status for
     // each asset/security so it is safe to query
     // for symbol and status pending only
@@ -198,9 +218,7 @@ async function getTransactionStatus({ symbol, transactionPerc, side }) {
 
     const isSell = side === "SELL";
 
-    // sometimes transactionPerc === 100 is 0
-    const isFullSelling =
-        transactionPerc === 100 || (transactionPerc === 0 && isSell);
+    const isFullSelling = isSell; // transactionPerc === 100 sometimes it is saved as 0
     const isLastPartSelling = doneSellPerc + transactionPerc === 100 && isSell;
 
     const isTransationDone = isFullSelling || isLastPartSelling;

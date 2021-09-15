@@ -14,6 +14,7 @@ const { getTransactionFees } = require("../fees");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
 const partialFilled = require("./partialFilled");
+const getId = require("../../utils/getId");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 const validOpenOrderStatus = ["SUBMITTED", "PROCESSING", "PARTIAL_FILLED"];
@@ -415,15 +416,18 @@ async function getOrdersList(payload = {}) {
 
     return treatListData(data);
 }
-// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 40, includesPartials: true }).then(
-//     console.log
-// );
+getOrdersList({
+    symbol: "BTC/BRL",
+    type: "closed",
+    limit: 2,
+    includesPartials: true,
+}).then(console.log);
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
 // .then(console.log)
 
 // HELPERS
 
-const handlePartialFilledOrders = async ({ partialData }) => {
+const handlePartialFilledOrders = async ({ partialData, strategy }) => {
     if (!partialData.length) return null;
 
     const partialFilledOrder = partialData[0];
@@ -432,17 +436,25 @@ const handlePartialFilledOrders = async ({ partialData }) => {
     const marketPrice = Number(partialFilledOrder.price);
     const feeAmount = partialFilledOrder.filledFee;
     const feePerc = partialFilledOrder.feePerc;
+    const timestamp = partialFilledOrder.timestamp;
 
     await partialFilled.clear();
     const bdData = await partialFilled.read();
 
     const lastHistory = bdData.history || [];
     const currHistory = {
-        marketPrice,
-        quotePrice,
-        basePrice,
-        feeAmount,
-        feePerc,
+        id: getId(),
+        timestamp,
+        strategy,
+        amounts: {
+            market: marketPrice,
+            quote: quotePrice,
+            base: basePrice,
+        },
+        fee: {
+            perc: feePerc,
+            amount: feeAmount,
+        },
     };
 
     await partialFilled.update({
@@ -547,7 +559,6 @@ async function checkOpeningOrderNotDoneExchange({
     if (gotOpenOrderExchange) {
         const openOrderStatus = openOrdersList[0] && openOrdersList[0].status;
         const isPartialFilled = openOrderStatus === "PARTIAL_FILLED";
-        console.log("dbMaxIterationCount", dbMaxIterationCount);
 
         const needCancelOrder =
             lastOpenOrderId && maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
@@ -556,6 +567,7 @@ async function checkOpeningOrderNotDoneExchange({
             if (isPartialFilled)
                 await handlePartialFilledOrders({
                     partialData: openOrdersList,
+                    strategy,
                 });
             await Promise.all([
                 cancelOrderBack({ symbol, cancelLast: true }),
