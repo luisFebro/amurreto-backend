@@ -551,7 +551,7 @@ async function checkOpeningOrderNotDoneExchange({
 
         const needCancelOrder =
             lastOpenOrderId && maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
-        if (false) {
+        if (needCancelOrder) {
             // needCancelOrder
             if (isPartialFilled)
                 await handlePartialFilledOrders({
