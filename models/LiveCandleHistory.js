@@ -25,6 +25,7 @@ const mainData = {
             marketPrice: Number,
             feePerc: Number,
             feeAmount: Number,
+            history: Array, // all the previous data.
         }, // record partially filled orders to be combined with the next filled order
     },
     candleReliability: Object,

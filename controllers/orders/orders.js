@@ -283,7 +283,12 @@ async function createOrderBack(payload = {}) {
 async function cancelOrderBack(payload = {}) {
     const cancelLast = (payload.cancelLast || true) && !payload.timestamp;
     const { timestamp, symbol } = payload;
-    const orderList = await getOrdersList({ symbol, type: "open", limit: 10 });
+    const orderList = await getOrdersList({
+        symbol,
+        type: "open",
+        limit: 10,
+        includesPartials: true,
+    });
     const lastOrder = orderList[0];
 
     const foundOrder = orderList.find((order) => order.timestamp === timestamp);
@@ -428,15 +433,22 @@ const handlePartialFilledOrders = async ({ partialData }) => {
     const feeAmount = partialFilledOrder.filledFee;
     const feePerc = partialFilledOrder.feePerc;
 
-    // increment inc just in case there are multiple partial filled orders side by side.
-    await partialFilled.update({
-        basePrice,
-        quotePrice,
+    await partialFilled.clear();
+    const bdData = await partialFilled.read();
+
+    const lastHistory = bdData.history || [];
+    const currHistory = {
         marketPrice,
-        feePerc,
+        quotePrice,
+        basePrice,
         feeAmount,
+        feePerc,
+    };
+
+    await partialFilled.update({
+        lastHistory,
+        currHistory,
     });
-    // await partialFilled.clear();
 
     return true;
 };
@@ -535,10 +547,12 @@ async function checkOpeningOrderNotDoneExchange({
     if (gotOpenOrderExchange) {
         const openOrderStatus = openOrdersList[0] && openOrdersList[0].status;
         const isPartialFilled = openOrderStatus === "PARTIAL_FILLED";
+        console.log("dbMaxIterationCount", dbMaxIterationCount);
 
         const needCancelOrder =
             lastOpenOrderId && maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
-        if (needCancelOrder) {
+        if (false) {
+            // needCancelOrder
             if (isPartialFilled)
                 await handlePartialFilledOrders({
                     partialData: openOrdersList,

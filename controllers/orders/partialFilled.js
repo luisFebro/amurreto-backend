@@ -5,7 +5,7 @@ const partialFilled = {
     read: async () => {
         // it is safe using destructing, always return object
         const {
-            pendingLimitOrder: { partialFilled: partialFilled },
+            pendingLimitOrder: { partialFilled },
         } = await LiveCandleHistory.findById(LIVE_CANDLE_ID).select(
             "-_id pendingLimitOrder.partialFilled"
         );
@@ -15,13 +15,13 @@ const partialFilled = {
         if (!foundPartialFilled) return false;
         return foundPartialFilled;
     },
-    update: async ({
-        basePrice,
-        quotePrice,
-        marketPrice,
-        feePerc,
-        feeAmount,
-    }) => {
+    update: async ({ lastHistory, currHistory }) => {
+        const history = [...lastHistory, currHistory];
+
+        const { marketPrice, quotePrice, basePrice, feeAmount, feePerc } =
+            currHistory;
+
+        // increment inc just in case there are multiple partial filled orders side by side.
         const dataToUpdate = {
             $inc: {
                 "pendingLimitOrder.partialFilled.count": 1,
@@ -31,6 +31,7 @@ const partialFilled = {
                 "pendingLimitOrder.partialFilled.feeAmount": feeAmount,
             },
             "pendingLimitOrder.partialFilled.marketPrice": marketPrice,
+            "pendingLimitOrder.partialFilled.history": history,
         };
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, dataToUpdate);
     },
