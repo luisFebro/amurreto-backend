@@ -136,25 +136,26 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
     return "done";
 }
 
-const moreData = {
-    symbol: "BTC/BRL",
-    strategy: "powerSoloHighWave",
-    transactionPositionPerc: 100,
-    capitalPositionPerc: 100,
-};
+// TEST
+// const moreData = {
+//     symbol: "BTC/BRL",
+//     strategy: "powerSoloHighWave",
+//     transactionPositionPerc: 100,
+//     capitalPositionPerc: 100,
+// };
 
-const mostRecentData = {
-    quote: 78.9,
-    base: 0.00031276,
-    price: 252270.11,
-    filledFee: 0.08,
-    feePerc: 0.1,
-    type: "LIMIT",
-    timestamp: 1631739160263,
-    status: "FILLED",
-};
+// const mostRecentData = {
+//     quote: 78.9,
+//     base: 0.00031276,
+//     price: 252270.11,
+//     filledFee: 0.08,
+//     feePerc: 0.1,
+//     type: "LIMIT",
+//     timestamp: 1631739160263,
+//     status: "FILLED",
+// };
 
-setDbOrderBack({ side: "BUY", mostRecentData, moreData }).then(console.log);
+// setDbOrderBack({ side: "BUY", mostRecentData, moreData }).then(console.log);
 
 async function checkAlreadyExecutedStrategy(symbol, options = {}) {
     const { side } = options; // strategy

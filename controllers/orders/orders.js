@@ -416,12 +416,12 @@ async function getOrdersList(payload = {}) {
 
     return treatListData(data);
 }
-getOrdersList({
-    symbol: "BTC/BRL",
-    type: "closed",
-    limit: 2,
-    includesPartials: true,
-}).then(console.log);
+// getOrdersList({
+//     symbol: "BTC/BRL",
+//     type: "closed",
+//     limit: 2,
+//     includesPartials: true,
+// }).then(console.log);
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
 // .then(console.log)
 
