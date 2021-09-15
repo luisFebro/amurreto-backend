@@ -18,6 +18,14 @@ const mainData = {
         strategy: String,
         count: Number,
         openOrderId: String,
+        partialFilled: {
+            count: Number, // total orders
+            basePrice: Number,
+            quotePrice: Number,
+            marketPrice: Number,
+            feePerc: Number,
+            feeAmount: Number,
+        }, // record partially filled orders to be combined with the next filled order
     },
     candleReliability: Object,
     atr: Number,

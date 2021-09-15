@@ -13,8 +13,10 @@ const LiveCandleHistory = require("../../models/LiveCandleHistory");
 const { getTransactionFees } = require("../fees");
 const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
+const partialFilled = require("./partialFilled");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
+const validOpenOrderStatus = ["SUBMITTED", "PROCESSING", "PARTIAL_FILLED"];
 
 async function createOrderBySignal(signalData = {}, options = {}) {
     const {
@@ -243,12 +245,9 @@ async function createOrderBack(payload = {}) {
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
-            const validStatusList = ["SUBMITTED", "PROCESSING"];
-            console.log(
-                "mostRecentData.status after exchange async",
+            const validStatus = validOpenOrderStatus.includes(
                 mostRecentData.status
             );
-            const validStatus = validStatusList.includes(mostRecentData.status);
             if (validStatus)
                 await LiveCandleHistory.findByIdAndUpdate(
                     LIVE_CANDLE_ID,
@@ -322,6 +321,7 @@ async function getOrdersList(payload = {}) {
         mostRecent = false, // get either open or close order right after order request
         fallback = {}, // // fallback is used as the last value in case of the exchange did not process the order. need to register the value in DB.
         removeCancel = false,
+        includesPartials = false,
     } = payload;
     const fallbackPrice = !fallback.price ? 0 : Number(fallback.price);
     const fallbackQuote = !fallback.quote ? 0 : Number(fallback.quote);
@@ -332,15 +332,22 @@ async function getOrdersList(payload = {}) {
     const treatListData = (data) => {
         const includesCancel = mostRecent && !removeCancel;
         const neededCancel = includesCancel ? "CANCELED" : undefined;
+        const neededPartialCancel = includesPartials
+            ? "PARTIAL_CANCELED"
+            : undefined;
+        const neededPartialFilled = includesPartials
+            ? "PARTIAL_FILLED"
+            : undefined;
 
         const list = data
             .filter(
                 (order) =>
                     order.info.status === neededCancel ||
+                    order.info.status === neededPartialCancel ||
+                    order.info.status === neededPartialFilled ||
                     order.info.status === "SUBMITTED" ||
                     order.info.status === "FILLED" ||
-                    order.info.status === "PROCESSING" ||
-                    order.info.status === "PARTIAL_FILLED"
+                    order.info.status === "PROCESSING"
             )
             .map((each) => {
                 const info = each.info;
@@ -403,13 +410,37 @@ async function getOrdersList(payload = {}) {
 
     return treatListData(data);
 }
-// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 4 }).then(
+// getOrdersList({ symbol: "BTC/BRL", type: "closed", limit: 40, includesPartials: true }).then(
 //     console.log
 // );
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
 // .then(console.log)
 
 // HELPERS
+
+const handlePartialFilledOrders = async ({ partialData }) => {
+    if (!partialData.length) return null;
+
+    const partialFilledOrder = partialData[0];
+    const basePrice = Number(partialFilledOrder.base);
+    const quotePrice = Number(partialFilledOrder.quote.toFixed(2));
+    const marketPrice = Number(partialFilledOrder.price);
+    const feeAmount = partialFilledOrder.filledFee;
+    const feePerc = partialFilledOrder.feePerc;
+
+    // increment inc just in case there are multiple partial filled orders side by side.
+    await partialFilled.update({
+        basePrice,
+        quotePrice,
+        marketPrice,
+        feePerc,
+        feeAmount,
+    });
+    // await partialFilled.clear();
+
+    return true;
+};
+
 async function checkOpeningOrderNotDoneExchange({
     symbol,
     maxIterateCount = 1,
@@ -426,6 +457,7 @@ async function checkOpeningOrderNotDoneExchange({
             symbol,
             type: "open",
             removeCancel: true,
+            includesPartials: true,
             limit: 1,
         }),
         getOrdersList({
@@ -501,11 +533,16 @@ async function checkOpeningOrderNotDoneExchange({
         };
 
     if (gotOpenOrderExchange) {
-        // if last open is undefined is because there is no order.
-        // But also because it can be a partially filled or canceled type of order which the system can not handle. Only cancel the order if there is a whole open order
+        const openOrderStatus = openOrdersList[0] && openOrdersList[0].status;
+        const isPartialFilled = openOrderStatus === "PARTIAL_FILLED";
+
         const needCancelOrder =
             lastOpenOrderId && maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
         if (needCancelOrder) {
+            if (isPartialFilled)
+                await handlePartialFilledOrders({
+                    partialData: openOrdersList,
+                });
             await Promise.all([
                 cancelOrderBack({ symbol, cancelLast: true }),
                 incIteratorCounter(false),
@@ -513,18 +550,8 @@ async function checkOpeningOrderNotDoneExchange({
             return false;
         }
 
-        const validStatusList = ["SUBMITTED", "PROCESSING"];
-        const validStatus = validStatusList.includes(
-            openOrdersList[0] && openOrdersList[0].status
-        );
+        const validStatus = validOpenOrderStatus.includes(openOrderStatus);
         if (validStatus) await incIteratorCounter(true, lastOpenOrderId);
-
-        /*
-        {
-            symbol,
-            [`${list}.timestamp`]: timestamp,
-        },
-         */
     }
 
     return {
@@ -612,12 +639,12 @@ The quote currency (counter currency) is the SECOND CURRENCY in both a direct an
 
 Order status(order.status)
 parcialmente executado (PARTIAL_FILLED) x parcialmente cancelado (PARTIAL_CANCELED)
+- partial_filled is always in the OPEN ORDERS whiel partial_canceled is found in closed order as result.
 - when there is PARTIAL_FILLED and if you cancel it, then we have a PARTIAL_CANCELED transaction with what partially was traded.
 SUBMITTED：The order has been submitted but not processed, not in the matching queue yet. The order is unfinished.
 PROCESSING：The order has been submitted and is in the matching queue, waiting for deal. The order is unfinished.
 FILLED：This order has been completely traded, finished and no longer in the matching queue.
 PARTIAL_FILLED：The order is already in the matching queue and partially traded, and is waiting for further matching and trade. The order is unfinished
-//
 PARTIAL_CANCELED：The order has been partially traded and canceled by the user and is no longer in the matching queue. This order is finished.
 PARTIAL_REJECTED：The order has been rejected by the system after being partially traded. Now it is finished and no longer in the matching queue.
 CANCELED：This order has been canceled by the user before being traded. It is finished now and no longer in the matching queue.

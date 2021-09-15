@@ -1,6 +1,7 @@
 const AmurretoOrders = require("../../models/Orders");
 const { pushFIFO } = require("../../utils/mongodb/fifo");
 const LiveCandleHistory = require("../../models/LiveCandleHistory");
+const partialFilled = require("./dbOrders");
 // const getPercentage = require("../utils/number/perc/getPercentage");
 
 async function recordFinalDbOrder({
@@ -44,6 +45,21 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         status: statusExchange,
     } = mostRecentData;
 
+    const partialOrderData = await partialFilled.read();
+
+    const thisQuote = partialOrderData
+        ? Number(quote + partialOrderData.quotePrice)
+        : quote;
+    const thisBase = partialOrderData
+        ? Number(base + partialOrderData.basePrice)
+        : base;
+    const thisFilledFee = partialOrderData
+        ? Number(filledFee + partialOrderData.feeAmount)
+        : filledFee;
+    const thisFeePerc = partialOrderData
+        ? Number(feePerc + partialOrderData.feePerc)
+        : feePerc;
+
     const isBuy = side === "BUY";
 
     const {
@@ -53,6 +69,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         symbol,
     } = moreData;
 
+    if (partialOrderData) await partialFilled.clear();
     const status = await getTransactionStatus({
         symbol,
         transactionPerc: transactionPositionPerc,
@@ -60,18 +77,19 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
     });
 
     const defaultTransaction = {
+        partialOrderData: partialOrderData || undefined,
         strategy,
         type,
         timestamp: timestamp,
         transactionPositionPerc,
         amounts: {
-            base,
-            quote,
+            base: thisBase,
+            quote: thisQuote,
             market: price,
         },
         fee: {
-            perc: feePerc,
-            amount: filledFee,
+            perc: thisFeePerc,
+            amount: thisFilledFee,
         },
     };
 
@@ -81,7 +99,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         status: status === "new" ? "pending" : status,
         capitalPosition: {
             totalPerc: capitalPositionPerc,
-            amount: quote,
+            amount: thisQuote,
         },
         // need to be pushed since it is an array
         buyPrices: [defaultTransaction],

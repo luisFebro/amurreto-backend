@@ -8,6 +8,7 @@ const transactionData = {
         enum: ["LIMIT", "MARKET"],
     },
     timestamp: Number,
+    partialOrderData: Object,
     amounts: {
         base: Number,
         quote: Number,
