@@ -144,6 +144,7 @@ async function createOrderBack(payload = {}) {
 
     const isMarket = type.toUpperCase() === "MARKET";
     const isBuy = side.toUpperCase() === "BUY";
+    const isSell = !isBuy;
 
     const marketPrice = await getMarketPrice({
         isBuy,
@@ -156,6 +157,15 @@ async function createOrderBack(payload = {}) {
     const { baseCurrencyAmount, quoteCurrencyAmount } = await getCurrencyAmount(
         { symbol, isBuy, transactionPositionPerc }
     );
+
+    // prevent transactions that are triggered but not enough balance
+    const MIN_BASE_BALANCE = 0.00001;
+    const MIN_QUOTE_BALANCE = 25;
+    if (
+        (isSell && baseCurrencyAmount < MIN_BASE_BALANCE) ||
+        (isBuy && quoteCurrencyAmount < MIN_QUOTE_BALANCE)
+    )
+        return null;
 
     const params = {
         value: isMarket && isBuy ? quoteCurrencyAmount : undefined,

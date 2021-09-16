@@ -121,7 +121,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         );
     }
 
-    return "done";
+    // return "done";
 }
 
 // TEST
@@ -208,7 +208,7 @@ async function getTransactionStatus({ symbol, side }) {
     const isSell = side === "SELL";
 
     const isFullSelling = isSell; // transactionPerc === 100 sometimes it is saved as 0
-    const isLastPartSelling = doneSellPerc + transactionPerc === 100 && isSell;
+    const isLastPartSelling = doneSellPerc && isSell; // + transactionPerc === 100
 
     const isTransationDone = isFullSelling || isLastPartSelling;
 

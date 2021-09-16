@@ -131,7 +131,6 @@ async function getTotalResults() {
     ];
 
     const allOrdersList = await AmurretoOrders.aggregate([...mainAggr]);
-    console.log("allOrdersList", allOrdersList);
 
     if (!allOrdersList.length)
         return {
@@ -227,7 +226,7 @@ function getMainBalanceData() {
 
 // END HELPERS
 
-getTotalResults().then(console.log);
+// getTotalResults().then(console.log);
 
 module.exports = {
     getAmountPriceResults,
