@@ -146,7 +146,6 @@ function handleUnreliableBuySignal({
     // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
     const isCurrReliable = candleReliability.status;
     const reliableReason = candleReliability.reason;
-    console.log("reliableReason", reliableReason);
 
     const exceptionToReliability = [
         "freeFall",

@@ -5,6 +5,7 @@ async function getProfitTrackerSignal({
 }) {
     const {
         watching,
+        isProfit,
         atrLimit,
         atrUpperLimit,
         maxCurrPrice,
@@ -28,7 +29,8 @@ async function getProfitTrackerSignal({
     // const MAX_DIFF_SPLITTER = 0.8;
 
     const condAtr =
-        maxPerc >= 0.5 &&
+        maxPerc >= 1 &&
+        isProfit &&
         !hasPassedAtrUpperLimit &&
         atrTrends.includes(currEmaTrend);
 
@@ -103,19 +105,6 @@ function getTrackerStrategy(data) {
     const allowedTrends = ["downtrend", "bullReversal", "bearReversal"];
     const primaryCond = isProfit && allowedTrends.includes(currEmaTrend);
 
-    const minDownProfitRange = maxPerc >= 1 && maxPerc < 1.5;
-    const MAX_DIFF_MINIMUM_PROFIT = 0.4;
-
-    const isMinDowntrendProfit =
-        minDownProfitRange && diffMax >= MAX_DIFF_MINIMUM_PROFIT;
-    if (primaryCond && isMinDowntrendProfit) {
-        return {
-            signal: "SELL",
-            strategy: `minDownTrendProfit${nextLevel}`,
-            transactionPerc: 100,
-        };
-    }
-
     const MAX_PROFIT_DOWNTREND_PERC = 1.5;
     const candleBodySize = liveCandle.candleBodySize;
     const largeSizes = ["big", "huge"];
@@ -165,7 +154,7 @@ function getTrackerStrategy(data) {
         `longProfit${nextLevel}`;
     const profitRange = isStartProfit || isMidProfit || isLongProfit;
 
-    if (isProfit && profitRange) {
+    if (profitRange) {
         return {
             signal: "SELL",
             strategy: profitRange,
@@ -214,5 +203,21 @@ module.exports = getProfitTrackerSignal;
   minPerc: -2.03,
   diffMax: 2.31,
  }
+
+ */
+
+/* ARCHIVES
+const minDownProfitRange = maxPerc >= 1 && maxPerc < 1.5;
+const MAX_DIFF_MINIMUM_PROFIT = 0.4;
+
+const isMinDowntrendProfit =
+    minDownProfitRange && diffMax >= MAX_DIFF_MINIMUM_PROFIT;
+if (primaryCond && isMinDowntrendProfit) {
+    return {
+        signal: "SELL",
+        strategy: `minDownTrendProfit${nextLevel}`,
+        transactionPerc: 100,
+    };
+}
 
  */

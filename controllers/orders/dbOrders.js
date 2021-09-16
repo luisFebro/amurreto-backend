@@ -47,49 +47,37 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 
     const partialOrderData = await partialFilled.read();
 
-    const thisQuote = partialOrderData
-        ? Number((quote + partialOrderData.quotePrice).toFixed(2))
-        : quote;
-    const thisBase = partialOrderData
-        ? Number(base + partialOrderData.basePrice)
-        : base;
-    const thisFilledFee = partialOrderData
-        ? Number(filledFee + partialOrderData.feeAmount)
-        : filledFee;
-    const thisFeePerc = partialOrderData
-        ? Number(feePerc + partialOrderData.feePerc)
-        : feePerc;
-
     const isBuy = side === "BUY";
 
     const {
         capitalPositionPerc = 100,
         strategy,
-        transactionPositionPerc = 100,
         symbol,
+        // transactionPositionPerc = 100,
     } = moreData;
 
     if (partialOrderData) await partialFilled.clear();
     const status = await getTransactionStatus({
         symbol,
-        transactionPerc: transactionPositionPerc,
+        // transactionPerc: transactionPositionPerc,
         side,
     });
 
     const defaultTransaction = {
+        // if no data, returns false, then undefined.
         partialOrderData: partialOrderData || undefined,
         strategy,
         type,
         timestamp: timestamp,
         transactionPositionPerc: 100,
         amounts: {
-            base: thisBase,
-            quote: thisQuote,
+            base,
+            quote,
             market: price,
         },
         fee: {
-            perc: thisFeePerc,
-            amount: thisFilledFee,
+            perc: feePerc,
+            amount: filledFee,
         },
     };
 
@@ -99,7 +87,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         status: status === "new" ? "pending" : status,
         capitalPosition: {
             totalPerc: capitalPositionPerc,
-            amount: thisQuote,
+            amount: quote,
         },
         // need to be pushed since it is an array
         buyPrices: [defaultTransaction],
@@ -210,7 +198,7 @@ async function cancelDbOrderBack(timestamp, options = {}) {
 // .then(console.log)
 
 // HELPERS
-async function getTransactionStatus({ symbol, transactionPerc, side }) {
+async function getTransactionStatus({ symbol, side }) {
     // search by symbol, timestamp and pending status so that we can check to create a new transaction or update one
     const { priorSellingPerc: doneSellPerc, isNewOrder } =
         await findTransactionSidePerc({ symbol, side });
