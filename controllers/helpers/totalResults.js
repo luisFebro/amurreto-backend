@@ -2,6 +2,20 @@ const AmurretoOrders = require("../../models/Orders");
 const reduceQuery = require("../../utils/mongodb/reduceQuery");
 const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 
+const getReduceForPartials = (input) => {
+    const reduceForPartials = {
+        $reduce: {
+            input,
+            initialValue: [],
+            in: {
+                $sum: { $concatArrays: ["$$value", "$$this"] },
+            },
+        },
+    };
+
+    return { $cond: [{ $isArray: reduceForPartials }, 0, reduceForPartials] };
+};
+
 // LESSON: do not confuse the perc fee with actual perc amount when adding both buy/sell fees
 function getTotalFee(type = "amount") {
     const allowedTypes = ["amount", "perc"];
@@ -15,6 +29,12 @@ function getTotalFee(type = "amount") {
                 $add: [
                     reduceQuery(`$$elem.buyPrices.fee.${type}`),
                     reduceQuery(`$$elem.sellPrices.fee.${type}`),
+                    getReduceForPartials(
+                        `$$elem.buyPrices.partialOrderData.history.fee.${type}`
+                    ),
+                    getReduceForPartials(
+                        `$$elem.sellPrices.partialOrderData.history.fee.${type}`
+                    ),
                 ],
             },
             truncCount,
@@ -23,33 +43,16 @@ function getTotalFee(type = "amount") {
 }
 
 function getAmountPriceResults(file = "totalResults") {
-    const startQuotePrice = {
-        $last: "$$elem.buyPrices.amounts.quote",
-    };
-    const startFeeAmount = {
-        $last: "$$elem.buyPrices.fee.amount",
-    };
-
-    const endQuotePrice = {
-        $last: "$$elem.sellPrices.amounts.quote",
-    };
-    const endFeeAmount = {
-        $last: "$$elem.sellPrices.fee.amount",
-    };
-    // $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
-    // };
-
-    const grossProfitAmount = { $subtract: [endQuotePrice, startQuotePrice] };
-
-    const startNetProfitPrice = {
-        $subtract: [startQuotePrice, startFeeAmount],
-    };
-    const endNetProfitPrice = { $subtract: [endQuotePrice, endFeeAmount] };
-    const finalBalanceAmount = endNetProfitPrice;
-
-    const netProfitAmount = {
-        $subtract: [finalBalanceAmount, startQuotePrice],
-    };
+    const {
+        startQuotePrice,
+        startFeeAmount,
+        endQuotePrice,
+        endFeeAmount,
+        grossProfitAmount,
+        startNetProfitPrice,
+        finalBalanceAmount,
+        netProfitAmount,
+    } = getMainBalanceData();
 
     // since the getPercentage Increment is a method detached from DB, it can not be used here
     const dataForTotalResults = {
@@ -75,15 +78,15 @@ function getAmountPriceResults(file = "totalResults") {
         $let: {
             vars: {
                 // $first is need here because we are looking in an array and to have the value use $first or $reduce if multiple in future updates.
-                buyBasePrice: {
-                    $first: "$$elem.buyPrices.amounts.base",
-                },
-                buyMarketPrice: {
-                    $first: "$$elem.buyPrices.amounts.market",
-                },
-                sellBasePrice: {
-                    $first: "$$elem.sellPrices.amounts.base",
-                },
+                // buyBasePrice: {
+                //     $first: "$$elem.buyPrices.amounts.base",
+                // },
+                // buyMarketPrice: {
+                //     $first: "$$elem.buyPrices.amounts.market",
+                // },
+                // sellBasePrice: {
+                //     $first: "$$elem.sellPrices.amounts.base",
+                // },
                 sellMarketPrice: {
                     $first: "$$elem.sellPrices.amounts.market",
                 },
@@ -128,6 +131,7 @@ async function getTotalResults() {
     ];
 
     const allOrdersList = await AmurretoOrders.aggregate([...mainAggr]);
+    console.log("allOrdersList", allOrdersList);
 
     if (!allOrdersList.length)
         return {
@@ -179,7 +183,51 @@ async function getTotalResults() {
     };
 }
 
-// getTotalResults().then(console.log);
+// HELPERS
+function getMainBalanceData() {
+    const startQuotePrice = {
+        $last: "$$elem.buyPrices.amounts.quote",
+    };
+    const startFeeAmount = {
+        $last: "$$elem.buyPrices.fee.amount",
+    };
+
+    const endQuotePrice = {
+        $last: "$$elem.sellPrices.amounts.quote",
+    };
+    const endFeeAmount = {
+        $last: "$$elem.sellPrices.fee.amount",
+    };
+    // $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
+    // };
+
+    const grossProfitAmount = { $subtract: [endQuotePrice, startQuotePrice] };
+
+    const startNetProfitPrice = {
+        $subtract: [startQuotePrice, startFeeAmount],
+    };
+
+    const finalBalanceAmount = { $subtract: [endQuotePrice, endFeeAmount] };
+
+    const netProfitAmount = {
+        $subtract: [finalBalanceAmount, startQuotePrice],
+    };
+
+    return {
+        startQuotePrice,
+        startFeeAmount,
+        endQuotePrice,
+        endFeeAmount,
+        grossProfitAmount,
+        startNetProfitPrice,
+        netProfitAmount,
+        finalBalanceAmount,
+    };
+}
+
+// END HELPERS
+
+getTotalResults().then(console.log);
 
 module.exports = {
     getAmountPriceResults,

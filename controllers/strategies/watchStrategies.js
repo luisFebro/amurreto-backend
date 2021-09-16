@@ -59,7 +59,7 @@ async function watchStrategies(options = {}) {
     });
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
-    const offsetPrice = needLimitType ? 500 : 0;
+    const offsetPrice = needLimitType ? 400 : 0;
     const forcePrice = needLimitType;
     // END TYPE ORDER HANDLING
 
@@ -160,7 +160,7 @@ function handleUnreliableBuySignal({
     if (isBuySignal && reliableReason === "40minBearishReliable") return true;
 
     const candleBodySize = liveCandle.candleBodySize;
-    const allowCandleSizes = ["medium", "big", "huge"];
+    const allowCandleSizes = ["medium", "big"];
     if (isBuySignal && allowCandleSizes.includes(candleBodySize)) return false;
 
     return !isCurrReliable;
