@@ -104,21 +104,37 @@ async function readTradesHistoryBack(payload = {}) {
         return list.map((order) => {
             const results = order.results;
 
+            const buyPartialOrders = results.buyPartialOrdersData;
+            const sellPartialOrders = results.sellPartialOrdersData;
+
+            const buyTableList = handleTableWithPartialOrders({
+                tableList: order.buyTableList,
+                partialOrders: buyPartialOrders,
+            });
+            const sellTableList = handleTableWithPartialOrders({
+                tableList: order.sellTableList,
+                partialOrders: sellPartialOrders,
+            });
+
             const finalDataBalance = getFinalBalanceData({
                 startQuote: results.startQuotePrice,
                 endQuote: results.endQuotePrice,
                 endFee: results.endFeeAmount,
-                sellPartialOrders: results.sellPartialOrdersData,
-                buyPartialOrders: results.buyPartialOrdersData,
+                sellPartialOrders,
+                buyPartialOrders,
             });
 
             return {
                 ...order,
+                sellTableList,
+                buyTableList,
                 results: finalDataBalance,
             };
         });
     });
-    data[0].list = finalOrderList;
+
+    // console.log("finalOrderList", finalOrderList[0]);
+    data[0].list = finalOrderList[0];
     // end handling balance considering partial orders
 
     if (isPending) {
@@ -150,6 +166,43 @@ async function readTradesHistoryBack(payload = {}) {
 // );
 
 // HELPERS
+function handleTableWithPartialOrders({ tableList, partialOrders }) {
+    if (!partialOrders.length) return tableList;
+
+    const finalTable = {
+        date: [...tableList.date],
+        base: [...tableList.base],
+        market: [...tableList.market],
+        orderType: [...tableList.orderType],
+        strategy: [...tableList.strategy],
+        quoteAndTransPerc: {
+            transactionPositionPerc: [
+                ...tableList.quoteAndTransPerc.transactionPositionPerc,
+            ],
+            amount: [...tableList.quoteAndTransPerc.amount],
+        },
+        fee: {
+            perc: [...tableList.fee.perc],
+            amount: [...tableList.fee.amount],
+        },
+    };
+
+    // reverse so that we can have the right order: first is the last filled order, then as the partial orders are pushed and the newly added ones are the late ones, then we reverse to have the right order
+    partialOrders.reverse().forEach((partial) => {
+        const partialData = partial[0];
+
+        finalTable.date.push(partialData.timestamp);
+        finalTable.base.push(partialData.amounts.base);
+        finalTable.market.push(partialData.amounts.market);
+        finalTable.orderType.push("LIMIT"); // it is always limit when partial order
+        finalTable.strategy.push(partialData.strategy);
+        finalTable.fee.amount.push(partialData.fee.amount);
+        finalTable.fee.perc.push(partialData.fee.perc);
+        finalTable.quoteAndTransPerc.amount.push(partialData.amounts.quote);
+        finalTable.quoteAndTransPerc.transactionPositionPerc.push(100);
+    });
+    return finalTable;
+}
 
 // in this version, only accepting BTC and one pending transaction
 // if eventually is required to manage multiple pending trnsactions, it is required to create an syncronous function to get live candle data later so that we can loop through the pending list

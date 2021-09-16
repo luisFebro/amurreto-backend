@@ -21,12 +21,12 @@ console.log("env", isProduction ? "production" : "development");
 initDB(true);
 
 // MIDDLEWARES
+app.use(cors()); //n2
 app.use(helmet()); // protect app with secure headers
 app.use(helmet.hidePoweredBy());
 app.use(compression()); // compress all responses
 app.use(express.json()); //n1
 app.use(express.urlencoded({ extended: true }));
-app.use(cors()); //n2
 // app.use(formData.parse()); // for images and multimedia in forms.
 // app.use(sslRedirect()); // n5
 
