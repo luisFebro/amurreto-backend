@@ -43,32 +43,43 @@ function getTotalFee(type = "amount") {
 }
 
 function getAmountPriceResults(file = "totalResults") {
-    const {
-        startQuotePrice,
-        startFeeAmount,
-        endQuotePrice,
-        endFeeAmount,
-        grossProfitAmount,
-        startNetProfitPrice,
-        finalBalanceAmount,
-        netProfitAmount,
-    } = getMainBalanceData();
+    // ATENTION: startFeeAmount is included implicitly in the selling price.endQuotePrice
+    // since the exchange already discounted the fee and no need to discount them again
+    // but the selling price is the gross value and it does require to discount fee.
+
+    const startQuotePrice = {
+        $last: "$$elem.buyPrices.amounts.quote",
+    };
+
+    const endQuotePrice = {
+        $last: "$$elem.sellPrices.amounts.quote",
+    };
+    const endFeeAmount = {
+        $last: "$$elem.sellPrices.fee.amount",
+    };
+
+    const buyPartialOrdersData = `$$elem.buyPrices.partialOrderData.history`;
+    const sellPartialOrdersData = `$$elem.sellPrices.partialOrderData.history`;
 
     // since the getPercentage Increment is a method detached from DB, it can not be used here
     const dataForTotalResults = {
-        startNetProfitPrice,
-        finalBalanceAmount,
         startQuotePrice,
-        netProfitAmount,
+        endQuotePrice,
+        endFeeAmount,
+        buyPartialOrdersData,
+        sellPartialOrdersData,
         sellMarketPrice: "$$sellMarketPrice",
     };
 
     const dataForDbTrades = {
-        startNetProfitPrice,
-        finalBalanceAmount,
-        grossProfitAmount,
-        netProfitAmount,
         startQuotePrice,
+        endQuotePrice,
+        endFeeAmount,
+        buyPartialOrdersData,
+        sellPartialOrdersData,
+        // finalBalanceAmount,
+        // grossProfitAmount,
+        // netProfitAmount,
     };
 
     const finalData =
@@ -77,16 +88,6 @@ function getAmountPriceResults(file = "totalResults") {
     return {
         $let: {
             vars: {
-                // $first is need here because we are looking in an array and to have the value use $first or $reduce if multiple in future updates.
-                // buyBasePrice: {
-                //     $first: "$$elem.buyPrices.amounts.base",
-                // },
-                // buyMarketPrice: {
-                //     $first: "$$elem.buyPrices.amounts.market",
-                // },
-                // sellBasePrice: {
-                //     $first: "$$elem.sellPrices.amounts.base",
-                // },
                 sellMarketPrice: {
                     $first: "$$elem.sellPrices.amounts.market",
                 },
@@ -140,10 +141,12 @@ async function getTotalResults() {
 
     const finalTotalResult = allOrdersList.map((currResults) => {
         const {
+            sellPartialOrdersData,
+            buyPartialOrdersData,
             startQuotePrice,
-            finalBalanceAmount,
-            netProfitAmount,
             sellMarketPrice,
+            endQuotePrice,
+            endFeeAmount,
         } = currResults;
 
         const isCurrentTrading = !sellMarketPrice;
@@ -154,11 +157,18 @@ async function getTotalResults() {
             };
         }
 
-        // netProfitPerc takes initial investiment and subtract with final balance which discounts the fees in both buy/sell prices.
-        const netProfitPerc = getIncreasedPerc(
-            startQuotePrice,
-            finalBalanceAmount
-        );
+        const {
+            netProfitPerc,
+            netProfitAmount,
+            // finalBalanceAmount,
+            // grossProfitAmount,
+        } = getFinalBalanceData({
+            startQuote: startQuotePrice,
+            endQuote: endQuotePrice,
+            endFee: endFeeAmount,
+            sellPartialOrders: sellPartialOrdersData,
+            buyPartialOrders: buyPartialOrdersData,
+        });
 
         return {
             netProfitPerc,
@@ -183,52 +193,73 @@ async function getTotalResults() {
 }
 
 // HELPERS
-function getMainBalanceData() {
-    const startQuotePrice = {
-        $last: "$$elem.buyPrices.amounts.quote",
-    };
-    const startFeeAmount = {
-        $last: "$$elem.buyPrices.fee.amount",
-    };
+// these values should already be combined with partial orders ones
+const getQuoteWithPartialData = ({
+    startQuote,
+    endQuote,
+    buyPartialOrders,
+    sellPartialOrders,
+}) => {
+    let thisStartQuote = startQuote;
+    let thisEndQuote = endQuote;
 
-    const endQuotePrice = {
-        $last: "$$elem.sellPrices.amounts.quote",
-    };
-    const endFeeAmount = {
-        $last: "$$elem.sellPrices.fee.amount",
-    };
-    // $trunc: [{ $multiply: ["$$sellBasePrice", "$$sellMarketPrice"] }, 2],
-    // };
+    const gotBuyPartialOrders = Boolean(buyPartialOrders.length);
+    if (gotBuyPartialOrders) {
+        buyPartialOrders.forEach((orders) => {
+            return orders.forEach((order) => {
+                const partialStartQuote = order.amounts.quote;
+                thisStartQuote += partialStartQuote;
+            });
+        });
+    }
 
-    const grossProfitAmount = { $subtract: [endQuotePrice, startQuotePrice] };
-
-    const startNetProfitPrice = {
-        $subtract: [startQuotePrice, startFeeAmount],
-    };
-
-    const finalBalanceAmount = { $subtract: [endQuotePrice, endFeeAmount] };
-
-    const netProfitAmount = {
-        $subtract: [finalBalanceAmount, startQuotePrice],
-    };
+    const gotSellPartialOrders = Boolean(sellPartialOrders.length);
+    if (gotSellPartialOrders) {
+        sellPartialOrders.forEach((orders) => {
+            return orders.forEach((order) => {
+                const partialEndQuote = order.amounts.quote;
+                thisEndQuote += partialEndQuote;
+            });
+        });
+    }
 
     return {
-        startQuotePrice,
-        startFeeAmount,
-        endQuotePrice,
-        endFeeAmount,
-        grossProfitAmount,
-        startNetProfitPrice,
-        netProfitAmount,
+        thisStartQuote,
+        thisEndQuote,
+    };
+};
+
+function getFinalBalanceData({
+    startQuote,
+    endQuote,
+    endFee,
+    sellPartialOrders,
+    buyPartialOrders,
+}) {
+    const { thisStartQuote, thisEndQuote } = getQuoteWithPartialData({
+        startQuote,
+        endQuote,
+        buyPartialOrders,
+        sellPartialOrders,
+    });
+    const finalBalanceAmount = thisEndQuote - endFee;
+
+    // netProfitPerc takes initial investiment and subtract with final balance which discounts the fees in both buy/sell prices.
+    const netProfitPerc = getIncreasedPerc(thisStartQuote, finalBalanceAmount);
+
+    return {
+        grossProfitAmount: thisEndQuote - thisStartQuote,
         finalBalanceAmount,
+        netProfitAmount: finalBalanceAmount - thisStartQuote,
+        netProfitPerc,
     };
 }
-
 // END HELPERS
 
 // getTotalResults().then(console.log);
 
 module.exports = {
+    getFinalBalanceData,
     getAmountPriceResults,
     getTotalResults,
     getTotalFee,

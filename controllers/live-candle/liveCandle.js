@@ -78,14 +78,7 @@ async function getLiveCandle(options = {}) {
     });
     // END FEE
 
-    // const startNetProfitPrice = Number(
-    //     (startQuotePrice - buyFeeAmount).toFixed(2)
-    // );
-    const endNetProfitPrice = Number(
-        (endQuotePrice - sellFeeAmount).toFixed(2)
-    );
-
-    const balanceAmount = endNetProfitPrice;
+    const balanceAmount = Number((endQuotePrice - sellFeeAmount).toFixed(2));
 
     const { grossProfitAmount, netProfitAmount } = getProfitAmount({
         endQuotePrice,

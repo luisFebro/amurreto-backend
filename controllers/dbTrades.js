@@ -7,6 +7,7 @@ const {
     getTotalResults,
     getTotalFee,
     getAmountPriceResults,
+    getFinalBalanceData,
 } = require("./helpers/totalResults");
 const getLiveCandle = require("./live-candle/liveCandle");
 
@@ -96,6 +97,29 @@ async function readTradesHistoryBack(payload = {}) {
         ...mainAggr,
         ...handleList({ skip, limit }),
     ]);
+
+    // handling balance considering partial orders
+    const finalOrderList = data.map((o) => {
+        const list = o.list;
+        return list.map((order) => {
+            const results = order.results;
+
+            const finalDataBalance = getFinalBalanceData({
+                startQuote: results.startQuotePrice,
+                endQuote: results.endQuotePrice,
+                endFee: results.endFeeAmount,
+                sellPartialOrders: results.sellPartialOrdersData,
+                buyPartialOrders: results.buyPartialOrdersData,
+            });
+
+            return {
+                ...order,
+                results: finalDataBalance,
+            };
+        });
+    });
+    data[0].list = finalOrderList;
+    // end handling balance considering partial orders
 
     if (isPending) {
         const pendingList = data[0] && data[0].list;
