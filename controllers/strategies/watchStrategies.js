@@ -160,7 +160,7 @@ function handleUnreliableBuySignal({
     if (isBuySignal && reliableReason === "40minBearishReliable") return true;
 
     const candleBodySize = liveCandle.candleBodySize;
-    const allowCandleSizes = ["medium", "big"];
+    const allowCandleSizes = ["medium", "big", "huge"];
     if (isBuySignal && allowCandleSizes.includes(candleBodySize)) return false;
 
     return !isCurrReliable;
