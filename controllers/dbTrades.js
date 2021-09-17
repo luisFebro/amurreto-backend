@@ -102,7 +102,7 @@ async function readTradesHistoryBack(payload = {}) {
     const finalOrderList = data.map((o) => {
         const list = o.list;
         return list.map((order) => {
-            const results = order.results;
+            const results = order.results || {};
 
             const buyPartialOrders = results.buyPartialOrdersData;
             const sellPartialOrders = results.sellPartialOrdersData;
