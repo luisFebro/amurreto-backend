@@ -90,7 +90,7 @@ function getTrackerStrategy(data) {
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
-    const MAX_STOP_LOSS_PERC = -2;
+    const MAX_STOP_LOSS_PERC = -1;
     const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
@@ -129,7 +129,7 @@ function getTrackerStrategy(data) {
         if (highBearReversalZoneB) return 0.4;
         if (highBearReversalZoneC) return 0.3;
 
-        return 1.5;
+        return 1;
     };
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
