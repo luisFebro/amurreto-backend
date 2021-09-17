@@ -12,8 +12,8 @@ only applicable for buy order since if we block selling the current transaction 
  */
 
 async function needCircuitBreaker() {
-    const MIN_PRICE_DIFF = 100;
-    const MIN_TIME_AFTER_LAST_TRANS = 30; // in minute
+    const MIN_PRICE_DIFF = 50;
+    const MIN_TIME_AFTER_LAST_TRANS = 10; // in minute
 
     const livePrice = await getLivePrice("BTC/BRL");
 

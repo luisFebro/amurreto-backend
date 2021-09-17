@@ -125,9 +125,9 @@ function getTrackerStrategy(data) {
         const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.4;
         const highBearReversalZoneB = maxPerc >= 0.4 && maxPerc < 0.8;
         const highBearReversalZoneC = maxPerc >= 0.8 && maxPerc < 1.2;
-        if (highBearReversalZoneA) return 0.4;
-        if (highBearReversalZoneB) return 0.3;
-        if (highBearReversalZoneC) return 0.2;
+        if (highBearReversalZoneA) return 0.2;
+        if (highBearReversalZoneB) return 0.4;
+        if (highBearReversalZoneC) return 0.3;
 
         return 0.5;
     };
