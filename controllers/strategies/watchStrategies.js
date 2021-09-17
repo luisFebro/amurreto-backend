@@ -37,7 +37,7 @@ async function watchStrategies(options = {}) {
             lastLiveCandle,
             lowerWing20,
         }),
-        getLowerWingSignal({ lowerWing20, sequenceStreaks }),
+        // getLowerWingSignal({ lowerWing20, sequenceStreaks }),
     ]);
 
     const profitStrategy = allStrategySignals[0].whichStrategy;
@@ -153,7 +153,7 @@ function handleUnreliableBuySignal({
         "freeFall",
         "thunderingChange",
         "atrProfitStopLoss",
-        "tweezers",
+        "patternTWEEZERS",
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
