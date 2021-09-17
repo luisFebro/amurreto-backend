@@ -18,25 +18,18 @@ const partialFilled = {
     update: async ({ lastHistory, currHistory }) => {
         const history = [...lastHistory, currHistory];
 
-        const {
-            strategy,
-            marketPrice,
-            quotePrice,
-            basePrice,
-            feeAmount,
-            feePerc,
-        } = currHistory;
+        const { amounts, fee, strategy } = currHistory;
 
         // increment inc just in case there are multiple partial filled orders side by side.
         const dataToUpdate = {
             $inc: {
                 "pendingLimitOrder.partialFilled.count": 1,
-                "pendingLimitOrder.partialFilled.basePrice": basePrice,
-                "pendingLimitOrder.partialFilled.quotePrice": quotePrice,
-                "pendingLimitOrder.partialFilled.feePerc": feePerc,
-                "pendingLimitOrder.partialFilled.feeAmount": feeAmount,
+                "pendingLimitOrder.partialFilled.basePrice": amounts.base,
+                "pendingLimitOrder.partialFilled.quotePrice": amounts.quote,
+                "pendingLimitOrder.partialFilled.feePerc": fee.perc,
+                "pendingLimitOrder.partialFilled.feeAmount": fee.amount,
             },
-            "pendingLimitOrder.partialFilled.marketPrice": marketPrice,
+            "pendingLimitOrder.partialFilled.marketPrice": amounts.market,
             "pendingLimitOrder.partialFilled.strategy": strategy,
             "pendingLimitOrder.partialFilled.history": history,
         };
