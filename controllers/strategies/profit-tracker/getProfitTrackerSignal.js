@@ -125,11 +125,11 @@ function getTrackerStrategy(data) {
         const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.4;
         const highBearReversalZoneB = maxPerc >= 0.4 && maxPerc < 0.8;
         const highBearReversalZoneC = maxPerc >= 0.8 && maxPerc < 1.2;
-        if (highBearReversalZoneA) return 0.5;
-        if (highBearReversalZoneB) return 0.4;
-        if (highBearReversalZoneC) return 0.3;
+        if (highBearReversalZoneA) return 0.4;
+        if (highBearReversalZoneB) return 0.3;
+        if (highBearReversalZoneC) return 0.2;
 
-        return 1;
+        return 0.5;
     };
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
@@ -175,7 +175,7 @@ function getAtrStrategy(data) {
         // netPerc,
         // atrLimit,
     } = data;
-    const minRangeForSellNetPerc = maxPerc >= 2.5;
+    const minRangeForSellNetPerc = maxPerc >= 2.0;
     const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
 
     if (atrSellCond) {
