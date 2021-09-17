@@ -133,7 +133,6 @@ async function readTradesHistoryBack(payload = {}) {
         });
     });
 
-    // console.log("finalOrderList", finalOrderList[0]);
     data[0].list = finalOrderList[0];
     // end handling balance considering partial orders
 
@@ -238,7 +237,6 @@ async function getPendingListData({ tradeData }) {
         } = liveFee;
 
         const {
-            grossProfitAmount,
             netProfitAmount,
             netProfitPerc,
             balanceAmount,
@@ -252,7 +250,6 @@ async function getPendingListData({ tradeData }) {
             totalFeeSellAmount: sellFeeAmount,
             totalFeePerc,
             results: {
-                grossProfitAmount,
                 netProfitAmount,
                 netProfitPerc,
                 finalBalanceAmount: balanceAmount,

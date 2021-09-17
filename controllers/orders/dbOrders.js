@@ -121,29 +121,28 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
         );
     }
 
-    // return "done";
+    return "done";
 }
-
 // TEST
 // const moreData = {
 //     symbol: "BTC/BRL",
-//     strategy: "powerSoloHighWave",
+//     strategy: "startProfit",
 //     transactionPositionPerc: 100,
 //     capitalPositionPerc: 100,
 // };
 
 // const mostRecentData = {
-//     quote: 78.9,
-//     base: 0.00031276,
-//     price: 252270.11,
-//     filledFee: 0.08,
+//     quote: 92.59,
+//     base: 0.0003672,
+//     price: 252151.42,
+//     filledFee: 0.1,
 //     feePerc: 0.1,
 //     type: "LIMIT",
-//     timestamp: 1631739160263,
+//     timestamp: 1631782453190,
 //     status: "FILLED",
 // };
 
-// setDbOrderBack({ side: "BUY", mostRecentData, moreData }).then(console.log);
+// setDbOrderBack({ side: "SELL", mostRecentData, moreData }).then(console.log);
 
 async function checkAlreadyExecutedStrategy(symbol, options = {}) {
     const { side } = options; // strategy

@@ -77,9 +77,6 @@ function getAmountPriceResults(file = "totalResults") {
         endFeeAmount,
         buyPartialOrdersData,
         sellPartialOrdersData,
-        // finalBalanceAmount,
-        // grossProfitAmount,
-        // netProfitAmount,
     };
 
     const finalData =
@@ -157,12 +154,7 @@ async function getTotalResults() {
             };
         }
 
-        const {
-            netProfitPerc,
-            netProfitAmount,
-            // finalBalanceAmount,
-            // grossProfitAmount,
-        } = getFinalBalanceData({
+        const { netProfitPerc, netProfitAmount } = getFinalBalanceData({
             startQuote: startQuotePrice,
             endQuote: endQuotePrice,
             endFee: endFeeAmount,
@@ -242,13 +234,13 @@ function getFinalBalanceData({
         buyPartialOrders,
         sellPartialOrders,
     });
+
     const finalBalanceAmount = thisEndQuote - endFee;
 
     // netProfitPerc takes initial investiment and subtract with final balance which discounts the fees in both buy/sell prices.
     const netProfitPerc = getIncreasedPerc(thisStartQuote, finalBalanceAmount);
 
     return {
-        grossProfitAmount: thisEndQuote - thisStartQuote,
         finalBalanceAmount,
         netProfitAmount: finalBalanceAmount - thisStartQuote,
         netProfitPerc,
