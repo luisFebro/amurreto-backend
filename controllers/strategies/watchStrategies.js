@@ -59,7 +59,7 @@ async function watchStrategies(options = {}) {
     });
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
-    const offsetPrice = needLimitType ? 80 : 0;
+    const offsetPrice = needLimitType ? 50 : 0;
     const forcePrice = needLimitType;
     // // END TYPE ORDER HANDLING
 
