@@ -5,8 +5,8 @@ const {
 } = require("../fees");
 const LiveCandleHistory = require("../../models/LiveCandleHistory");
 const getPercentage = require("../../utils/number/perc/getPercentage");
-const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 const getLivePrice = require("./getLivePrice");
+const getIncreasedPerc = require("../../utils/number/perc/getIncreasedPerc");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 
@@ -55,6 +55,7 @@ async function getLiveCandle(options = {}) {
     });
 
     // FEE
+    // only calculate one fee. If there is a partial selling order, the final price may very 0,1%. But it is very little diff
     const sellFeeAmount = getPercentage(endQuotePrice, orderTypePerc, {
         mode: "value",
     });

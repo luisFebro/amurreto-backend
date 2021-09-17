@@ -60,8 +60,24 @@ async function getLiveProfitsPerc({ maxClosePrice }) {
         ? list.buyPrices.slice(-1)[0]
         : { amounts: 0, fee: 0 };
     const lastPendingBuyMarketPrice = lastBuyData.amounts.market;
-    const lastPendingBuyBaseAmount = lastBuyData.amounts.base;
-    const lastPendingBuyFeeAmount = lastBuyData.fee.amount;
+
+    const partialBuyBaseAmount = lastBuyData.partialOrderData
+        ? lastBuyData.partialOrderData.history.reduce(
+              (curr, next) => curr + next.amounts.base,
+              0
+          )
+        : 0;
+    const lastPendingBuyBaseAmount =
+        lastBuyData.amounts.base + partialBuyBaseAmount;
+
+    const partialFeeAmount = lastBuyData.partialOrderData
+        ? lastBuyData.partialOrderData.history.reduce(
+              (curr, next) => curr + next.fee.amount,
+              0
+          )
+        : 0;
+    const lastPendingBuyFeeAmount = lastBuyData.fee.amount + partialFeeAmount;
+
     const currStrategy = lastBuyData.strategy;
 
     const defaultDataForLiveCandle = {

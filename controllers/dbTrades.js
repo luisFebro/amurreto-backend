@@ -63,7 +63,7 @@ async function readTradesHistoryBack(payload = {}) {
         delete allListData.sellTableList;
         delete allListData.totalFeeAmount;
         delete allListData.totalFeePerc;
-        delete allListData.results;
+        // delete allListData.results;
     }
 
     const mainAggr = [
@@ -99,12 +99,14 @@ async function readTradesHistoryBack(payload = {}) {
     ]);
 
     // handling balance considering partial orders
+    let buyPartialOrdersForLive = [];
     const finalOrderList = data.map((o) => {
         const list = o.list;
         return list.map((order) => {
             const results = order.results || {};
 
             const buyPartialOrders = results.buyPartialOrdersData;
+            if (buyPartialOrders) buyPartialOrdersForLive = buyPartialOrders;
             const sellPartialOrders = results.sellPartialOrdersData;
 
             const buyTableList = handleTableWithPartialOrders({
@@ -150,6 +152,7 @@ async function readTradesHistoryBack(payload = {}) {
 
         const updatedPendingData = await getPendingListData({
             tradeData: pendingList[0],
+            buyPartialOrders: buyPartialOrdersForLive,
         });
 
         data[0].list = [updatedPendingData];
@@ -206,7 +209,7 @@ function handleTableWithPartialOrders({ tableList = {}, partialOrders = [] }) {
 
 // in this version, only accepting BTC and one pending transaction
 // if eventually is required to manage multiple pending trnsactions, it is required to create an syncronous function to get live candle data later so that we can loop through the pending list
-async function getPendingListData({ tradeData }) {
+async function getPendingListData({ tradeData, buyPartialOrders }) {
     const run = async (resolve, reject) => {
         if (!tradeData) return reject("no pendingList");
 
@@ -215,11 +218,18 @@ async function getPendingListData({ tradeData }) {
         if (!symbol) return tradeData;
 
         const { fee } = buyTableList;
-        const buyFeeAmount = fee && fee.amount[0];
+        const buyFeeAmount =
+            fee && fee.amount.reduce((curr, next) => curr + next, 0);
+        const thisBuyBaseAmount = buyPartialOrders.length
+            ? buyPartialOrders[0].reduce(
+                  (curr, next) => curr + next.amounts.base,
+                  0
+              ) + buyBasePrice
+            : buyBasePrice;
 
         const liveCandleData = await getLiveCandle({
             symbol,
-            buyBaseAmount: buyBasePrice,
+            buyBaseAmount: thisBuyBaseAmount,
             buyMarketPrice,
             buyFeeAmount,
         });
