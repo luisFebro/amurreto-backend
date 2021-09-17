@@ -61,7 +61,7 @@ async function watchStrategies(options = {}) {
     const orderType = needLimitType ? "LIMIT" : "MARKET";
     const offsetPrice = needLimitType ? 100 : 0;
     const forcePrice = needLimitType;
-    // END TYPE ORDER HANDLING
+    // // END TYPE ORDER HANDLING
 
     const finalSignal = {
         ...essentialData,
