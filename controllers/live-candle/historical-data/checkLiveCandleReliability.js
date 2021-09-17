@@ -70,6 +70,7 @@ function checkLiveCandleReliability({
         .slice(0, 2)
         .every((side) => side === currSide);
     if (
+        isCurrBullish &&
         minCandles &&
         isLast2SidesReliable &&
         reliable30MinSizes.includes(currBodySize)
