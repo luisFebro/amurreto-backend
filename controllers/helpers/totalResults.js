@@ -195,7 +195,9 @@ const getQuoteWithPartialData = ({
     let thisStartQuote = startQuote;
     let thisEndQuote = endQuote;
 
-    const gotBuyPartialOrders = Boolean(buyPartialOrders.length);
+    const gotBuyPartialOrders = Boolean(
+        buyPartialOrders && buyPartialOrders.length
+    );
     if (gotBuyPartialOrders) {
         buyPartialOrders.forEach((orders) => {
             return orders.forEach((order) => {
@@ -205,7 +207,9 @@ const getQuoteWithPartialData = ({
         });
     }
 
-    const gotSellPartialOrders = Boolean(sellPartialOrders.length);
+    const gotSellPartialOrders = Boolean(
+        sellPartialOrders && sellPartialOrders.length
+    );
     if (gotSellPartialOrders) {
         sellPartialOrders.forEach((orders) => {
             return orders.forEach((order) => {

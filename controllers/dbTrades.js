@@ -133,7 +133,7 @@ async function readTradesHistoryBack(payload = {}) {
         });
     });
 
-    data[0].list = finalOrderList[0];
+    if (data[0]) data[0].list = finalOrderList[0];
     // end handling balance considering partial orders
 
     if (isPending) {
@@ -160,13 +160,14 @@ async function readTradesHistoryBack(payload = {}) {
     return data;
 }
 
-// readTradesHistoryBack({ status: "done" }).then((res) =>
-//     console.log(JSON.stringify(res))
-// );
+readTradesHistoryBack({ status: "pending" }).then((res) =>
+    console.log(JSON.stringify(res))
+);
 
 // HELPERS
 function handleTableWithPartialOrders({ tableList = {}, partialOrders = [] }) {
-    if (!partialOrders || partialOrders.length) return tableList;
+    if (!partialOrders || !partialOrders.length || !tableList.date)
+        return tableList;
 
     const finalTable = {
         date: [...tableList.date],
