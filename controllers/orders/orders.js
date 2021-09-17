@@ -161,11 +161,10 @@ async function createOrderBack(payload = {}) {
     // prevent transactions that are triggered but not enough balance
     const MIN_BASE_BALANCE = 0.00001;
     const MIN_QUOTE_BALANCE = 25;
-    if (
+    const notEnoughBalance =
         (isSell && baseCurrencyAmount < MIN_BASE_BALANCE) ||
-        (isBuy && quoteCurrencyAmount < MIN_QUOTE_BALANCE)
-    )
-        return null;
+        (isBuy && quoteCurrencyAmount < MIN_QUOTE_BALANCE);
+    if (notEnoughBalance && !needOnlyRecordLimitOrderDB) return null;
 
     const params = {
         value: isMarket && isBuy ? quoteCurrencyAmount : undefined,
