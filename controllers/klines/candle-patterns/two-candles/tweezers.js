@@ -9,7 +9,7 @@ const areTweezers = (data) => {
     const matchSides = candleB.side === "bear" && candleA.side === "bull";
     if (!matchSides) return false;
 
-    const sizesCandleA = ["small", "medium", "big", "huge"];
+    const sizesCandleA = ["tiny", "small", "medium", "big", "huge"];
     const sizesCandleB = ["tiny", "small", "medium", "big", "huge"];
     const matchSizes =
         sizesCandleA.includes(candleA.bodySize) &&
