@@ -155,6 +155,7 @@ function handleUnreliableBuySignal({
         "atrProfitStopLoss",
         "patternTWEEZERS",
         "broBulls",
+        "soloThor",
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
