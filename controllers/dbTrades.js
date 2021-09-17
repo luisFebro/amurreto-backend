@@ -165,7 +165,7 @@ async function readTradesHistoryBack(payload = {}) {
 // );
 
 // HELPERS
-function handleTableWithPartialOrders({ tableList, partialOrders = [] }) {
+function handleTableWithPartialOrders({ tableList = {}, partialOrders = [] }) {
     if (!partialOrders || partialOrders.length) return tableList;
 
     const finalTable = {
