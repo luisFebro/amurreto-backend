@@ -141,7 +141,11 @@ function getTrackerStrategy(data) {
     const midProfitRange = maxPerc >= 1.5 && maxPerc < 4;
     const longProfitRange = maxPerc >= 4;
 
-    const exceptionSkipStartProfit = maxPerc <= 0.8 && isBullish;
+    const exceptionSkipSizes = ["tiny", "small", "medium"];
+    const exceptionSkipStartProfit =
+        maxPerc <= 0.8 &&
+        isBullish &&
+        exceptionSkipSizes.includes(liveCandle.candleBodySize);
     const isStartProfit =
         !exceptionSkipStartProfit &&
         startProfitRange &&

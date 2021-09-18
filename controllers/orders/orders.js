@@ -150,6 +150,7 @@ async function createOrderBack(payload = {}) {
     const isBuy = side.toUpperCase() === "BUY";
     const isSell = !isBuy;
 
+    console.log("transactionAttempts", transactionAttempts);
     const marketPrice = await analyseMarketPrice({
         isBuy,
         payload,
