@@ -31,6 +31,21 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // IMPORTANT: do not ever change like hammer and doji order because that some parts of logic depend on it
 
     // single candle
+    const isShorty = (data) => {
+        const { candleA } = data;
+        const cond = candleA.side === "bull" && candleA.bodySize === "small";
+        if (!cond) return false;
+
+        return {
+            type: "shorty",
+            variant: "bullish",
+            pressureA: candleA.pressure,
+        };
+    };
+
+    const checkShorty = isShorty(defaultData);
+    if (checkShorty) oneCandleType = JSON.stringify(checkShorty);
+
     const checkHammer = isHammer(defaultData);
     if (checkHammer) oneCandleType = JSON.stringify(checkHammer);
 
@@ -39,6 +54,24 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end single candle
 
     // 2 candles
+    const isMedium = (data) => {
+        const { candleB, candleA } = data;
+        const cond =
+            candleB.side === "bull" &&
+            candleA.side === "bull" &&
+            candleA.bodySize === "medium";
+        if (!cond) return false;
+
+        return {
+            type: "medium",
+            variant: "bullish",
+            pressureA: candleA.pressure,
+        };
+    };
+
+    const checkMedium = isMedium(defaultData);
+    if (checkMedium) twoCandleType = JSON.stringify(checkMedium);
+
     const checkBullBros = areBullBros(defaultData);
     if (checkBullBros) twoCandleType = JSON.stringify(checkBullBros);
 

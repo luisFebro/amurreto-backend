@@ -82,6 +82,24 @@ async function getCandlePatternsSignal({
     // END TWO CANDLES
 
     // ONE CANDLE
+    const runMedium = twoCandleType.includes("medium");
+    if (runMedium) {
+        return {
+            signal: "BUY",
+            strategy: "medium",
+            transactionPerc: 100,
+        };
+    }
+
+    const runShorty = oneCandleType.includes("shorty");
+    if (runShorty) {
+        return {
+            signal: "BUY",
+            strategy: "shorty",
+            transactionPerc: 100,
+        };
+    }
+
     const isNearSupport = lowerWing20 <= 7000; // 3500 allow run this only near the support
     const runSoloPowerThor =
         isNearSupport && oneCandleType.includes("soloThor");
