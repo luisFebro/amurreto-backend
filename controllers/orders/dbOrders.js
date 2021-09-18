@@ -17,6 +17,7 @@ async function recordFinalDbOrder({
         const dataToUpdate = {
             "pendingLimitOrder.signal": null,
             "pendingLimitOrder.count": 0,
+            "pendingLimitOrder.attempts": 0,
             "pendingLimitOrder.openOrderId": null,
             "pendingLimitOrder.strategy": null,
         };

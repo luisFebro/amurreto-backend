@@ -56,7 +56,7 @@ async function getProfitTrackerSignal({
 // PROFIT STRATEGIES
 function getContTrendStrategy({ profitTracker, isContTrend }) {
     if (!isContTrend) return false;
-    const DOWN_RANGE_DIFF = 0.3;
+    const DOWN_RANGE_DIFF = 0.2;
 
     const { maxPerc, netPerc } = profitTracker;
 

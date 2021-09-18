@@ -1,6 +1,5 @@
 const novadax = require("../exchangeAPI");
 const sortValue = require("../../utils/number/sortNumbers");
-const { getTradingSymbolBack } = require("../basicInfo");
 const {
     getOrderTransactionPerc,
     // findTransactionSidePerc,
@@ -15,6 +14,7 @@ const getCurrencyAmount = require("./currencyAmounts");
 const { IS_PROD, IS_DEV } = require("../../config");
 const partialFilled = require("./partialFilled");
 const getId = require("../../utils/getId");
+const analyseMarketPrice = require("./marketPrice");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 const validOpenOrderStatus = ["SUBMITTED", "PROCESSING", "PARTIAL_FILLED"];
@@ -27,7 +27,6 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         strategy,
         transactionPerc = 100,
         capitalPositionPerc = 100,
-        forcePrice = false,
         offsetPrice = 0,
     } = signalData;
 
@@ -50,8 +49,13 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         strategy,
     });
 
-    const { gotOpenOrderExchange, needRecordOnly, dbSignal, dbStrategy } =
-        openOrderExchange;
+    const {
+        gotOpenOrderExchange,
+        needRecordOnly,
+        dbSignal,
+        dbStrategy,
+        dbAttempts,
+    } = openOrderExchange;
 
     // if there is no order in exchange and there is a count available, it means a pending transaction was recently filled and ready to be recorded in the DB.
     // note that, after registration, the count and signal are set to 0 and null respectively.
@@ -96,7 +100,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
             capitalPositionPerc,
             transactionPositionPerc,
             offsetPrice,
-            forcePrice,
+            transactionAttempts: dbAttempts,
             needOnlyRecordLimitOrderDB: needRecordLimitBuyOnly,
         });
     }
@@ -113,8 +117,8 @@ async function createOrderBySignal(signalData = {}, options = {}) {
             capitalPositionPerc,
             transactionPositionPerc,
             offsetPrice,
-            forcePrice,
             needOnlyRecordLimitOrderDB: needRecordLimitSellOnly,
+            transactionAttempts: dbAttempts,
         });
     }
 
@@ -137,8 +141,8 @@ async function createOrderBack(payload = {}) {
         capitalPositionPerc = 100, // for db, devide the available amount in the exchange account to the assets. like 50% for BTC and 50% for ETH
         transactionPositionPerc = 100, // transaction position percentage from total position
         offsetPrice = 0,
-        forcePrice = false, // use this before put a market price order since we set the price in a ask sellers zone so that the change to be filled is higher. But the fee can be a TAKER like market.
         needOnlyRecordLimitOrderDB, // record only a limit order after exchange has filled
+        transactionAttempts,
         // accountId, // Sub account ID, if not informed, the order will be created under master account
     } = payload;
 
@@ -146,12 +150,12 @@ async function createOrderBack(payload = {}) {
     const isBuy = side.toUpperCase() === "BUY";
     const isSell = !isBuy;
 
-    const marketPrice = await getMarketPrice({
+    const marketPrice = await analyseMarketPrice({
         isBuy,
         payload,
         symbol,
-        offsetPrice,
-        forcePrice,
+        offsetPrice: transactionAttempts >= 1 ? offsetPrice : 0,
+        forcePrice: transactionAttempts >= 1 ? true : false,
     });
 
     const { baseCurrencyAmount, quoteCurrencyAmount } = await getCurrencyAmount(
@@ -520,6 +524,7 @@ async function checkOpeningOrderNotDoneExchange({
         if (!status)
             dataToUpdate = {
                 "pendingLimitOrder.count": 0,
+                $inc: { "pendingLimitOrder.attempts": 1 },
                 // signal is only set to null in recordFinalDbOrder to avoid issues with not recorded transaction. The needRecord param will do well
                 // "pendingLimitOrder.signal": null,
             };
@@ -537,6 +542,7 @@ async function checkOpeningOrderNotDoneExchange({
 
     const dbMaxIterationCount = dbData ? dbData.pendingLimitOrder.count : 0;
     const dbSignal = dbData ? dbData.pendingLimitOrder.signal : null;
+    const dbAttempts = dbData ? dbData.pendingLimitOrder.attempts : 0;
     const dbStrategy = dbData ? dbData.pendingLimitOrder.strategy : null;
     const dbOpenOrderId = dbData ? dbData.pendingLimitOrder.openOrderId : null;
 
@@ -563,6 +569,7 @@ async function checkOpeningOrderNotDoneExchange({
             needRecordOnly, // ignore pendingTypeLimit check if market so that it ain't gonna count in the DB.
             dbSignal,
             dbStrategy,
+            dbAttempts,
         };
 
     if (gotOpenOrderExchange) {
@@ -596,28 +603,8 @@ async function checkOpeningOrderNotDoneExchange({
         needRecordOnly,
         dbSignal, // identify which side to execute either BUY or SELL
         dbStrategy,
+        dbAttempts,
     };
-}
-
-async function getMarketPrice({
-    isBuy,
-    payload = {},
-    symbol = "BTC/BRL",
-    offsetPrice = 0, // preço deslocado
-    forcePrice,
-}) {
-    if (payload.price) return payload.price;
-
-    const priceInfo = await getTradingSymbolBack({ symbol });
-    // quote money to invest / last price
-    const lastAskPrice = Number(priceInfo.ask);
-    const lastBidPrice = Number(priceInfo.bid);
-    // const test = Boolean(true);
-    // if buy I want a price that other buyers are willing to buy and offsetPrice is distance below this price.The same with selling
-    const isNormalPrice = !forcePrice;
-    const buyBid = isNormalPrice ? lastBidPrice : lastAskPrice;
-    const sellAsk = isNormalPrice ? lastAskPrice : lastBidPrice;
-    return isBuy ? buyBid - offsetPrice : sellAsk + offsetPrice;
 }
 // END HELPERS
 

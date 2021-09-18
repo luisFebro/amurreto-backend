@@ -18,6 +18,7 @@ const mainData = {
         strategy: String,
         count: Number,
         openOrderId: String,
+        attempts: Number,
         partialFilled: {
             count: Number, // total orders
             basePrice: Number,

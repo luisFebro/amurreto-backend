@@ -60,13 +60,11 @@ async function watchStrategies(options = {}) {
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
     const offsetPrice = needLimitType ? 50 : 0;
-    const forcePrice = needLimitType;
     // // END TYPE ORDER HANDLING
 
     const finalSignal = {
         ...essentialData,
         offsetPrice, // some difference from the current market price.
-        forcePrice, // force price for ask pricing which is the most favorable price of sellers with a offset to get a bargain under the current price
         type: orderType,
     };
 
