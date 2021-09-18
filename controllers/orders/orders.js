@@ -43,8 +43,8 @@ async function createOrderBySignal(signalData = {}, options = {}) {
     // essential check to register pending open transaction with LIMIT order type.
     const openOrderExchange = await checkOpeningOrderNotDoneExchange({
         symbol,
-        orderType: type,
         side,
+        orderType: type,
         maxIterateCount: 5,
         strategy,
     });
@@ -481,8 +481,8 @@ const handlePartialFilledOrders = async ({ partialData, strategy }) => {
 async function checkOpeningOrderNotDoneExchange({
     symbol,
     maxIterateCount = 1,
-    orderType,
     side,
+    orderType,
     strategy,
 }) {
     // verify if there is open order
@@ -505,16 +505,22 @@ async function checkOpeningOrderNotDoneExchange({
         }),
     ]);
 
+    // after no open order is available, the next algo reading will have the most recent side BUY or SELL.
+    // In the method incIteratorCounter, we use the opposite because when there is no open order, the signals are no longer recorded in DB and it will be read the last closed order which is the opposite.
+    const lastClosedSide = closeOrdersList[0] && closeOrdersList[0].side;
+
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
     const incIteratorCounter = async (status, openOrderId, options = {}) => {
         const { incAttempts } = options;
 
+        // make sure record the opposite side of the last closed side because if the current signal turns out to be a BUY with a current position, but the algo need record a SELL, then it will rcord as a BUY wrongly
         const signalInclusion =
-            !side || !strategy
+            !lastClosedSide || !strategy
                 ? {}
                 : {
-                      "pendingLimitOrder.signal": side,
+                      "pendingLimitOrder.signal":
+                          lastClosedSide === "BUY" ? "SELL" : "BUY",
                       "pendingLimitOrder.strategy": strategy,
                   };
 
@@ -540,7 +546,7 @@ async function checkOpeningOrderNotDoneExchange({
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, dataToUpdate);
     };
 
-    // clean up count when WAIT and no pending orders so that algo can record the right order
+    // clean up count when WAIT (!side) and no pending orders so that algo can record the right order
     const detectedCleanableSide = !side && !gotOpenOrderExchange;
     if (detectedCleanableSide) await incIteratorCounter(false);
 
@@ -550,7 +556,7 @@ async function checkOpeningOrderNotDoneExchange({
         ),
         getCurrencyAmount({
             symbol,
-            isBuy: !side || side === "BUY",
+            isBuy: lastClosedSide === "BUY",
             transactionPositionPerc: 100,
         }),
     ]);
@@ -577,14 +583,14 @@ async function checkOpeningOrderNotDoneExchange({
     // sometimes the id is diff although there is an actual buy order filled in the exchange. the following condition check the balance to see if there is enough to know if we need to register data
     const recentBoughtButNotRecorded =
         dbOpenOrderId &&
-        (!side || side === "BUY") &&
+        lastClosedSide === "BUY" &&
         quoteCurrencyAmount <= 25 &&
         !matchOrderIds &&
         !gotOpenOrderExchange &&
         !isPartialFilled;
     const recentSoldButNotRecorded =
         dbOpenOrderId &&
-        (!side || side === "SELL") &&
+        lastClosedSide === "SELL" &&
         baseCurrencyAmount <= 0.00001 &&
         !matchOrderIds &&
         !gotOpenOrderExchange &&
@@ -596,7 +602,7 @@ async function checkOpeningOrderNotDoneExchange({
             recentSoldButNotRecorded
     );
 
-    // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
+    // need to refuse if no pending order in exchange
     const refuseToContinue =
         !gotOpenOrderExchange ||
         (!gotOpenOrderExchange && orderType === "MARKET");

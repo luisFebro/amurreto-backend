@@ -95,18 +95,19 @@ async function getMarketPrice({
 //     lastPrice: false,
 // };
 
-// const marketPriceData2 = {
-//     isBuy: true,
-//     symbol: "BTC/BRL",
-//     offsetPrice: 50,
-//     forcePrice: true,
-//     lastPrice: false,
-// };
+const marketPriceData2 = {
+    isBuy: true,
+    symbol: "BTC/BRL",
+    offsetPrice: 50,
+    forcePrice: true,
+    lastPrice: false,
+};
 
 // analyseMarketPrice(marketPriceData)
 // .then(res => console.log("normal", res))
 
-// analyseMarketPrice(marketPriceData2)
-// .then(res => console.log("enforced", res))
+analyseMarketPrice(marketPriceData2).then((res) =>
+    console.log("enforced", res)
+);
 
 module.exports = analyseMarketPrice;
