@@ -37,15 +37,14 @@ async function analyseMarketPrice(data) {
     latestPrices.push(price10);
 
     const pricesRange = [...new Set([...latestPrices])];
-    console.log("pricesRange", pricesRange);
 
-    const diffPrices = [];
-    let lastVal = 0;
-    pricesRange.forEach((p, ind) => {
-        if (ind !== 0)
-            diffPrices.push(Number(Math.abs(p - lastVal).toFixed(2)));
-        lastVal = p;
-    });
+    // const diffPrices = [];
+    // let lastVal = 0;
+    // pricesRange.forEach((p, ind) => {
+    //     if (ind !== 0)
+    //         diffPrices.push(Number(Math.abs(p - lastVal).toFixed(2)));
+    //     lastVal = p;
+    // });
 
     // const sumPrices = diffPrices.reduce((curr, next) => curr + next, 0);
     // const DEFAULT_OFFSET = 50;
