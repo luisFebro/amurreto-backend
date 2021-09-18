@@ -570,6 +570,9 @@ async function checkOpeningOrderNotDoneExchange({
 
     const matchOrderIds = dbOpenOrderId === lastCloseOrderId;
 
+    const openOrderStatus = openOrdersList[0] && openOrdersList[0].status;
+    const isPartialFilled = openOrderStatus === "PARTIAL_FILLED";
+
     const { baseCurrencyAmount, quoteCurrencyAmount } = dataCurrency;
     // sometimes the id is diff although there is an actual buy order filled in the exchange. the following condition check the balance to see if there is enough to know if we need to register data
     const recentBoughtButNotRecorded =
@@ -577,13 +580,15 @@ async function checkOpeningOrderNotDoneExchange({
         (!side || side === "BUY") &&
         quoteCurrencyAmount <= 25 &&
         !matchOrderIds &&
-        !gotOpenOrderExchange;
+        !gotOpenOrderExchange &&
+        !isPartialFilled;
     const recentSoldButNotRecorded =
         dbOpenOrderId &&
         (!side || side === "SELL") &&
         baseCurrencyAmount <= 0.00001 &&
         !matchOrderIds &&
-        !gotOpenOrderExchange;
+        !gotOpenOrderExchange &&
+        !isPartialFilled;
 
     const needRecordOnly = Boolean(
         (!gotOpenOrderExchange && dbOpenOrderId && matchOrderIds) ||
@@ -605,9 +610,6 @@ async function checkOpeningOrderNotDoneExchange({
         };
 
     if (gotOpenOrderExchange) {
-        const openOrderStatus = openOrdersList[0] && openOrdersList[0].status;
-        const isPartialFilled = openOrderStatus === "PARTIAL_FILLED";
-
         const needCancelOrder =
             lastOpenOrderId && maxIterateCount <= dbMaxIterationCount + 1; // since we add later the new count, add one more to cancel the order right in the number of maxIterateCount
         if (needCancelOrder) {
