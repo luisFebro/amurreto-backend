@@ -544,9 +544,16 @@ async function checkOpeningOrderNotDoneExchange({
     const detectedCleanableSide = !side && !gotOpenOrderExchange;
     if (detectedCleanableSide) await incIteratorCounter(false);
 
-    const dbData = await LiveCandleHistory.findById(LIVE_CANDLE_ID).select(
-        "-_id pendingLimitOrder"
-    );
+    const [dbData, dataCurrency] = await Promise.all([
+        LiveCandleHistory.findById(LIVE_CANDLE_ID).select(
+            "-_id pendingLimitOrder"
+        ),
+        getCurrencyAmount({
+            symbol,
+            isBuy: !side || side === "BUY",
+            transactionPositionPerc: 100,
+        }),
+    ]);
 
     const dbMaxIterationCount = dbData ? dbData.pendingLimitOrder.count : 0;
     const dbSignal = dbData ? dbData.pendingLimitOrder.signal : null;
@@ -561,10 +568,25 @@ async function checkOpeningOrderNotDoneExchange({
         closeOrdersList[0] &&
         `${closeOrdersList[0].quote}||${closeOrdersList[0].base}`;
 
+    const matchOrderIds = dbOpenOrderId === lastCloseOrderId;
+
+    const { baseCurrencyAmount, quoteCurrencyAmount } = dataCurrency;
+    // sometimes the id is diff although there is an actual buy order filled in the exchange. the following condition check the balance to see if there is enough to know if we need to register data
+    const recentBoughtButNotRecorded =
+        dbOpenOrderId &&
+        (!side || side === "BUY") &&
+        quoteCurrencyAmount <= 25 &&
+        !matchOrderIds;
+    const recentSoldButNotRecorded =
+        dbOpenOrderId &&
+        (!side || side === "SELL") &&
+        baseCurrencyAmount <= 0.00001 &&
+        !matchOrderIds;
+
     const needRecordOnly = Boolean(
-        !gotOpenOrderExchange &&
-            dbOpenOrderId &&
-            dbOpenOrderId === lastCloseOrderId
+        (!gotOpenOrderExchange && dbOpenOrderId && matchOrderIds) ||
+            recentBoughtButNotRecorded ||
+            recentSoldButNotRecorded
     );
 
     // need to refuse if no pending order in exchange, if null side or MARKET order type so that only buy and sell can be recorded properly in the pendingLimit DB
