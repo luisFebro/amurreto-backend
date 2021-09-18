@@ -61,10 +61,8 @@ function getContTrendStrategy({ profitTracker, isContTrend }) {
     const { maxPerc, netPerc } = profitTracker;
 
     const nextProfitGoalPerc = Math.round(maxPerc);
-    console.log("nextProfitGoalPerc", nextProfitGoalPerc);
     const limitDown = nextProfitGoalPerc - DOWN_RANGE_DIFF;
-    console.log("limitDown", limitDown);
-    const finalRange = limitDown <= netPerc || netPerc >= nextProfitGoalPerc;
+    const finalRange = true; //limitDown <= netPerc || netPerc >= nextProfitGoalPerc;
     const isGoSignal = finalRange && nextProfitGoalPerc >= 1;
     if (!isGoSignal) return false;
 
