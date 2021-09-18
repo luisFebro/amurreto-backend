@@ -86,6 +86,7 @@ function getTrackerStrategy(data) {
         hasPassedAtrUpperLimit,
         liveCandle,
     } = data;
+    const isBearish = !liveCandle.isBullish;
 
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
@@ -141,6 +142,7 @@ function getTrackerStrategy(data) {
     const longProfitRange = maxPerc >= 4;
 
     const isStartProfit =
+        isBearish &&
         startProfitRange &&
         diffMax >= MAX_DIFF_START_PROFIT &&
         `startProfit${nextLevel}`;
