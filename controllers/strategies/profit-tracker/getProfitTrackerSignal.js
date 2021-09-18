@@ -90,7 +90,7 @@ function getTrackerStrategy(data) {
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
-    const MAX_STOP_LOSS_PERC = -1;
+    const MAX_STOP_LOSS_PERC = -0.5;
     const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
