@@ -31,7 +31,12 @@ async function watchStrategies(options = {}) {
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
-        getProfitTrackerSignal({ profitTracker, liveCandle, isContTrend }),
+        getProfitTrackerSignal({
+            profitTracker,
+            liveCandle,
+            lastLiveCandle,
+            isContTrend,
+        }),
         getCandlePatternsSignal({
             liveCandle,
             lastLiveCandle,

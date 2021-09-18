@@ -1,6 +1,7 @@
 async function getProfitTrackerSignal({
     profitTracker = {},
     liveCandle,
+    lastLiveCandle,
     isContTrend,
 }) {
     const {
@@ -46,6 +47,7 @@ async function getProfitTrackerSignal({
         whichStrategy: "tracker",
         ...getTrackerStrategy({
             ...profitTracker,
+            lastLiveCandle,
             currEmaTrend,
             hasPassedAtrUpperLimit,
             liveCandle,
@@ -85,6 +87,7 @@ function getTrackerStrategy(data) {
         // minPerc,
         hasPassedAtrUpperLimit,
         liveCandle,
+        lastLiveCandle,
     } = data;
     const isBullish = liveCandle.isBullish;
 
@@ -141,12 +144,28 @@ function getTrackerStrategy(data) {
     const midProfitRange = maxPerc >= 1.5 && maxPerc < 4;
     const longProfitRange = maxPerc >= 4;
 
+    // EXCEPTIONS FOR START PROFIT
     const exceptionSkipSizes = ["tiny", "small", "medium"];
     const exceptionSkipStartProfit =
         maxPerc <= 0.8 &&
         isBullish &&
         exceptionSkipSizes.includes(liveCandle.candleBodySize);
+
+    // resistence
+    // exception resistence when there is a bearish candle, but not reached the bottom (open) of the last candle with potential to a sudden reversal to upside.
+    const lastCandleResistenceSizes = ["tiny", "small", "medium"];
+    const resistenceLiveSizes = ["tiny", "small"];
+    const meetResistenceSizes =
+        resistenceLiveSizes.includes(liveCandle.candleBodySize) &&
+        lastCandleResistenceSizes.includes(lastLiveCandle.candleBodySize);
+    const exceptionBullResistence =
+        meetResistenceSizes &&
+        lastLiveCandle.isBullish &&
+        lastLiveCandle.open < liveCandle.close;
+    // EXCEPTIONS FOR START PROFIT
+
     const isStartProfit =
+        !exceptionBullResistence &&
         !exceptionSkipStartProfit &&
         startProfitRange &&
         diffMax >= MAX_DIFF_START_PROFIT &&
