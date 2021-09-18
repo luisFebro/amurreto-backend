@@ -39,11 +39,11 @@ async function getCandlePatternsSignal({
     // END THREE CANDLES
 
     // TWO CANDLES
-    const runBullBros = twoCandleType.includes("bullBros");
-    if (runBullBros) {
+    const runBroBulls = twoCandleType.includes("broBulls");
+    if (runBroBulls) {
         return {
             signal: "BUY",
-            strategy: "bullBros",
+            strategy: "broBulls",
             transactionPerc: 100,
         };
     }
