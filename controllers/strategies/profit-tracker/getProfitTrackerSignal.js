@@ -145,9 +145,10 @@ function getTrackerStrategy(data) {
     const longProfitRange = maxPerc >= 4;
 
     // EXCEPTIONS FOR START PROFIT
+    const MAX_PERC_EXCEP = 0.5;
     const exceptionSkipSizes = ["tiny", "small", "medium"];
     const exceptionSkipStartProfit =
-        maxPerc <= 0.8 &&
+        maxPerc <= MAX_PERC_EXCEP &&
         isBullish &&
         exceptionSkipSizes.includes(liveCandle.candleBodySize);
 
@@ -159,6 +160,7 @@ function getTrackerStrategy(data) {
         resistenceLiveSizes.includes(liveCandle.candleBodySize) &&
         lastCandleResistenceSizes.includes(lastLiveCandle.candleBodySize);
     const exceptionBullResistence =
+        maxPerc <= MAX_PERC_EXCEP &&
         meetResistenceSizes &&
         lastLiveCandle.isBullish &&
         lastLiveCandle.open < liveCandle.close;
