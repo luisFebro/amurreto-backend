@@ -576,12 +576,14 @@ async function checkOpeningOrderNotDoneExchange({
         dbOpenOrderId &&
         (!side || side === "BUY") &&
         quoteCurrencyAmount <= 25 &&
-        !matchOrderIds;
+        !matchOrderIds &&
+        !gotOpenOrderExchange;
     const recentSoldButNotRecorded =
         dbOpenOrderId &&
         (!side || side === "SELL") &&
         baseCurrencyAmount <= 0.00001 &&
-        !matchOrderIds;
+        !matchOrderIds &&
+        !gotOpenOrderExchange;
 
     const needRecordOnly = Boolean(
         (!gotOpenOrderExchange && dbOpenOrderId && matchOrderIds) ||
