@@ -1,7 +1,7 @@
 const { getTradingSymbolBack } = require("../basicInfo");
 
 async function analyseMarketPrice(data) {
-    const { isBuy } = data;
+    const { isBuy, forcePrice } = data;
 
     const getPrice = async () => {
         const price = await getMarketPrice(data);
@@ -16,6 +16,7 @@ async function analyseMarketPrice(data) {
 
     const latestPrices = [];
     const price1 = await getPrice(data);
+    if (forcePrice) return price1;
     latestPrices.push(price1);
     const price2 = await getPrice(data);
     latestPrices.push(price2);

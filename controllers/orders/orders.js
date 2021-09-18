@@ -507,7 +507,9 @@ async function checkOpeningOrderNotDoneExchange({
 
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
-    const incIteratorCounter = async (status, openOrderId) => {
+    const incIteratorCounter = async (status, openOrderId, options = {}) => {
+        const { incAttempts } = options;
+
         const signalInclusion =
             !side || !strategy
                 ? {}
@@ -521,13 +523,19 @@ async function checkOpeningOrderNotDoneExchange({
             "pendingLimitOrder.openOrderId": openOrderId,
             ...signalInclusion,
         };
-        if (!status)
+
+        if (!status) {
+            const insertAttempts = !incAttempts
+                ? {}
+                : { $inc: { "pendingLimitOrder.attempts": 1 } };
+
             dataToUpdate = {
                 "pendingLimitOrder.count": 0,
-                $inc: { "pendingLimitOrder.attempts": 1 },
+                ...insertAttempts,
                 // signal is only set to null in recordFinalDbOrder to avoid issues with not recorded transaction. The needRecord param will do well
                 // "pendingLimitOrder.signal": null,
             };
+        }
 
         await LiveCandleHistory.findByIdAndUpdate(LIVE_CANDLE_ID, dataToUpdate);
     };
@@ -587,7 +595,7 @@ async function checkOpeningOrderNotDoneExchange({
                 });
             await Promise.all([
                 cancelOrderBack({ symbol, cancelLast: true }),
-                incIteratorCounter(false),
+                incIteratorCounter(false, null, { incAttempts: true }),
             ]);
             return false;
         }
