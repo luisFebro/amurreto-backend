@@ -30,7 +30,9 @@ const isHammer = (data) => {
     if (!matchPressure) return false;
 
     const isThorHammer =
-        candleA.pressure.part === "lower" && candleA.pressure.perc >= 50;
+        candleA.pressure.part === "lower" &&
+        candleA.pressure.perc >= 50 &&
+        candleA.side === "bull";
 
     const handleVariant = () => {
         if (isThorHammer) return "soloThor";
