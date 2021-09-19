@@ -92,10 +92,6 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
     // end 2 candles
 
     // 3 candles
-    const checkThunderingChange = isThunderingChange(defaultData);
-    if (checkThunderingChange)
-        threeCandleType = JSON.stringify(checkThunderingChange);
-
     const checkThreeInside = isThreeInside(defaultData);
     if (checkThreeInside) threeCandleType = JSON.stringify(checkThreeInside);
 
@@ -104,6 +100,10 @@ function findCandleTypes({ candlesDataAnalysis = [] }) {
 
     const checkStar = isStar(defaultData);
     if (checkStar) threeCandleType = JSON.stringify(checkStar);
+
+    const checkThunderingChange = isThunderingChange(defaultData);
+    if (checkThunderingChange)
+        threeCandleType = JSON.stringify(checkThunderingChange);
     // end 3 candles
 
     return {

@@ -20,9 +20,6 @@ const isThunderingChange = (data) => {
     const matchLowerPerc = candleA.lowerPerc >= 40;
     if (!matchLowerPerc) return false;
 
-    const matchWholeSize = candleA.wholeSize >= 2000; // wholeSize >= 2900
-    if (!matchWholeSize) return false;
-
     return {
         type: "thunderingChange",
         pressureA: candleA.pressure,
