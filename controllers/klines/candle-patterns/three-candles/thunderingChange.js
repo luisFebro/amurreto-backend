@@ -11,10 +11,18 @@ const isThunderingChange = (data) => {
     const gotAllCandlesData = candleA.openPrice && candleB.openPrice;
     if (!gotAllCandlesData) return false;
 
-    const matchSides =
+    const cond1 =
         candleC.side === "bear" &&
         candleB.side === "bear" &&
         candleA.side === "bull";
+
+    const exceptionalMatchSizes = ["medium", "big", "large"];
+    const cond2 =
+        candleB.side === "bear" &&
+        exceptionalMatchSizes.includes(candleB.bodySize) &&
+        candleA.side === "bull";
+
+    const matchSides = cond1 || cond2;
     if (!matchSides) return false;
 
     const matchLowerPerc = candleA.lowerPerc >= 40;

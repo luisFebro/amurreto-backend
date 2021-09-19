@@ -102,7 +102,7 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
 
     if (hasLiveCandleChanged) {
         // save last-past-hour candle history
-        const MAX_LAST_ITEMS = 20;
+        const MAX_LAST_ITEMS = 1000;
         const newHistory = [
             {
                 timestamp: dbTimestamp,

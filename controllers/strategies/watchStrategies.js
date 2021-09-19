@@ -146,7 +146,7 @@ function handleUnreliableBuySignal({
     isProfitLimitSignal,
     isBuySignal,
     candleReliability,
-    liveCandle,
+    // liveCandle,
 }) {
     // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
     const isCurrReliable = candleReliability.status;
@@ -164,10 +164,6 @@ function handleUnreliableBuySignal({
     if (isProfitLimitSignal || isPatternException) return false;
 
     if (isBuySignal && reliableReason === "40minBearishReliable") return true;
-
-    const candleBodySize = liveCandle.candleBodySize;
-    const allowCandleSizes = ["medium", "big"];
-    if (isBuySignal && allowCandleSizes.includes(candleBodySize)) return false;
 
     return !isCurrReliable;
 }

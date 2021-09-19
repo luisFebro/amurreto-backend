@@ -134,16 +134,17 @@ function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
 
     const isThorHammer =
         lastOneCandleType.includes("hammer") &&
-        lastOneCandleType.includes("thor") &&
+        lastOneCandleType.includes("soloThor") &&
         "powerThorHammer";
     const isHighWaveDoji =
         lastOneCandleType.includes("doji") &&
         lastOneCandleType.includes("highWave") &&
         "powerHighWaveDoji";
 
-    const confirmationCandle = ["small", "medium"].includes(liveBodySize);
+    const confirmationCandle = ["tiny", "small", "medium"].includes(
+        liveBodySize
+    );
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
-
     if (!powerCandle) return false;
 
     return {
