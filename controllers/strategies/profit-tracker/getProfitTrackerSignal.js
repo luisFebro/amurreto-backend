@@ -147,13 +147,14 @@ function getTrackerStrategy(data) {
     // EXCEPTIONS FOR START PROFIT
     const MAX_PERC_EXCEP = 0.5;
     const exceptionSkipSizes = ["tiny", "small", "medium"];
-    const exceptionSkipStartProfit =
+    const exceptionLiveBullCandle =
         maxPerc <= MAX_PERC_EXCEP &&
         isBullish &&
         exceptionSkipSizes.includes(liveCandle.candleBodySize);
 
     // resistence
     // exception resistence when there is a bearish candle, but not reached the bottom (open) of the last candle with potential to a sudden reversal to upside.
+    // not including huge and big because it supposes to have some profit already and this is temporary exception
     const lastCandleResistenceSizes = ["tiny", "small", "medium"];
     const resistenceLiveSizes = ["tiny", "small"];
     const meetResistenceSizes =
@@ -168,7 +169,7 @@ function getTrackerStrategy(data) {
 
     const isStartProfit =
         !exceptionBullResistence &&
-        !exceptionSkipStartProfit &&
+        !exceptionLiveBullCandle &&
         startProfitRange &&
         diffMax >= MAX_DIFF_START_PROFIT &&
         `startProfit${nextLevel}`;
