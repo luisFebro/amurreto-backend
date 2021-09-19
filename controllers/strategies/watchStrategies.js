@@ -111,7 +111,7 @@ function strategiesHandler(allSignals = [], options = {}) {
             transactionPerc: 100,
         };
     }
-    if (isBuySignal && !allowBuySignalsByZone) return DEFAULT_WAIT_SIGNAL;
+    // if (isBuySignal && !allowBuySignalsByZone) return DEFAULT_WAIT_SIGNAL;
     if (isSellSignal) return DEFAULT_WAIT_SIGNAL;
     // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
     const isProfitLimitSignal =
