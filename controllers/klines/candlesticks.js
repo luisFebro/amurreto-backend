@@ -156,6 +156,7 @@ async function getCandlesticksData(payload = {}) {
             open,
             close, // do not remove
             highest, // do not remove
+            lowest, // do not remove
             // candle
             timestamp,
             isBullish,

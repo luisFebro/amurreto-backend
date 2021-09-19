@@ -2,7 +2,7 @@ const watchProfitTracker = require("./profit-tracker/profitTracker");
 // strategy types
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
-const getLowerWingSignal = require("./lower-wing/getLowerWingSignal");
+// const getLowerWingSignal = require("./lower-wing/getLowerWingSignal");
 const { checkCondLimitOrder } = require("../fees");
 // const analyseEmaSignals = require("./ema/analyseEmaSignals");
 // end strategy types

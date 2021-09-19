@@ -94,7 +94,7 @@ function getTrackerStrategy(data) {
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
-    const MAX_STOP_LOSS_PERC = -0.2;
+    const MAX_STOP_LOSS_PERC = -1.5;
     const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
@@ -161,15 +161,14 @@ function getTrackerStrategy(data) {
     const meetResistenceSizes =
         resistenceLiveSizes.includes(liveCandle.candleBodySize) &&
         lastCandleResistenceSizes.includes(lastLiveCandle.candleBodySize);
-    const exceptionBullResistence =
+    const exceptionResistence =
         maxPerc <= MAX_PERC_EXCEP &&
         meetResistenceSizes &&
-        lastLiveCandle.isBullish &&
-        lastLiveCandle.open < liveCandle.close;
+        lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
     // EXCEPTIONS FOR START PROFIT
 
     const isStartProfit =
-        !exceptionBullResistence &&
+        !exceptionResistence &&
         !exceptionLiveBullCandle &&
         startProfitRange &&
         diffMax >= MAX_DIFF_START_PROFIT &&
