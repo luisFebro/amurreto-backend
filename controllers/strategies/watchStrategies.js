@@ -157,6 +157,7 @@ function handleUnreliableBuySignal({
         "thunderingChange",
         "atrProfitStopLoss",
         "broBulls",
+        "medium",
         "soloPowerThor",
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
