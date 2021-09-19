@@ -145,6 +145,7 @@ function getTrackerStrategy(data) {
     const longProfitRange = maxPerc >= 4;
 
     // EXCEPTIONS FOR START PROFIT
+    // as long as there is a bullish candle as the current one and not enough or no profit whatsoever, do not sell
     const MAX_PERC_EXCEP = 0.5;
     const exceptionSkipSizes = ["tiny", "small", "medium"];
     const exceptionLiveBullCandle =
