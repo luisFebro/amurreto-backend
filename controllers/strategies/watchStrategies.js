@@ -2,7 +2,6 @@ const watchProfitTracker = require("./profit-tracker/profitTracker");
 // strategy types
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
-// const getLowerWingSignal = require("./lower-wing/getLowerWingSignal");
 const { checkCondLimitOrder } = require("../fees");
 // const analyseEmaSignals = require("./ema/analyseEmaSignals");
 // end strategy types
@@ -42,7 +41,6 @@ async function watchStrategies(options = {}) {
             lastLiveCandle,
             lowerWing20,
         }),
-        // getLowerWingSignal({ lowerWing20, sequenceStreaks }),
     ]);
 
     const profitStrategy = allStrategySignals[0].whichStrategy;
@@ -54,6 +52,7 @@ async function watchStrategies(options = {}) {
         liveCandle,
         profitTracker,
         profitStrategy,
+        lowerWing20,
     });
 
     // TYPE ORDER HANDLING
@@ -84,6 +83,7 @@ function strategiesHandler(allSignals = [], options = {}) {
         liveCandle = {},
         profitTracker,
         profitStrategy,
+        lowerWing20,
         // sequenceStreaks,
         // isProfit,
     } = options;
@@ -102,6 +102,17 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     const isSellSignal = !isBuySignal;
 
+    const oversoldZone = lowerWing20.diffCurrPrice;
+    const allowBuySignalsByZone = oversoldZone <= 1000;
+    if (allowBuySignalsByZone) {
+        return {
+            signal: "BUY",
+            strategy: "oversoldZone",
+            transactionPerc: 100,
+        };
+    }
+    if (isBuySignal && !allowBuySignalsByZone) return DEFAULT_WAIT_SIGNAL;
+    if (isSellSignal) return DEFAULT_WAIT_SIGNAL;
     // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
     const isProfitLimitSignal =
         firstFoundValidStrategy.strategy.includes("Profit");
