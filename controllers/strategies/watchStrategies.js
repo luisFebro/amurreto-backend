@@ -103,6 +103,7 @@ function strategiesHandler(allSignals = [], options = {}) {
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
     );
 
+    console.log("firstFoundValidStrategy", firstFoundValidStrategy);
     if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
     const foundStrategy = firstFoundValidStrategy.strategy;
 
@@ -216,6 +217,7 @@ function handleUnreliableBuySignal({
         "broBulls",
         "medium",
         "soloPowerThor",
+        "patternSTAR",
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
