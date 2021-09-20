@@ -215,7 +215,6 @@ function handleUnreliableBuySignal({
         "thunderingChange",
         "atrProfitStopLoss",
         "broBulls",
-        "medium",
         "soloPowerThor",
         "patternSTAR",
     ];
