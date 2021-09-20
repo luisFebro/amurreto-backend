@@ -299,7 +299,7 @@ async function getCandlesticksData(payload = {}) {
     });
 
     const { isBlock: isCircuitBreakerBlock, circuitBreakerData } =
-        await needCircuitBreaker();
+        await needCircuitBreaker({ emaTrend: lastEmaTrend });
     const candleReliability = await setHistoricalLiveCandle({
         liveCandle,
         emaTrend: lastEmaTrend,

@@ -11,9 +11,10 @@ The algo considers both the last selling price and time so that the market can b
 only applicable for buy order since if we block selling the current transaction we can have a big loss if the price bluntly drops.
  */
 
-async function needCircuitBreaker() {
-    const MIN_PRICE_DIFF = 3000;
-    const MIN_TIME_AFTER_LAST_TRANS = 60; // in minute
+async function needCircuitBreaker({ emaTrend }) {
+    // for trading with higher volatility, the gap is lower for circuit breaker to get best deals in the dip
+    const MIN_PRICE_DIFF = emaTrend === "downtrend" ? 100 : 3000;
+    const MIN_TIME_AFTER_LAST_TRANS = emaTrend === "downtrend" ? 30 : 60; // in minute
 
     const livePrice = await getLivePrice("BTC/BRL");
 

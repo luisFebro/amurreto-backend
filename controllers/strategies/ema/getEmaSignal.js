@@ -1,6 +1,8 @@
-async function getEmaSignal({ emaTrend, currStrategy, profitTracker }) {
+async function getEmaSignal({ liveCandle, currStrategy, profitTracker }) {
+    const { emaTrend, isBullish } = liveCandle;
+
     const isUptrend = emaTrend === "uptrend" || emaTrend === "bullReversal";
-    if (isUptrend) {
+    if (isUptrend && isBullish) {
         return {
             signal: "BUY",
             strategy: "emaUptrend",
