@@ -248,10 +248,12 @@ async function createOrderBack(payload = {}) {
             symbol,
             mostRecent: true,
             fallback,
+        }).catch(() => {
+            cancelOrderBack({ symbol, cancelLast: true });
         });
 
         // LATEST OPEN ORDER ID
-        // make sure register open order id right away in case of pending order takes less than a minute and before the id can be set on DB to record the data properly
+        // IMPORTANT: make sure register open order data right away in case of pending order takes less than a minute and before the id can be set on DB to record the data properly
         if (isLimit && mostRecentData) {
             const newFoundOpenOrderId = `${mostRecentData.quote}||${mostRecentData.base}`;
             const dataToUpdate = {
@@ -512,23 +514,14 @@ async function checkOpeningOrderNotDoneExchange({
 
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
-    const incIteratorCounter = async (status, openOrderId, options = {}) => {
+    const incIteratorCounter = async (status, options = {}) => {
         const { incAttempts } = options;
 
-        // make sure record the opposite side of the last closed side because if the current signal turns out to be a BUY with a current position, but the algo need record a SELL, then it will rcord as a BUY wrongly
-        const signalInclusion =
-            !lastClosedSide || !strategy
-                ? {}
-                : {
-                      "pendingLimitOrder.signal":
-                          lastClosedSide === "BUY" ? "SELL" : "BUY",
-                      "pendingLimitOrder.strategy": strategy,
-                  };
-
+        // strategy and signal are now recorded right after sending order to exchange
         let dataToUpdate = {
             $inc: { "pendingLimitOrder.count": 1 },
-            "pendingLimitOrder.openOrderId": openOrderId,
-            ...signalInclusion,
+            // "pendingLimitOrder.openOrderId": openOrderId,
+            // ...signalInclusion,
         };
 
         if (!status) {
@@ -628,13 +621,13 @@ async function checkOpeningOrderNotDoneExchange({
                 });
             await Promise.all([
                 cancelOrderBack({ symbol, cancelLast: true }),
-                incIteratorCounter(false, null, { incAttempts: true }),
+                incIteratorCounter(false, { incAttempts: true }),
             ]);
             return false;
         }
 
         const validStatus = validOpenOrderStatus.includes(openOrderStatus);
-        if (validStatus) await incIteratorCounter(true, lastOpenOrderId);
+        if (validStatus) await incIteratorCounter(true);
     }
 
     return {
@@ -717,3 +710,15 @@ Order’s role(order.role)
 MAKER：Brings liquidity
 TAKER：Takes liquidity
  */
+
+/* ARCHIVES
+const signalInclusion =
+!lastClosedSide || !strategy
+    ? {}
+    : {
+          "pendingLimitOrder.signal":
+              lastClosedSide === "BUY" ? "SELL" : "BUY",
+          "pendingLimitOrder.strategy": strategy,
+      };
+
+*/
