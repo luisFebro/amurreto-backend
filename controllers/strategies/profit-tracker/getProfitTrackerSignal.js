@@ -58,7 +58,7 @@ async function getProfitTrackerSignal({
 // PROFIT STRATEGIES
 function getContTrendStrategy({ profitTracker, isContTrend }) {
     if (!isContTrend) return false;
-    const DOWN_RANGE_DIFF = 0.3;
+    const DOWN_RANGE_DIFF = 0.2;
 
     const { maxPerc, netPerc } = profitTracker;
 
@@ -94,12 +94,12 @@ function getTrackerStrategy(data) {
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
-    const MAX_STOP_LOSS_PERC = -1;
+    const MAX_STOP_LOSS_PERC = -3;
     const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
-            strategy: `maxProfitStopLoss${nextLevel}`,
+            strategy: "maxProfitStopLoss",
             transactionPerc: 100,
         };
     }
@@ -154,9 +154,9 @@ function getTrackerStrategy(data) {
         exceptionSkipSizes.includes(liveCandle.candleBodySize);
 
     // resistence
-    // exception resistence when there is a bearish candle, but not reached the bottom (open) of the last candle with potential to a sudden reversal to upside.
-    // not including huge and big because it supposes to have some profit already and this is temporary exception
-    const lastCandleResistenceSizes = ["tiny", "small", "medium"];
+    // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
+    // not including huge because it supposes to have some profit already and this is temporary exception
+    const lastCandleResistenceSizes = ["tiny", "small", "medium", "big"];
     const resistenceLiveSizes = ["tiny", "small"];
     const meetResistenceSizes =
         resistenceLiveSizes.includes(liveCandle.candleBodySize) &&
@@ -204,7 +204,7 @@ function getAtrStrategy(data) {
         // netPerc,
         // atrLimit,
     } = data;
-    const minRangeForSellNetPerc = maxPerc >= 2.0;
+    const minRangeForSellNetPerc = maxPerc >= 3;
     const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
 
     if (atrSellCond) {

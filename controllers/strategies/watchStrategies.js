@@ -2,8 +2,8 @@ const watchProfitTracker = require("./profit-tracker/profitTracker");
 // strategy types
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
+const getEmaSignal = require("./ema/getEmaSignal");
 const { checkCondLimitOrder } = require("../fees");
-// const analyseEmaSignals = require("./ema/analyseEmaSignals");
 // end strategy types
 
 // this is where all strategies we be analysed and decide when to buy and sell
@@ -27,9 +27,15 @@ async function watchStrategies(options = {}) {
     // watchProfitTracker is the highest priority to track pending transaction.
     const profitTracker = await watchProfitTracker({ liveCandle });
     console.log("profitTracker", profitTracker);
+    const signalStrategy = (profitTracker && profitTracker.strategy) || null;
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom
     const allStrategySignals = await Promise.all([
+        getEmaSignal({
+            emaTrend: liveCandle.emaTrend,
+            currStrategy: signalStrategy,
+            profitTracker,
+        }),
         getProfitTrackerSignal({
             profitTracker,
             liveCandle,
@@ -43,7 +49,7 @@ async function watchStrategies(options = {}) {
         }),
     ]);
 
-    const profitStrategy = allStrategySignals[0].whichStrategy;
+    const profitStrategy = allStrategySignals[1].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
     const essentialData = strategiesHandler(allStrategySignals, {
@@ -52,6 +58,7 @@ async function watchStrategies(options = {}) {
         liveCandle,
         profitTracker,
         profitStrategy,
+        signalStrategy,
         lowerWing20,
     });
 
@@ -77,18 +84,16 @@ async function watchStrategies(options = {}) {
 }
 
 // HELPERS
+
 function strategiesHandler(allSignals = [], options = {}) {
     const {
         candleReliability,
         liveCandle = {},
         profitTracker,
         profitStrategy,
+        signalStrategy,
         lowerWing20,
-        // sequenceStreaks,
-        // isProfit,
     } = options;
-
-    const signalStrategy = (profitTracker && profitTracker.strategy) || null;
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
 
     // the first array to be looked over got more priority over the last ones
@@ -102,40 +107,63 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     const isSellSignal = !isBuySignal;
 
-    const oversoldZone = lowerWing20.diffCurrPrice;
-    const allowBuySignalsByZone = oversoldZone <= 1000;
-    if (allowBuySignalsByZone) {
-        return {
-            signal: "BUY",
-            strategy: "oversoldZone",
-            transactionPerc: 100,
-        };
-    }
-    // if (isBuySignal && !allowBuySignalsByZone) return DEFAULT_WAIT_SIGNAL;
-    if (isSellSignal) return DEFAULT_WAIT_SIGNAL;
+    // SELL - DOWNTREND MIN PROFIT AND COND
+    // if not reached the min 0.5 of profit, then ignore all other selling strategies untill we have a min profit and activate all of them again
+    const MIN_PROFIT_NET_PERC = 0.5;
+    const currProfit = profitTracker && profitTracker.netPerc;
+    const isMinProfit = currProfit >= MIN_PROFIT_NET_PERC;
+    const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
+    if (isSellSignal && !isMinProfit && !isExceptionSellSignal)
+        return DEFAULT_WAIT_SIGNAL;
+    //  END SELL - DOWNTREND MIN PROFIT AND COND
+
     // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
     const isProfitLimitSignal =
         firstFoundValidStrategy.strategy.includes("Profit");
 
+    // BUY - ZONE VERIFICATION FOR ENTRY
+    // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
+    const oversoldZone = lowerWing20.diffCurrPrice;
+    const allowBuySignalsByZone = oversoldZone <= 1000;
+    const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
+        foundStrategy
+    );
+    if (isBuySignal && !allowBuySignalsByZone && !isExceptionBuySignal)
+        return DEFAULT_WAIT_SIGNAL;
+    // BUY - END ZONE VERIFICATION FOR ENTRY
+
     // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
-    const isAtrStrategy = profitStrategy === "atr";
-    const exceptionAtrPatterns = foundStrategy === "candleEater";
+    const isUptrendStrategy = profitStrategy === "atr";
+    const exceptionUptrendPatterns = [
+        "candleEater",
+        "emaDowntrend",
+        "emaUptrend",
+    ].includes(foundStrategy);
 
     const allowedSignals =
         isBuySignal ||
         (isSellSignal && isProfitLimitSignal) ||
-        exceptionAtrPatterns;
-    if (isAtrStrategy && !allowedSignals) return DEFAULT_WAIT_SIGNAL;
+        exceptionUptrendPatterns;
+    if (isUptrendStrategy && !allowedSignals) return DEFAULT_WAIT_SIGNAL;
     // END CHECK PROFIT STRATAGY
 
     // CHECK FREE FALL (only exception to buy in a bear market)
     const isFreeFall = signalStrategy === "freeFall";
     // deny because volatility is high and probability favors losses since it is an downtrend.
-    const denyBuySignal = !isFreeFall && disableATR;
-    if (denyBuySignal) return DEFAULT_WAIT_SIGNAL;
+    const denyBuySignalDisableAtr = !isFreeFall && disableATR;
+    if (denyBuySignalDisableAtr) return DEFAULT_WAIT_SIGNAL;
 
+    // if freeFall, then disable candle patterns and max profit takers so that we can take as much we can from this trade.
+    // allow only profit strategy with enough profit already taken
     const isBlockMaxProfitSignal = foundStrategy === "maxDowntrendProfit";
-    if (isFreeFall && (!isProfitLimitSignal || isBlockMaxProfitSignal))
+    const isEnoughProfitForFreefall =
+        profitTracker && profitTracker.netPerc >= 5;
+    if (
+        isFreeFall &&
+        (!isProfitLimitSignal ||
+            !isEnoughProfitForFreefall ||
+            isBlockMaxProfitSignal)
+    )
         return DEFAULT_WAIT_SIGNAL;
     // END CHECK FREE FALL
 
@@ -186,13 +214,6 @@ module.exports = watchStrategies;
 SIGNALS
 BUY, SELL, WAIT, ? (unknown)
 // HOLD not being using in this +v1.15
-
-*/
-/* ARCHIVES
-const emaSignal = analyseEmaSignals({
-    emaTrend: lastEmaTrend,
-    isOverbought: null,
-});
 
 // detection for bullish candle patterns adjust to catch only if size is big or huge, decreasing the changes to sell very early in a potential bullish transaction
 // CHECK EXCEPTION STOPLOSS WHEN LOSS
