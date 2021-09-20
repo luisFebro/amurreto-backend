@@ -114,7 +114,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isMinProfit = currProfit >= MIN_PROFIT_NET_PERC;
     const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
     const isAcceptableCandle =
-        candleSide === "bear" ||
+        (candleSide === "bear" && isExceptionSellSignal) ||
         (candleSide === "bull" && candleBodySize === "huge");
     if (
         isSellSignal &&
