@@ -97,6 +97,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const candleBodySize = liveCandle && liveCandle.candleBodySize;
     const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
+    const currProfit = profitTracker && profitTracker.netPerc;
 
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(
@@ -111,7 +112,6 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     // SELL - DOWNTREND MIN PROFIT AND COND
     const MIN_PROFIT_NET_PERC = 0.5;
-    const currProfit = profitTracker && profitTracker.netPerc;
     const isMinProfit = currProfit >= MIN_PROFIT_NET_PERC;
     const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
     const isAcceptableCandle =
@@ -171,8 +171,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // if freeFall, then disable candle patterns and max profit takers so that we can take as much we can from this trade.
     // allow only profit strategy with enough profit already taken
     const isBlockMaxProfitSignal = foundStrategy === "maxDowntrendProfit";
-    const isEnoughProfitForFreefall =
-        profitTracker && profitTracker.netPerc >= 5;
+    const isEnoughProfitForFreefall = currProfit >= 5;
     if (
         isFreeFall &&
         (!isProfitLimitSignal ||
