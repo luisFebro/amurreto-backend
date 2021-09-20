@@ -104,11 +104,11 @@ function getTrackerStrategy(data) {
     const handleMaxDiffZones = () => {
         // the minimum profit is 0.5 to trigger a sell signal.
         const highBearReversalZoneA = maxPerc >= 0.5 && maxPerc < 8;
-        const highBearReversalZoneB = maxPerc >= 0.8 && maxPerc < 1.2;
-        if (highBearReversalZoneA) return 0.2;
-        if (highBearReversalZoneB) return 0.3;
+        const highBearReversalZoneB = maxPerc >= 0.8 && maxPerc < 1.5;
+        if (highBearReversalZoneA) return 0.3;
+        if (highBearReversalZoneB) return 0.5;
 
-        return 0.5;
+        return 2;
     };
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();

@@ -17,6 +17,10 @@ const isThunderingChange = (data) => {
         candleA.side === "bull";
     if (!matchSides) return false;
 
+    const candleASizes = ["small", "medium"];
+    const matchSizes = candleASizes.includes(candleA.bodySize);
+    if (!matchSizes) return false;
+
     const matchLowerPerc = candleA.lowerPerc >= 40;
     if (!matchLowerPerc) return false;
 
