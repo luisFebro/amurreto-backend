@@ -45,7 +45,6 @@ async function watchStrategies(options = {}) {
         getCandlePatternsSignal({
             liveCandle,
             lastLiveCandle,
-            lowerWing20,
         }),
     ]);
 

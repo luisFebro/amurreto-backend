@@ -1,8 +1,4 @@
-async function getCandlePatternsSignal({
-    liveCandle,
-    lastLiveCandle,
-    lowerWing20,
-}) {
+async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
     const liveBodySize = liveCandle.candleBodySize;
     const isCurrBullish = liveCandle.isBullish;
 
@@ -100,9 +96,7 @@ async function getCandlePatternsSignal({
         };
     }
 
-    const isNearSupport = lowerWing20 <= 7000; // 3500 allow run this only near the support
-    const runSoloPowerThor =
-        isNearSupport && oneCandleType.includes("soloThor");
+    const runSoloPowerThor = oneCandleType.includes("soloThor");
     if (runSoloPowerThor) {
         return {
             signal: "BUY",
@@ -111,8 +105,7 @@ async function getCandlePatternsSignal({
         };
     }
 
-    const runSoloHighWaveDoji =
-        isNearSupport && oneCandleType.includes("soloHighWave");
+    const runSoloHighWaveDoji = oneCandleType.includes("soloHighWave");
     if (runSoloHighWaveDoji) {
         return {
             signal: "BUY",
@@ -141,9 +134,7 @@ function checkPowerConfirmed({ lastLiveCandle, liveBodySize }) {
         lastOneCandleType.includes("highWave") &&
         "powerHighWaveDoji";
 
-    const confirmationCandle = ["tiny", "small", "medium"].includes(
-        liveBodySize
-    );
+    const confirmationCandle = ["small", "medium"].includes(liveBodySize);
     const powerCandle = confirmationCandle && (isThorHammer || isHighWaveDoji);
     if (!powerCandle) return false;
 
