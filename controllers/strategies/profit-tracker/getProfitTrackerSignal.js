@@ -12,7 +12,7 @@ async function getProfitTrackerSignal({
         atrLimit,
         atrUpperLimit,
         maxCurrPrice,
-        maxPerc,
+        // maxPerc,
         // atrLowerLimit,
     } = profitTracker;
     if (!watching || !atrLimit)

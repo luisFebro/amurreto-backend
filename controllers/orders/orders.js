@@ -45,7 +45,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         symbol,
         side,
         orderType: type,
-        maxIterateCount: 5,
+        maxIterateCount: side === "BUY" ? 10 : 5,
         strategy,
     });
 
