@@ -33,8 +33,8 @@ app.use(express.urlencoded({ extended: true }));
 // routes
 app.use("/api/altrabot", require("./routes/altrabot"));
 
-// cron job request to keep server awaken at https://cron-job.org/en/members/jobs/
-app.get("/api/cron-job/awake", (req, res) => res.json("waking server!"));
+// keep server awaken every 10 min at https://cron-job.org/en/members/jobs/
+app.get("/api/sys/waker", (req, res) => res.json("waking server!"));
 // Serve static files such as images, CSS files, and JavaScript files for the React frontend <app></app>
 // isProduction && app.use(express.static(path.join(__dirname, "client/build")));
 // END MIDDLEWARES
