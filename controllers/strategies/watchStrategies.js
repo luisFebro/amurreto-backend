@@ -115,6 +115,14 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
     if (isSellSignal && !isMinProfit && !isExceptionSellSignal)
         return DEFAULT_WAIT_SIGNAL;
+
+    // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
+    if (
+        isSellSignal &&
+        signalStrategy === "emaUptrend" &&
+        foundStrategy !== "emaDowntrend"
+    )
+        return DEFAULT_WAIT_SIGNAL;
     //  END SELL - DOWNTREND MIN PROFIT AND COND
 
     // only allow profit related stoploss because if allow candle patterns it will be trigger like bearish three inside/outside
