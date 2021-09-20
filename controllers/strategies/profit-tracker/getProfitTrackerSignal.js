@@ -80,10 +80,8 @@ function getContTrendStrategy({ profitTracker, isContTrend }) {
 function getTrackerStrategy(data) {
     const {
         maxPerc,
-        isProfit,
         diffMax,
         netPerc,
-        currEmaTrend,
         // minPerc,
         hasPassedAtrUpperLimit,
         liveCandle,
@@ -105,26 +103,6 @@ function getTrackerStrategy(data) {
     }
     // END MAX STOP LOSS
 
-    // MIN AND MAX DOWNTREND PROFIT
-    const allowedTrends = ["downtrend", "bullReversal", "bearReversal"];
-    const primaryCond = isProfit && allowedTrends.includes(currEmaTrend);
-
-    const MAX_PROFIT_DOWNTREND_PERC = 1.5;
-    const candleBodySize = liveCandle.candleBodySize;
-    const largeSizes = ["big", "huge"];
-    const includesLargeSizes = largeSizes.includes(candleBodySize);
-    if (
-        primaryCond &&
-        netPerc >= MAX_PROFIT_DOWNTREND_PERC &&
-        !includesLargeSizes
-    ) {
-        return {
-            signal: "SELL",
-            strategy: "maxDowntrendProfit",
-            transactionPerc: 100,
-        };
-    }
-    // END MIN AND MAX DOWNTREND PROFIT
     const handleMaxDiffZones = () => {
         const highBearReversalZoneA = maxPerc >= 0 && maxPerc < 0.4;
         const highBearReversalZoneB = maxPerc >= 0.4 && maxPerc < 0.8;
@@ -145,31 +123,15 @@ function getTrackerStrategy(data) {
     const longProfitRange = maxPerc >= 4;
 
     // EXCEPTIONS FOR START PROFIT
-    // as long as there is a bullish candle as the current one and not enough or no profit whatsoever, do not sell
     const MAX_PERC_EXCEP = 0.5;
-    const exceptionSkipSizes = ["tiny", "small", "medium"];
-    const exceptionLiveBullCandle =
-        maxPerc <= MAX_PERC_EXCEP &&
-        isBullish &&
-        exceptionSkipSizes.includes(liveCandle.candleBodySize);
-
     // resistence
     // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
-    // not including huge because it supposes to have some profit already and this is temporary exception
-    const lastCandleResistenceSizes = ["tiny", "small", "medium", "big"];
-    const resistenceLiveSizes = ["tiny", "small"];
-    const meetResistenceSizes =
-        resistenceLiveSizes.includes(liveCandle.candleBodySize) &&
-        lastCandleResistenceSizes.includes(lastLiveCandle.candleBodySize);
     const exceptionResistence =
-        maxPerc <= MAX_PERC_EXCEP &&
-        meetResistenceSizes &&
-        lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
+        maxPerc <= MAX_PERC_EXCEP && lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
     // EXCEPTIONS FOR START PROFIT
 
     const isStartProfit =
         !exceptionResistence &&
-        !exceptionLiveBullCandle &&
         startProfitRange &&
         diffMax >= MAX_DIFF_START_PROFIT &&
         `startProfit${nextLevel}`;
@@ -236,6 +198,28 @@ module.exports = getProfitTrackerSignal;
  */
 
 /* ARCHIVES
+
+// MIN AND MAX DOWNTREND PROFIT
+const allowedTrends = ["downtrend", "bullReversal", "bearReversal"];
+const primaryCond = isProfit && allowedTrends.includes(currEmaTrend);
+
+const MAX_PROFIT_DOWNTREND_PERC = 1.5;
+const candleBodySize = liveCandle.candleBodySize;
+const largeSizes = ["big", "huge"];
+const includesLargeSizes = largeSizes.includes(candleBodySize);
+if (
+    primaryCond &&
+    netPerc >= MAX_PROFIT_DOWNTREND_PERC &&
+    !includesLargeSizes
+) {
+    return {
+        signal: "SELL",
+        strategy: "maxDowntrendProfit",
+        transactionPerc: 100,
+    };
+}
+// END MIN AND MAX DOWNTREND PROFIT
+
 const minDownProfitRange = maxPerc >= 1 && maxPerc < 1.5;
 const MAX_DIFF_MINIMUM_PROFIT = 0.4;
 

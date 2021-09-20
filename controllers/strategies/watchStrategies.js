@@ -94,6 +94,8 @@ function strategiesHandler(allSignals = [], options = {}) {
         signalStrategy,
         lowerWing20,
     } = options;
+    const candleBodySize = liveCandle && liveCandle.candleBodySize;
+    const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
 
     // the first array to be looked over got more priority over the last ones
@@ -108,12 +110,19 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isSellSignal = !isBuySignal;
 
     // SELL - DOWNTREND MIN PROFIT AND COND
-    // if not reached the min 0.5 of profit, then ignore all other selling strategies untill we have a min profit and activate all of them again
     const MIN_PROFIT_NET_PERC = 0.5;
     const currProfit = profitTracker && profitTracker.netPerc;
     const isMinProfit = currProfit >= MIN_PROFIT_NET_PERC;
     const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
-    if (isSellSignal && !isMinProfit && !isExceptionSellSignal)
+    const isAcceptableCandle =
+        candleSide === "bear" ||
+        (candleSide === "bull" && candleBodySize === "huge");
+    if (
+        isSellSignal &&
+        !isAcceptableCandle &&
+        !isMinProfit &&
+        !isExceptionSellSignal
+    )
         return DEFAULT_WAIT_SIGNAL;
 
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
@@ -142,11 +151,9 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
     const isUptrendStrategy = profitStrategy === "atr";
-    const exceptionUptrendPatterns = [
-        "candleEater",
-        "emaDowntrend",
-        "emaUptrend",
-    ].includes(foundStrategy);
+    const exceptionUptrendPatterns = ["emaDowntrend", "emaUptrend"].includes(
+        foundStrategy
+    );
 
     const allowedSignals =
         isBuySignal ||

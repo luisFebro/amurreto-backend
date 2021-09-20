@@ -150,7 +150,6 @@ async function createOrderBack(payload = {}) {
     const isBuy = side.toUpperCase() === "BUY";
     const isSell = !isBuy;
 
-    console.log("transactionAttempts", transactionAttempts);
     const marketPrice = await analyseMarketPrice({
         isBuy,
         payload,
@@ -257,6 +256,7 @@ async function createOrderBack(payload = {}) {
             const newFoundOpenOrderId = `${mostRecentData.quote}||${mostRecentData.base}`;
             const dataToUpdate = {
                 "pendingLimitOrder.signal": side,
+                "pendingLimitOrder.strategy": strategy,
                 "pendingLimitOrder.openOrderId": newFoundOpenOrderId,
             };
 
