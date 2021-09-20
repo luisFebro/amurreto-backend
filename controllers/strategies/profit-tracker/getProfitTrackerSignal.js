@@ -32,10 +32,7 @@ async function getProfitTrackerSignal({
     // const MAX_DIFF_SPLITTER = 0.8;
 
     const condAtr =
-        maxPerc >= 1 &&
-        isProfit &&
-        !hasPassedAtrUpperLimit &&
-        atrTrends.includes(currEmaTrend);
+        isProfit && !hasPassedAtrUpperLimit && atrTrends.includes(currEmaTrend);
 
     const whichStrategy = condAtr ? "atr" : "tracker";
 
@@ -66,8 +63,8 @@ function getContTrendStrategy({ profitTracker, isContTrend }) {
 
     const nextProfitGoalPerc = Math.round(maxPerc);
     const limitDown = nextProfitGoalPerc - DOWN_RANGE_DIFF;
-    const finalRange = limitDown <= netPerc || netPerc >= nextProfitGoalPerc;
-    const isGoSignal = finalRange && nextProfitGoalPerc >= 1;
+    const finalRange = limitDown <= netPerc && netPerc <= nextProfitGoalPerc;
+    const isGoSignal = finalRange && nextProfitGoalPerc >= 3;
     if (!isGoSignal) return false;
 
     return {
@@ -158,6 +155,8 @@ function getTrackerStrategy(data) {
 }
 
 // automatically activate in an uptrend
+// as long as the current transaction comes from downtrend.
+// That's because when reaching uptrend and no transaction, the algo automatically buy and sell only when a downtrend signal pops up
 function getAtrStrategy(data) {
     const {
         atrLowerLimit,

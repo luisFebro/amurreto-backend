@@ -16,7 +16,7 @@ const areBullBros = (data) => {
     const matchSides = candleB.side === "bull" && candleA.side === "bull";
     if (!matchSides) return false;
 
-    const sizesCandleA = ["small", "medium", "big", "huge"];
+    const sizesCandleA = ["small", "medium"];
     const matchSizes = sizesCandleA.includes(candleA.bodySize);
     if (!matchSizes) return false;
 

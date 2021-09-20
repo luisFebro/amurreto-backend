@@ -213,7 +213,6 @@ function handleUnreliableBuySignal({
         "broBulls",
         "medium",
         "soloPowerThor",
-        "patternTWEEZERS",
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;

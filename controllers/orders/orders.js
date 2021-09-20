@@ -155,8 +155,8 @@ async function createOrderBack(payload = {}) {
         payload,
         symbol,
         // selling is most crutial to have a as near as possible to ask price so that we can take the desired triggered profit. Otherwise, if the first attempt fail and the price continue to drop we lose part of it
-        offsetPrice: isSell || transactionAttempts >= 1 ? offsetPrice : 0,
-        forcePrice: isSell || transactionAttempts >= 1 ? true : false,
+        offsetPrice: isSell || transactionAttempts >= 2 ? offsetPrice : 0,
+        forcePrice: isSell || transactionAttempts >= 2 ? true : false,
     });
 
     const { baseCurrencyAmount, quoteCurrencyAmount } = await getCurrencyAmount(
