@@ -109,7 +109,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isBuySignal = firstFoundValidStrategy.signal.toUpperCase() === "BUY";
     const isSellSignal = !isBuySignal;
 
-    // SELL - DOWNTREND MIN PROFIT AND COND
+    // SELL - DOWNTREND MIN PROFIT AND COND ..
     const MIN_PROFIT_NET_PERC = 0.5;
     const isMinProfit = currProfit >= MIN_PROFIT_NET_PERC;
     const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
