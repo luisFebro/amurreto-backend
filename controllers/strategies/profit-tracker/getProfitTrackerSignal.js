@@ -120,11 +120,9 @@ function getTrackerStrategy(data) {
     const longProfitRange = maxPerc >= 4;
 
     // EXCEPTIONS FOR START PROFIT
-    const MAX_PERC_EXCEP = 0.5;
     // resistence
     // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
-    const exceptionResistence =
-        maxPerc <= MAX_PERC_EXCEP && lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
+    const exceptionResistence = lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
     // EXCEPTIONS FOR START PROFIT
 
     const isStartProfit =
