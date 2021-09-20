@@ -29,7 +29,6 @@ async function getProfitTrackerSignal({
 
     const hasPassedAtrUpperLimit = maxCurrPrice >= atrUpperLimit;
     const atrTrends = ["uptrend"];
-    // const MAX_DIFF_SPLITTER = 0.8;
 
     const condAtr =
         isProfit && !hasPassedAtrUpperLimit && atrTrends.includes(currEmaTrend);

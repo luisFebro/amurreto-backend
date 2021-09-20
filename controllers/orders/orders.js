@@ -45,7 +45,7 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         symbol,
         side,
         orderType: type,
-        maxIterateCount: side === "BUY" ? 10 : 5,
+        maxIterateCount: side === "BUY" ? 10 : 5, // 5 min and 2.5 min for 30s each iteration. sell is less because if not triggered quick, we are losing profit
         strategy,
     });
 
