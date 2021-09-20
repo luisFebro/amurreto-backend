@@ -1,3 +1,5 @@
+const MAX_STOP_LOSS_PERC = 2.5;
+
 async function getProfitTrackerSignal({
     profitTracker = {},
     liveCandle,
@@ -87,13 +89,12 @@ function getTrackerStrategy(data) {
         liveCandle,
         lastLiveCandle,
     } = data;
-    const isBullish = liveCandle.isBullish;
+    // const isBullish = liveCandle.isBullish;
 
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // MAX STOP LOSS
-    const MAX_STOP_LOSS_PERC = -3;
-    const maxProfitStopLoss = netPerc <= MAX_STOP_LOSS_PERC;
+    const maxProfitStopLoss = netPerc <= Number(`-${MAX_STOP_LOSS_PERC}`);
     if (maxProfitStopLoss) {
         return {
             signal: "SELL",
@@ -165,7 +166,7 @@ function getAtrStrategy(data) {
         // netPerc,
         // atrLimit,
     } = data;
-    const minRangeForSellNetPerc = maxPerc >= 3;
+    const minRangeForSellNetPerc = maxPerc >= MAX_STOP_LOSS_PERC;
     const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
 
     if (atrSellCond) {
