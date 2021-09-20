@@ -118,14 +118,11 @@ function strategiesHandler(allSignals = [], options = {}) {
         "emaDowntrend",
     ].includes(foundStrategy);
     // need have some profit to allow take profit with bearish candles and only allow maxStoploss if no profit
-    const isAcceptableCandleOrSignal =
+    const isAcceptSellCond =
         (candleSide === "bear" && (isProfit || isExceptionSellSignal)) ||
         (candleSide === "bull" && candleBodySize === "huge");
-    if (isSellSignal && !isAcceptableCandleOrSignal) return DEFAULT_WAIT_SIGNAL;
-    if (
-        (isSellSignal && !isMinProfit && !isAcceptableCandleOrSignal) ||
-        (isSellSignal && isMinProfit && !isAcceptableCandleOrSignal)
-    )
+    if (isSellSignal && !isAcceptSellCond) return DEFAULT_WAIT_SIGNAL;
+    if (isSellSignal && isMinProfit && !isAcceptSellCond)
         return DEFAULT_WAIT_SIGNAL;
 
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
