@@ -51,15 +51,20 @@ async function watchStrategies(options = {}) {
     const profitStrategy = allStrategySignals[1].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
-    const essentialData = strategiesHandler(allStrategySignals, {
-        candleReliability,
-        sequenceStreaks,
-        liveCandle,
-        profitTracker,
-        profitStrategy,
-        signalStrategy,
-        lowerWing20,
-    });
+    const essentialData = {
+        signal: "BUY",
+        strategy: "reinserted test",
+        transactionPerc: 100,
+    };
+    // const essentialData = strategiesHandler(allStrategySignals, {
+    //     candleReliability,
+    //     sequenceStreaks,
+    //     liveCandle,
+    //     profitTracker,
+    //     profitStrategy,
+    //     signalStrategy,
+    //     lowerWing20,
+    // });
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
@@ -118,14 +123,13 @@ function strategiesHandler(allSignals = [], options = {}) {
         "emaDowntrend",
     ].includes(foundStrategy);
     // need have some profit to allow take profit with bearish candles and only allow maxStoploss if no profit
-    const isAcceptableCandle =
+    const isAcceptableCandleOrSignal =
         (candleSide === "bear" && (isProfit || isExceptionSellSignal)) ||
         (candleSide === "bull" && candleBodySize === "huge");
+    if (isSellSignal && !isAcceptableCandleOrSignal) return DEFAULT_WAIT_SIGNAL;
     if (
-        isSellSignal &&
-        !isAcceptableCandle &&
-        !isMinProfit &&
-        !isExceptionSellSignal
+        (isSellSignal && !isMinProfit) ||
+        (isMinProfit && !isAcceptableCandleOrSignal)
     )
         return DEFAULT_WAIT_SIGNAL;
 
@@ -145,7 +149,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // BUY - ZONE VERIFICATION FOR ENTRY
     // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
     const oversoldZone = lowerWing20.diffCurrPrice;
-    const BUY_ZONE_LIMIT = 2000;
+    const BUY_ZONE_LIMIT = 3500; // 2000
     const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
     const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
         foundStrategy
