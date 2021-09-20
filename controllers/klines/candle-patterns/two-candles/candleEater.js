@@ -16,9 +16,6 @@ const isCandleEater = (data) => {
         candleA.openPrice && candleB.openPrice && candleC.openPrice;
     if (!gotAllCandlesData) return false;
 
-    const matchSides = candleB.side !== candleA.side;
-    if (!matchSides) return false;
-
     const sizesCandleA = ["big", "huge"];
     const matchSizes = sizesCandleA.includes(candleA.bodySize);
     if (!matchSizes) return false;

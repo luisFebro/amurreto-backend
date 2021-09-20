@@ -20,9 +20,7 @@ const isThreeOutside = (data) => {
 
     // detect bear only in the last case with big and huge
     const isCurrBull = candleA.side === "bull";
-    const sizesCandleA = isCurrBull
-        ? ["small", "medium", "big", "huge"]
-        : ["big", "huge"];
+    const sizesCandleA = isCurrBull ? ["small", "medium"] : ["big", "huge"];
     const matchSizes = sizesCandleA.includes(candleA.bodySize);
     if (!matchSizes) return false;
 
