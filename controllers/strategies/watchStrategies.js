@@ -97,7 +97,6 @@ function strategiesHandler(allSignals = [], options = {}) {
     const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
     const maxProfit = profitTracker && profitTracker.maxPerc;
-    const isProfit = profitTracker && profitTracker.isProfit;
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
@@ -119,12 +118,9 @@ function strategiesHandler(allSignals = [], options = {}) {
     ].includes(foundStrategy);
     // need have some profit to allow take profit with bearish candles and only allow maxStoploss if no profit
     const isAcceptSellCond =
-        (candleSide === "bear" && (isProfit || isExceptionSellSignal)) ||
+        (candleSide === "bear" && (isMinProfit || isExceptionSellSignal)) ||
         (candleSide === "bull" && candleBodySize === "huge");
     if (isSellSignal && !isAcceptSellCond) return DEFAULT_WAIT_SIGNAL;
-    if (isSellSignal && isMinProfit && !isAcceptSellCond)
-        return DEFAULT_WAIT_SIGNAL;
-
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
     if (
         isSellSignal &&
