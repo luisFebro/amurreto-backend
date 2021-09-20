@@ -211,12 +211,12 @@ function handleUnreliableBuySignal({
     const reliableReason = candleReliability.reason;
 
     const exceptionToReliability = [
-        "freeFall",
-        "thunderingChange",
-        "atrProfitStopLoss",
         "broBulls",
         "soloPowerThor",
         "patternSTAR",
+        "thunderingChange",
+        "atrProfitStopLoss",
+        "freeFall",
     ];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;

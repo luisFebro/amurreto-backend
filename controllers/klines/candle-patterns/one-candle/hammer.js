@@ -31,7 +31,7 @@ const isHammer = (data) => {
 
     const isThorHammer =
         candleA.pressure.part === "lower" &&
-        candleA.pressure.perc >= 50 &&
+        candleA.pressure.perc >= 55 &&
         candleA.side === "bull";
 
     const handleVariant = () => {
