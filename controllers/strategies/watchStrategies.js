@@ -112,7 +112,10 @@ function strategiesHandler(allSignals = [], options = {}) {
     // SELL - DOWNTREND MIN PROFIT AND COND ..
     const MIN_PROFIT_NET_PERC = 0.4;
     const isMinProfit = maxProfit >= MIN_PROFIT_NET_PERC;
-    const isExceptionSellSignal = ["maxProfitStopLoss"].includes(foundStrategy);
+    const isExceptionSellSignal = [
+        "maxProfitStopLoss",
+        "emaDowntrend",
+    ].includes(foundStrategy);
     // need have some profit to allow take profit with bearish candles and only allow maxStoploss if no profit
     const isAcceptableCandle =
         (candleSide === "bear" && (isProfit || isExceptionSellSignal)) ||
