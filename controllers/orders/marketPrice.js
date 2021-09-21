@@ -49,9 +49,10 @@ async function analyseMarketPrice(data) {
 
     // const sumPrices = diffPrices.reduce((curr, next) => curr + next, 0);
     // const DEFAULT_OFFSET = 50;
-    // const offsetPrice = Math.floor(sumPrices / diffPrices.length);
 
     // const sumRange = pricesRange.reduce((curr, next) => curr + next, 0)
+    // const forcedPrice = Math.floor(sumRange / pricesRange.length);
+
     const bestPrice = isBuy
         ? Math.min(...pricesRange)
         : Math.max(...pricesRange); // Number((sumRange / pricesRange.length).toFixed(2))  //
