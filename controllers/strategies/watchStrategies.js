@@ -167,13 +167,13 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     // if freeFall, then disable candle patterns and max profit takers so that we can take as much we can from this trade.
     // allow only profit strategy with enough profit already taken
-    const isBlockMaxProfitSignal = foundStrategy === "maxDowntrendProfit";
     const isEnoughProfitForFreefall = maxProfit >= 5;
+    const reachedMaxStopLossForFreefall = foundStrategy === "maxProfitStopLoss";
+
     if (
         isFreeFall &&
-        (!isProfitLimitSignal ||
-            !isEnoughProfitForFreefall ||
-            isBlockMaxProfitSignal)
+        !reachedMaxStopLossForFreefall &&
+        (!isProfitLimitSignal || !isEnoughProfitForFreefall)
     )
         return DEFAULT_WAIT_SIGNAL;
     // END CHECK FREE FALL
