@@ -370,7 +370,7 @@ async function getCandlesticksData(payload = {}) {
 function setAtrBoundaries({ json = false, close, atr }) {
     const MULTIPLIER = 2;
     const atrDefaultBoundary = atr * MULTIPLIER;
-    const disableATR = atr >= 4000; // 3000
+    const disableATR = atr >= 5000; // 3000
 
     const data = {
         atrUpperLimit: Number((close + atrDefaultBoundary).toFixed(2)),
