@@ -51,20 +51,15 @@ async function watchStrategies(options = {}) {
     const profitStrategy = allStrategySignals[1].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
-    const essentialData = {
-        signal: "BUY",
-        strategy: "teste",
-        transactionPerc: 100,
-    };
-    // const essentialData = strategiesHandler(allStrategySignals, {
-    //     candleReliability,
-    //     sequenceStreaks,
-    //     liveCandle,
-    //     profitTracker,
-    //     profitStrategy,
-    //     signalStrategy,
-    //     lowerWing20,
-    // });
+    const essentialData = strategiesHandler(allStrategySignals, {
+        candleReliability,
+        sequenceStreaks,
+        liveCandle,
+        profitTracker,
+        profitStrategy,
+        signalStrategy,
+        lowerWing20,
+    });
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
