@@ -1,3 +1,4 @@
+const { IS_DEV } = require("../../../../config");
 /*
 Indication: Bullish reversal
 Reliability: Medium (My own)
@@ -10,8 +11,9 @@ const isFreeFall = (data) => {
     const gotAllCandlesData = candleA.openPrice && candleB.openPrice;
     if (!gotAllCandlesData) return false;
 
-    // note that backtesting will not detect a bear candleA. Remove it for check this freeFall pattern for testing
-    const matchSides = candleB.side === "bear" && candleA.side === "bear";
+    // note that backtesting will not detect a bear candleA. That's why we don't detect a side when backtesting
+    const pickSide = IS_DEV ? true : candleA.side === "bear";
+    const matchSides = candleB.side === "bear" && pickSide;
     if (!matchSides) return false;
     const sizesCandleB = ["tiny", "small", "medium", "big", "huge"];
     const matchSizes = sizesCandleB.includes(candleB.bodySize);
@@ -19,7 +21,7 @@ const isFreeFall = (data) => {
 
     const matchWholeCandleSizes =
         candleA.wholeSize >= 10000 ||
-        (candleB.wholeSize >= 8000 && candleA.wholeSize >= 8000); // candleB.wholeSize >= 7000 &&
+        (candleB.wholeSize >= 8000 && candleA.wholeSize >= 8000);
     if (!matchWholeCandleSizes) return false;
 
     const matchMinLowerPerc = candleA.lowerPerc >= 25;
