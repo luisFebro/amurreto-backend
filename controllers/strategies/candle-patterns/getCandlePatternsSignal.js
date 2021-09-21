@@ -35,6 +35,15 @@ async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
     // END THREE CANDLES
 
     // TWO CANDLES
+    const runFreeFall = twoCandleType.includes("freeFall");
+    if (runFreeFall) {
+        return {
+            signal: "BUY",
+            strategy: "freeFall",
+            transactionPerc: 100,
+        };
+    }
+
     const runBroBulls = twoCandleType.includes("broBulls");
     if (runBroBulls) {
         return {
@@ -49,14 +58,6 @@ async function getCandlePatternsSignal({ liveCandle, lastLiveCandle }) {
         return {
             signal: isCurrBullish ? "BUY" : "SELL",
             strategy: "candleEater",
-            transactionPerc: 100,
-        };
-    }
-    const runFreeFall = twoCandleType.includes("freeFall");
-    if (runFreeFall) {
-        return {
-            signal: "BUY",
-            strategy: "freeFall",
             transactionPerc: 100,
         };
     }
