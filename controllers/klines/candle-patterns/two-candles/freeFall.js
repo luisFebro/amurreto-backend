@@ -17,7 +17,9 @@ const isFreeFall = (data) => {
     const matchSizes = sizesCandleB.includes(candleB.bodySize);
     if (!matchSizes) return false;
 
-    const matchWholeCandleSizes = candleA.wholeSize >= 10000; // candleB.wholeSize >= 7000 &&
+    const matchWholeCandleSizes =
+        candleA.wholeSize >= 10000 ||
+        (candleB.wholeSize >= 8000 && candleA.wholeSize >= 8000); // candleB.wholeSize >= 7000 &&
     if (!matchWholeCandleSizes) return false;
 
     const matchMinLowerPerc = candleA.lowerPerc >= 25;
