@@ -60,8 +60,8 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
     if (partialOrderData) await partialFilled.clear();
     const status = await getTransactionStatus({
         symbol,
-        // transactionPerc: transactionPositionPerc,
         side,
+        // transactionPerc: transactionPositionPerc,
     });
 
     const defaultTransaction = {
@@ -124,6 +124,7 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 
     return "done";
 }
+
 // TEST
 // const moreData = {
 //     symbol: "BTC/BRL",
@@ -133,13 +134,13 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 // };
 
 // const mostRecentData = {
-//     quote: 92.59,
-//     base: 0.0003672,
-//     price: 252151.42,
-//     filledFee: 0.1,
-//     feePerc: 0.1,
+//     quote: 78.79,
+//     base: 0.00036616,
+//     price: 215179.16,
+//     filledFee: 0.24,
+//     feePerc: 0.3,
 //     type: "LIMIT",
-//     timestamp: 1631782453190,
+//     timestamp: 11632265290127,
 //     status: "FILLED",
 // };
 

@@ -17,7 +17,12 @@ const getId = require("../../utils/getId");
 const analyseMarketPrice = require("./marketPrice");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
-const validOpenOrderStatus = ["SUBMITTED", "PROCESSING", "PARTIAL_FILLED"];
+const validOpenOrderStatus = [
+    "SUBMITTED",
+    "PROCESSING",
+    "PARTIAL_FILLED",
+    "FILLED",
+];
 
 async function createOrderBySignal(signalData = {}, options = {}) {
     const {
@@ -205,7 +210,7 @@ async function createOrderBack(payload = {}) {
         });
 
         if (needOnlyRecordLimitOrderDB) {
-            // LIMIT ORDER REGISTER
+            // LIMIT/MARKET ORDER REGISTER
             return await recordFinalDbOrder({
                 needLimitTypeOnly: true,
                 side,

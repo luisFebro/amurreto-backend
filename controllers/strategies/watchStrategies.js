@@ -69,7 +69,7 @@ async function watchStrategies(options = {}) {
     });
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
-    const offsetPrice = needLimitType ? 50 : 0;
+    const offsetPrice = needLimitType ? 100 : 0;
     // // END TYPE ORDER HANDLING
 
     const finalSignal = {
@@ -137,7 +137,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // BUY - ZONE VERIFICATION FOR ENTRY
     // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
     const oversoldZone = lowerWing20.diffCurrPrice;
-    const BUY_ZONE_LIMIT = 4000; // 2000
+    const BUY_ZONE_LIMIT = 10000; // 2500
     const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
     const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
         foundStrategy
