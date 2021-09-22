@@ -85,7 +85,7 @@ function getTrackerStrategy(data) {
         liveCandle,
         lastLiveCandle,
     } = data;
-    // const isBullish = liveCandle.isBullish;
+    const emaTrend = liveCandle.emaTrend;
 
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
@@ -111,7 +111,7 @@ function getTrackerStrategy(data) {
     };
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
-    const MAX_DIFF_MID_PROFIT = 1;
+    const MAX_DIFF_MID_PROFIT = emaTrend === "uptrend" ? 1 : 0.5;
     const MAX_DIFF_LONG_PROFIT = 0.5;
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 1.5;
@@ -130,10 +130,12 @@ function getTrackerStrategy(data) {
         diffMax >= MAX_DIFF_START_PROFIT &&
         `startProfit${nextLevel}`;
     const isMidProfit =
+        !exceptionResistence &&
         midProfitRange &&
         diffMax >= MAX_DIFF_MID_PROFIT &&
         `midProfit${nextLevel}`;
     const isLongProfit =
+        !exceptionResistence &&
         longProfitRange &&
         diffMax >= MAX_DIFF_LONG_PROFIT &&
         `longProfit${nextLevel}`;
