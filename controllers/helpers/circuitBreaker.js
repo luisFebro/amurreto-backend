@@ -62,6 +62,7 @@ async function needCircuitBreaker({ emaTrend }) {
 
     const circuitBreakerData = {
         diffPriceLastTransaction,
+        diffMinutesLastTransaction: getDiffInMinutes(lastTransactionSellDate),
     };
 
     return {

@@ -137,7 +137,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // BUY - ZONE VERIFICATION FOR ENTRY
     // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
     const oversoldZone = lowerWing20.diffCurrPrice;
-    const BUY_ZONE_LIMIT = 10000; // 2500
+    const BUY_ZONE_LIMIT = 2500; // 2500
     const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
     const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
         foundStrategy
