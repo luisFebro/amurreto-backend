@@ -13,8 +13,8 @@ only applicable for buy order since if we block selling the current transaction 
 
 async function needCircuitBreaker({ emaTrend }) {
     // for trading with higher volatility, the gap is lower for circuit breaker to get best deals in the dip
-    const MIN_PRICE_DIFF = emaTrend === "downtrend" ? 100 : 3000;
-    const MIN_TIME_AFTER_LAST_TRANS = emaTrend === "downtrend" ? 30 : 60; // in minute
+    const MIN_PRICE_DIFF = 100; //emaTrend === "downtrend" ? 100 : 3000;
+    const MIN_TIME_AFTER_LAST_TRANS = 30; //emaTrend === "downtrend" ? 30 : 60; // in minute
 
     const livePrice = await getLivePrice("BTC/BRL");
 
