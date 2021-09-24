@@ -112,12 +112,12 @@ function getTrackerStrategy(data) {
         // const highBearReversalZoneB = maxPerc >= 0.8 && maxPerc < 1.2;
         // if (highBearReversalZoneA) return 0.2;
         // if (highBearReversalZoneB) return 0.3;
-        return 0.2; // 0.5
+        return 0; // 0.5
     };
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
-    const MAX_DIFF_MID_PROFIT = 0.2; //emaTrend === "uptrend" ? 1 : 0.5;
-    const MAX_DIFF_LONG_PROFIT = 0.2; // 0.5
+    const MAX_DIFF_MID_PROFIT = 0; //emaTrend === "uptrend" ? 1 : 0.5;
+    const MAX_DIFF_LONG_PROFIT = 0; // 0.5
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 1.5;
     const midProfitRange = maxPerc >= 1.5 && maxPerc < 4;
