@@ -1,4 +1,4 @@
-const MAX_STOP_LOSS_PERC = 0.5;
+const MAX_STOP_LOSS_PERC = 0.2;
 
 async function getProfitTrackerSignal({
     profitTracker = {},
@@ -108,17 +108,16 @@ function getTrackerStrategy(data) {
 
     const handleMaxDiffZones = () => {
         // the minimum profit is 0.4 to trigger a sell signal.
-        const highBearReversalZoneA = maxPerc >= 0.4 && maxPerc < 8;
-        const highBearReversalZoneB = maxPerc >= 0.8 && maxPerc < 1.2;
-        if (highBearReversalZoneA) return 0.2;
-        if (highBearReversalZoneB) return 0.3;
-
-        return 0.5;
+        // const highBearReversalZoneA = maxPerc >= 0.4 && maxPerc < 8;
+        // const highBearReversalZoneB = maxPerc >= 0.8 && maxPerc < 1.2;
+        // if (highBearReversalZoneA) return 0.2;
+        // if (highBearReversalZoneB) return 0.3;
+        return 0.2; // 0.5
     };
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
-    const MAX_DIFF_MID_PROFIT = emaTrend === "uptrend" ? 1 : 0.5;
-    const MAX_DIFF_LONG_PROFIT = 0.5;
+    const MAX_DIFF_MID_PROFIT = 0.2; //emaTrend === "uptrend" ? 1 : 0.5;
+    const MAX_DIFF_LONG_PROFIT = 0.2; // 0.5
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 1.5;
     const midProfitRange = maxPerc >= 1.5 && maxPerc < 4;
