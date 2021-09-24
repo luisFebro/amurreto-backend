@@ -19,7 +19,7 @@ async function watchStrategies(options = {}) {
         liveCandle,
         lastLiveCandle,
         candleReliability,
-        lowerWing20,
+        // lowerWing20,
         sequenceStreaks,
         isContTrend,
     } = options;
@@ -58,7 +58,7 @@ async function watchStrategies(options = {}) {
         profitTracker,
         profitStrategy,
         signalStrategy,
-        lowerWing20,
+        // lowerWing20,
     });
 
     // TYPE ORDER HANDLING
@@ -91,7 +91,7 @@ function strategiesHandler(allSignals = [], options = {}) {
         profitTracker,
         profitStrategy,
         signalStrategy,
-        lowerWing20,
+        // lowerWing20,
     } = options;
     const candleBodySize = liveCandle && liveCandle.candleBodySize;
     const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
@@ -136,14 +136,14 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     // BUY - ZONE VERIFICATION FOR ENTRY
     // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
-    const oversoldZone = lowerWing20.diffCurrPrice;
-    const BUY_ZONE_LIMIT = 2500; // 2500
-    const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
-    const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
-        foundStrategy
-    );
-    if (isBuySignal && !allowBuySignalsByZone && !isExceptionBuySignal)
-        return DEFAULT_WAIT_SIGNAL;
+    // const oversoldZone = lowerWing20.diffCurrPrice;
+    // const BUY_ZONE_LIMIT = 2500; // 2500
+    // const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
+    // const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
+    //     foundStrategy
+    // );
+    // if (isBuySignal && !allowBuySignalsByZone && !isExceptionBuySignal)
+    //     return DEFAULT_WAIT_SIGNAL;
     // BUY - END ZONE VERIFICATION FOR ENTRY
 
     // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically

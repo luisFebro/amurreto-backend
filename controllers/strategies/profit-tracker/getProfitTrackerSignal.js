@@ -1,4 +1,4 @@
-const MAX_STOP_LOSS_PERC = 2.5;
+const MAX_STOP_LOSS_PERC = 0.5;
 
 async function getProfitTrackerSignal({
     profitTracker = {},
