@@ -8,11 +8,10 @@ async function getProfitTrackerSignal({
 }) {
     const {
         watching,
-        isProfit,
         atrLimit,
         atrUpperLimit,
         maxCurrPrice,
-        // maxPerc,
+        maxPerc,
         // atrLowerLimit,
     } = profitTracker;
     if (!watching || !atrLimit)
@@ -31,7 +30,9 @@ async function getProfitTrackerSignal({
     const atrTrends = ["uptrend"];
 
     const condAtr =
-        isProfit && !hasPassedAtrUpperLimit && atrTrends.includes(currEmaTrend);
+        maxPerc >= 2 &&
+        !hasPassedAtrUpperLimit &&
+        atrTrends.includes(currEmaTrend);
 
     const whichStrategy = condAtr ? "atr" : "tracker";
 
@@ -89,9 +90,14 @@ function getTrackerStrategy(data) {
 
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
+    // EXCEPTIONS FOR START PROFIT
+    // resistence asv
+    // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
+    const exceptionResistence = lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
+
     // MAX STOP LOSS
     const maxProfitStopLoss = netPerc <= Number(`-${MAX_STOP_LOSS_PERC}`);
-    if (maxProfitStopLoss) {
+    if (!exceptionResistence && maxProfitStopLoss) {
         return {
             signal: "SELL",
             strategy: "maxProfitStopLoss",
@@ -119,11 +125,6 @@ function getTrackerStrategy(data) {
     const longProfitRange = maxPerc >= 4;
 
     // EXCEPTIONS FOR START PROFIT
-    // resistence asv
-    // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
-    const exceptionResistence = lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
-    // EXCEPTIONS FOR START PROFIT
-
     const isStartProfit =
         !exceptionResistence &&
         startProfitRange &&
