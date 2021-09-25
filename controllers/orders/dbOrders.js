@@ -128,19 +128,19 @@ async function setDbOrderBack({ side, mostRecentData, moreData }) {
 // TEST
 // const moreData = {
 //     symbol: "BTC/BRL",
-//     strategy: "startProfit",
+//     strategy: "maxProfitStopLoss",
 //     transactionPositionPerc: 100,
 //     capitalPositionPerc: 100,
 // };
 
 // const mostRecentData = {
-//     quote: 78.79,
-//     base: 0.00036616,
-//     price: 215179.16,
-//     filledFee: 0.24,
+//     quote: 75.64,
+//     base: 0.00033141,
+//     price: 228236.93,
+//     filledFee: 0.23,
 //     feePerc: 0.3,
 //     type: "LIMIT",
-//     timestamp: 11632265290127,
+//     timestamp: 1632579621193,
 //     status: "FILLED",
 // };
 

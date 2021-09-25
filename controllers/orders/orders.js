@@ -17,7 +17,12 @@ const getId = require("../../utils/getId");
 const analyseMarketPrice = require("./marketPrice");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
-const validOpenOrderStatus = ["SUBMITTED", "PROCESSING", "PARTIAL_FILLED"];
+const validOpenOrderStatus = [
+    "SUBMITTED",
+    "PROCESSING",
+    "PARTIAL_FILLED",
+    "FILLED",
+];
 
 async function createOrderBySignal(signalData = {}, options = {}) {
     const {
@@ -57,7 +62,6 @@ async function createOrderBySignal(signalData = {}, options = {}) {
         dbAttempts,
     } = openOrderExchange;
 
-    // if there is no order in exchange and there is a count available, it means a pending transaction was recently filled and ready to be recorded in the DB.
     // note that, after registration, the count and signal are set to 0 and null respectively.
     const needRecordLimitBuyOnly = needRecordOnly && dbSignal === "BUY";
     const needRecordLimitSellOnly = needRecordOnly && dbSignal === "SELL";
@@ -574,19 +578,18 @@ async function checkOpeningOrderNotDoneExchange({
     const openOrderStatus = openOrdersList[0] && openOrdersList[0].status;
     const isPartialFilled = openOrderStatus === "PARTIAL_FILLED";
 
-    const { baseCurrencyAmount, quoteCurrencyAmount } = dataCurrency;
-    // sometimes the id is diff although there is an actual buy order filled in the exchange. the following condition check the balance to see if there is enough to know if we need to register data
-    const recentBoughtButNotRecorded =
-        dbOpenOrderId &&
-        lastClosedSide === "BUY" &&
-        quoteCurrencyAmount <= 25 &&
-        !matchOrderIds &&
-        !gotOpenOrderExchange &&
-        !isPartialFilled;
+    // const { quoteCurrencyAmount } = dataCurrency;
+    // console.log("dataCurrency FUCK", dataCurrency);
+    // const recentBoughtButNotRecorded =
+    //     dbOpenOrderId &&
+    //     lastClosedSide === "BUY" &&
+    //     quoteCurrencyAmount <= 25 &&
+    //     !matchOrderIds &&
+    //     !gotOpenOrderExchange &&
+    //     !isPartialFilled;
 
     const needRecordOnly = Boolean(
-        (!gotOpenOrderExchange && dbOpenOrderId && matchOrderIds) ||
-            recentBoughtButNotRecorded
+        !gotOpenOrderExchange && dbOpenOrderId && matchOrderIds // recentBoughtButNotRecorded
     );
 
     // need to refuse if no pending order in exchange
