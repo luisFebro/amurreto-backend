@@ -17,12 +17,7 @@ const getId = require("../../utils/getId");
 const analyseMarketPrice = require("./marketPrice");
 
 const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
-const validOpenOrderStatus = [
-    "SUBMITTED",
-    "PROCESSING",
-    "PARTIAL_FILLED",
-    "FILLED",
-];
+const validOpenOrderStatus = ["SUBMITTED", "PROCESSING", "PARTIAL_FILLED"];
 
 async function createOrderBySignal(signalData = {}, options = {}) {
     const {
@@ -588,18 +583,10 @@ async function checkOpeningOrderNotDoneExchange({
         !matchOrderIds &&
         !gotOpenOrderExchange &&
         !isPartialFilled;
-    const recentSoldButNotRecorded =
-        dbOpenOrderId &&
-        lastClosedSide === "SELL" &&
-        baseCurrencyAmount <= 0.00001 &&
-        !matchOrderIds &&
-        !gotOpenOrderExchange &&
-        !isPartialFilled;
 
     const needRecordOnly = Boolean(
         (!gotOpenOrderExchange && dbOpenOrderId && matchOrderIds) ||
-            recentBoughtButNotRecorded ||
-            recentSoldButNotRecorded
+            recentBoughtButNotRecorded
     );
 
     // need to refuse if no pending order in exchange
@@ -718,6 +705,14 @@ TAKER：Takes liquidity
  */
 
 /* ARCHIVES
+const recentSoldButNotRecorded =
+dbOpenOrderId &&
+lastClosedSide === "SELL" &&
+baseCurrencyAmount <= 0.00001 &&
+!matchOrderIds &&
+!gotOpenOrderExchange &&
+!isPartialFilled;
+
 const signalInclusion =
 !lastClosedSide || !strategy
     ? {}
