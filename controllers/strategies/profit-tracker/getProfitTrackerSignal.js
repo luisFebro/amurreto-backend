@@ -86,14 +86,20 @@ function getTrackerStrategy(data) {
         liveCandle,
         lastLiveCandle,
     } = data;
-    const emaTrend = liveCandle.emaTrend;
+    // const emaTrend = liveCandle.emaTrend;
 
     const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
 
     // EXCEPTIONS FOR START PROFIT
     // resistence asv
     // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
-    const exceptionResistence = lastLiveCandle.lowest < liveCandle.close; //   lastLiveCandle.isBullish
+    // to avoid losing all profit more than expecting due to prior candle is big or huge size
+    const skipBullishCandles = ["huge", "big"];
+    const skipExceptionBySize = skipBullishCandles.includes(
+        lastLiveCandle.candleBodySize
+    );
+    const exceptionResistence =
+        lastLiveCandle.lowest < liveCandle.close && !skipExceptionBySize; //   lastLiveCandle.isBullish
 
     // MAX STOP LOSS
     const maxProfitStopLoss = netPerc <= Number(`-${MAX_STOP_LOSS_PERC}`);
