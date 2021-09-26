@@ -96,9 +96,13 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
     const currHour = new Date(timestamp).getHours();
     const dbHour = new Date(dbTimestamp).getHours();
     const gotAllStreak = dbSidesStreak && dbSidesStreak.length === 6;
+
+    // sometimes, the algo ain't pulling out all streaks especially if all of them are bears. This cond will make sure in the next 10min candle will have all streaks to update properly
+    const hasPassedButKeepStreaks = currMin >= 60 && currMin <= 69;
     const hasLiveCandleChanged = !dbHour
         ? false
-        : currHour !== dbHour && gotAllStreak;
+        : (currHour !== dbHour && gotAllStreak) ||
+          (hasPassedButKeepStreaks && gotAllStreak);
 
     if (hasLiveCandleChanged) {
         // save last-past-hour candle history
