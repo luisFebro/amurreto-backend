@@ -203,8 +203,6 @@ function handleUnreliableBuySignal({
     const reliableReason = candleReliability.reason;
 
     const exceptionToReliability = [
-        "broBulls",
-        "soloPowerThor",
         "patternSTAR",
         "thunderingChange",
         "atrProfitStopLoss",

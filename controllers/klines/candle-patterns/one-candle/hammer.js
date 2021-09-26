@@ -10,7 +10,7 @@ const isHammer = (data) => {
     const gotAllCandlesData = candleA.openPrice;
     if (!gotAllCandlesData) return false;
 
-    const sizesCandleA = ["tiny", "small", "medium"];
+    const sizesCandleA = ["small", "medium"];
     const matchSizes = sizesCandleA.includes(candleA.bodySize);
     if (!matchSizes) return false;
 
