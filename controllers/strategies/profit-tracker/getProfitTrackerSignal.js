@@ -94,10 +94,10 @@ function getTrackerStrategy(data) {
     // resistence asv
     // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
     // to avoid losing all profit more than expecting due to prior candle is big or huge size
-    const skipBullishCandles = ["huge", "big"];
-    const skipExceptionBySize = skipBullishCandles.includes(
-        lastLiveCandle.candleBodySize
-    );
+    const isBearish = !liveCandle.isBullish;
+    const skipBearishCandles = ["big", "huge"];
+    const skipExceptionBySize =
+        isBearish && skipBearishCandles.includes(liveCandle.candleBodySize);
     const exceptionResistence =
         lastLiveCandle.lowest < liveCandle.close && !skipExceptionBySize; //   lastLiveCandle.isBullish
 
