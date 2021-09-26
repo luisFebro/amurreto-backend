@@ -21,6 +21,7 @@ const validOpenOrderStatus = [
     "SUBMITTED",
     "PROCESSING",
     "PARTIAL_FILLED",
+    "PARTIAL_CANCELED",
     "FILLED",
 ];
 
