@@ -310,7 +310,6 @@ async function cancelOrderBack(payload = {}) {
         symbol,
         type: "open",
         limit: 10,
-        includesPartials: true,
     });
     const lastOrder = orderList[0];
 
@@ -349,7 +348,7 @@ async function getOrdersList(payload = {}) {
         mostRecent = false, // get either open or close order right after order request
         fallback = {}, // // fallback is used as the last value in case of the exchange did not process the order. need to register the value in DB.
         removeCancel = false,
-        includesPartials = false,
+        includesPartials = true,
     } = payload;
     const fallbackPrice = !fallback.price ? 0 : Number(fallback.price);
     const fallbackQuote = !fallback.quote ? 0 : Number(fallback.quote);
@@ -442,9 +441,8 @@ async function getOrdersList(payload = {}) {
 //     symbol: "BTC/BRL",
 //     type: "closed",
 //     limit: 4,
-//     includesPartials: true,
 // }).then(console.log);
-// getOrdersList({ symbol: "BTC/BRL", mostRecent: true })
+// getOrdersList({ symbol: "BTC/BRL", mostRecent: true, })
 // .then(console.log)
 
 // HELPERS
@@ -460,7 +458,7 @@ const handlePartialFilledOrders = async ({ partialData, strategy }) => {
     const feePerc = partialFilledOrder.feePerc;
     const timestamp = partialFilledOrder.timestamp;
 
-    await partialFilled.clear();
+    // await partialFilled.clear();
     const bdData = await partialFilled.read();
 
     const lastHistory = bdData.history || [];
@@ -503,7 +501,6 @@ async function checkOpeningOrderNotDoneExchange({
             symbol,
             type: "open",
             removeCancel: true,
-            includesPartials: true,
             limit: 1,
         }),
         getOrdersList({
@@ -513,10 +510,9 @@ async function checkOpeningOrderNotDoneExchange({
             limit: 1,
         }),
     ]);
-
     // after no open order is available, the next algo reading will have the most recent side BUY or SELL.
     // In the method incIteratorCounter, we use the opposite because when there is no open order, the signals are no longer recorded in DB and it will be read the last closed order which is the opposite.
-    const lastClosedSide = closeOrdersList[0] && closeOrdersList[0].side;
+    // const lastClosedSide = closeOrdersList[0] && closeOrdersList[0].side;
 
     let gotOpenOrderExchange = Boolean(openOrdersList.length);
 
@@ -550,15 +546,10 @@ async function checkOpeningOrderNotDoneExchange({
     const detectedCleanableSide = !side && !gotOpenOrderExchange;
     if (detectedCleanableSide) await incIteratorCounter(false);
 
-    const [dbData, dataCurrency] = await Promise.all([
+    const [dbData] = await Promise.all([
         LiveCandleHistory.findById(LIVE_CANDLE_ID).select(
             "-_id pendingLimitOrder"
         ),
-        getCurrencyAmount({
-            symbol,
-            isBuy: lastClosedSide === "BUY",
-            transactionPositionPerc: 100,
-        }),
     ]);
 
     const dbMaxIterationCount = dbData ? dbData.pendingLimitOrder.count : 0;
@@ -709,6 +700,12 @@ TAKER：Takes liquidity
  */
 
 /* ARCHIVES
+getCurrencyAmount({
+    symbol,
+    isBuy: lastClosedSide === "BUY",
+    transactionPositionPerc: 100,
+}),
+
 const recentSoldButNotRecorded =
 dbOpenOrderId &&
 lastClosedSide === "SELL" &&
