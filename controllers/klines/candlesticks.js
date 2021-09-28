@@ -270,11 +270,11 @@ async function getCandlesticksData(payload = {}) {
         return secondCheckData;
     });
 
-    const MAX_CANDLES_SEQUENCE = 20;
+    const MAX_CANDLES_SEQUENCE = 72; // last 3 days
     const dataForSequenceStreak = candlestickData.slice(
         `-${MAX_CANDLES_SEQUENCE}`
     );
-    const { sequenceStreaks, lowerWing20 } = detectSequenceStreaks(
+    const { sequenceStreaks, lowerWing, higherWing } = detectSequenceStreaks(
         dataForSequenceStreak
     );
 
@@ -303,7 +303,8 @@ async function getCandlesticksData(payload = {}) {
     const candleReliability = await setHistoricalLiveCandle({
         liveCandle,
         emaTrend: lastEmaTrend,
-        lowerWing20,
+        lowerWing,
+        higherWing,
         sequenceStreaks,
         isCircuitBreakerBlock,
         circuitBreakerData,
@@ -313,7 +314,7 @@ async function getCandlesticksData(payload = {}) {
         liveCandle,
         lastLiveCandle,
         candleReliability,
-        lowerWing20,
+        lowerWing,
         sequenceStreaks,
         isContTrend,
     });
@@ -329,7 +330,7 @@ async function getCandlesticksData(payload = {}) {
         emaTrend: lastEmaTrend,
         isContTrend,
         atr: lastAtr && lastAtr.atr,
-        lowerWing20,
+        lowerWing,
         // ema9: lastEma9,
         // ema20: lastEma20,
         // ema50: lastEma50,

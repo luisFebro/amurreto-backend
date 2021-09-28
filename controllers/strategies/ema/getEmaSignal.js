@@ -2,14 +2,13 @@ async function getEmaSignal({ liveCandle, currStrategy, profitTracker }) {
     const { emaTrend, isBullish } = liveCandle;
 
     const isUptrend = emaTrend === "uptrend" || emaTrend === "bullReversal";
-    // disable for other tests.
-    // if (isUptrend && isBullish) {
-    //     return {
-    //         signal: "BUY",
-    //         strategy: "emaUptrend",
-    //         transactionPerc: 100,
-    //     };
-    // }
+    if (isUptrend && isBullish) {
+        return {
+            signal: "BUY",
+            strategy: "emaUptrend",
+            transactionPerc: 100,
+        };
+    }
 
     // only sell with ema if the current strategy is also bought with EMA.
     // !isUptrend can be either bearReversal or downtrend

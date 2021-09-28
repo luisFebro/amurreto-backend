@@ -9,7 +9,8 @@ const LIVE_CANDLE_ID = "613ed80dd3ce8cd2bbce76cb";
 async function setHistoricalLiveCandle({
     liveCandle,
     sequenceStreaks,
-    lowerWing20,
+    lowerWing,
+    higherWing,
     emaTrend,
     isCircuitBreakerBlock,
     circuitBreakerData,
@@ -66,7 +67,8 @@ async function setHistoricalLiveCandle({
         history,
         openPrice: open,
         bodySize: candleBodySize,
-        lowerWing20,
+        lowerWing,
+        higherWing,
         sequenceStreaks,
         wholeCandleSize,
         candleReliability,
@@ -97,6 +99,7 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
     const dbHour = new Date(dbTimestamp).getHours();
     const gotAllStreak = dbSidesStreak && dbSidesStreak.length === 6;
 
+    // midnights streaks are not being recorded
     // sometimes, the algo ain't pulling out all streaks especially if all of them are bears. This cond will make sure in the next 10min candle will have all streaks to update properly
     const hasPassedButKeepStreaks = currMin >= 60 && currMin <= 69;
     const hasLiveCandleChanged = !dbHour
@@ -114,7 +117,8 @@ function handleSidesStreak({ dbData, currMin, side, timestamp }) {
                 openPrice: dbData && dbData.openPrice,
                 emaTrend: dbData && dbData.emaTrend,
                 bodySize: dbData && dbData.bodySize,
-                lowerWing20: dbData && dbData.lowerWing20,
+                lowerWing: dbData && dbData.lowerWing,
+                higherWing: dbData && dbData.higherWing,
                 sequenceStreaks: dbData && dbData.sequenceStreaks,
                 wholeCandleSize: dbData && dbData.wholeCandleSize,
                 candleReliability: dbData && dbData.candleReliability,

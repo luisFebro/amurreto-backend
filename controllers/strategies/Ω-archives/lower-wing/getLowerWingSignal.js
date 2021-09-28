@@ -4,13 +4,13 @@ for instance, if the lowerWingPrice is 172.000 and the price goes to above 174.5
 also can be used to determine the support of the current market
  */
 
-async function getLowerWingSignal({ lowerWing20, sequenceStreaks }) {
-    if (!lowerWing20)
+async function getLowerWingSignal({ lowerWing, sequenceStreaks }) {
+    if (!lowerWing)
         return {
             signal: null,
         };
 
-    const diffCurrPrice = lowerWing20.diffCurrPrice;
+    const diffCurrPrice = lowerWing.diffCurrPrice;
 
     const MAX_PRICE_DIFF = 3500;
     const MIN_PRICE_DIFF = 1500;
@@ -23,7 +23,7 @@ async function getLowerWingSignal({ lowerWing20, sequenceStreaks }) {
     if (isInDetectionRange && isCurrBullishStreak) {
         return {
             signal: "BUY",
-            strategy: "lowerWing20",
+            strategy: "lowerWing",
             transactionPerc: 100,
         };
     }

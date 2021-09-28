@@ -21,7 +21,7 @@ async function watchStrategies(options = {}) {
         liveCandle,
         lastLiveCandle,
         candleReliability,
-        // lowerWing20,
+        lowerWing,
         sequenceStreaks,
         isContTrend,
     } = options;
@@ -60,7 +60,7 @@ async function watchStrategies(options = {}) {
         profitTracker,
         profitStrategy,
         signalStrategy,
-        // lowerWing20,
+        lowerWing,
     });
 
     // TYPE ORDER HANDLING
@@ -104,7 +104,7 @@ function strategiesHandler(allSignals = [], options = {}) {
         profitTracker,
         profitStrategy,
         signalStrategy,
-        // lowerWing20,
+        lowerWing,
     } = options;
     const candleBodySize = liveCandle && liveCandle.candleBodySize;
     const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
@@ -134,6 +134,7 @@ function strategiesHandler(allSignals = [], options = {}) {
         (candleSide === "bear" && (isMinProfit || isExceptionSellSignal)) ||
         (candleSide === "bull" && candleBodySize === "huge");
     if (isSellSignal && !isAcceptSellCond) return DEFAULT_WAIT_SIGNAL;
+
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
     if (
         isSellSignal &&
@@ -149,14 +150,14 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     // BUY - ZONE VERIFICATION FOR ENTRY
     // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
-    // const oversoldZone = lowerWing20.diffCurrPrice;
-    // const BUY_ZONE_LIMIT = 2500; // 2500
-    // const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
-    // const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
-    //     foundStrategy
-    // );
-    // if (isBuySignal && !allowBuySignalsByZone && !isExceptionBuySignal)
-    //     return DEFAULT_WAIT_SIGNAL;
+    const oversoldZone = lowerWing.diffCurrPrice;
+    const BUY_ZONE_LIMIT = 2500; // 2500
+    const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
+    const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
+        foundStrategy
+    );
+    if (isBuySignal && !allowBuySignalsByZone && !isExceptionBuySignal)
+        return DEFAULT_WAIT_SIGNAL;
     // BUY - END ZONE VERIFICATION FOR ENTRY
 
     // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
@@ -215,12 +216,7 @@ function handleUnreliableBuySignal({
     const isCurrReliable = candleReliability.status;
     const reliableReason = candleReliability.reason;
 
-    const exceptionToReliability = [
-        "patternSTAR",
-        "thunderingChange",
-        "atrProfitStopLoss",
-        "freeFall",
-    ];
+    const exceptionToReliability = ["atrProfitStopLoss", "freeFall"];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
 

@@ -10,7 +10,8 @@ const mainData = {
     emaTrend: String,
     openPrice: Number,
     bodySize: String,
-    lowerWing20: Object, // { closePrice, timestamp, diffCurrPrice } so that we can detect buy opportunities in case of other strategies failed to detect.
+    lowerWing: Object, // { closePrice, timestamp, diffCurrPrice } so that we can detect buy opportunities in case of other strategies failed to detect.
+    higherWing: Object,
     sequenceStreaks: String,
     wholeCandleSize: String,
     pendingLimitOrder: {

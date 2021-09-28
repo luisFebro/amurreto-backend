@@ -162,16 +162,16 @@ function detectSequenceStreaks(data) {
     const sequenceStreaks = getStringifiedSequences(allSequences);
     // END SEQUENCE STREAK
 
-    // LOWER WING
     const liveCandle = readyData.slice(-1)[0];
     const currPrice = liveCandle && liveCandle.closePrice;
 
+    // LOWER WING
     const lowestPrices = sortArray(readyData, {
         sortBy: "lowest",
         target: "closePrice",
     });
 
-    const lowerWing20 = {
+    const lowerWing = {
         timestamp: lowestPrices[0].timestamp,
         closePrice: lowestPrices[0].closePrice,
         diffCurrPrice: Number(
@@ -180,9 +180,25 @@ function detectSequenceStreaks(data) {
     };
     // END LOWER WING
 
+    // HIGHER WING
+    const highestPrices = sortArray(readyData, {
+        sortBy: "highest",
+        target: "closePrice",
+    });
+
+    const higherWing = {
+        timestamp: highestPrices[0].timestamp,
+        closePrice: highestPrices[0].closePrice,
+        diffCurrPrice: Number(
+            Number(currPrice - highestPrices[0].closePrice).toFixed(2)
+        ),
+    };
+    // END HIGHER WING
+
     return {
         sequenceStreaks,
-        lowerWing20,
+        lowerWing,
+        higherWing,
     };
 }
 

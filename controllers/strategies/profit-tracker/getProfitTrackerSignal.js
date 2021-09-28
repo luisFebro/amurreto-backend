@@ -98,8 +98,12 @@ function getTrackerStrategy(data) {
     const skipBearishCandles = ["big", "huge"];
     const skipExceptionBySize =
         isBearish && skipBearishCandles.includes(liveCandle.candleBodySize);
+
+    const BELOW_CANDLE_SPAN = 500;
+
     const exceptionResistence =
-        lastLiveCandle.lowest < liveCandle.close && !skipExceptionBySize; //   lastLiveCandle.isBullish
+        lastLiveCandle.lowest - BELOW_CANDLE_SPAN < liveCandle.close &&
+        !skipExceptionBySize; //   lastLiveCandle.isBullish
 
     // MAX STOP LOSS
     const maxProfitStopLoss = netPerc <= Number(`-${MAX_STOP_LOSS_PERC}`);
