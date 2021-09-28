@@ -6,10 +6,6 @@ const getEmaSignal = require("./ema/getEmaSignal");
 const { checkCondLimitOrder } = require("../fees");
 const { getOrdersList } = require("../orders/orders");
 
-// end strategy types
-
-// this is where all strategies we be analysed and decide when to buy and sell
-
 const DEFAULT_WAIT_SIGNAL = {
     signal: "WAIT",
     strategy: null,
@@ -22,6 +18,7 @@ async function watchStrategies(options = {}) {
         lastLiveCandle,
         candleReliability,
         lowerWing,
+        higherWing,
         sequenceStreaks,
         isContTrend,
     } = options;
@@ -41,6 +38,7 @@ async function watchStrategies(options = {}) {
         getProfitTrackerSignal({
             profitTracker,
             liveCandle,
+            higherWing,
             lastLiveCandle,
             isContTrend,
         }),
@@ -127,6 +125,10 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isMinProfit = maxProfit >= MIN_PROFIT_NET_PERC;
     const isExceptionSellSignal = [
         "maxProfitStopLoss",
+        "startProfitNextLevel",
+        "midProfitNextLevel",
+        "longProfitNextLevel",
+        "maxProfitHigherWing",
         "emaDowntrend",
     ].includes(foundStrategy);
     // need have some profit to allow take profit with bearish candles and only allow maxStoploss if no profit

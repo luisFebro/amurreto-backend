@@ -1,8 +1,11 @@
+const blockEmaUptrend = require("./blockEmaUptrend");
+
 async function getEmaSignal({ liveCandle, currStrategy, profitTracker }) {
     const { emaTrend, isBullish } = liveCandle;
 
     const isUptrend = emaTrend === "uptrend" || emaTrend === "bullReversal";
-    if (isUptrend && isBullish) {
+    const isBlock = await blockEmaUptrend("read");
+    if (!isBlock && isUptrend && isBullish) {
         return {
             signal: "BUY",
             strategy: "emaUptrend",
@@ -10,14 +13,11 @@ async function getEmaSignal({ liveCandle, currStrategy, profitTracker }) {
         };
     }
 
-    // only sell with ema if the current strategy is also bought with EMA.
-    // !isUptrend can be either bearReversal or downtrend
+    const downtrendList = ["downtrend", "bearReversal"];
+    const needUnlockUptrendSignal = isBlock && downtrendList.includes(emaTrend);
+    if (needUnlockUptrendSignal) await blockEmaUptrend("toggle", false);
 
-    // it needs a verifier to warn the uptrend was already taken otherwise it will negotiate again with a right risky of downtrend.
-    // const maxPerc = profitTracker && profitTracker.maxPerc;
-    // const diffMax = profitTracker && profitTracker.diffMax;
-    const isDesirableProfit = false; //maxPerc >= 5 && diffMax >= 1;
-    if (currStrategy === "emaUptrend" && (!isUptrend || isDesirableProfit)) {
+    if (currStrategy === "emaUptrend" && !isUptrend) {
         return {
             signal: "SELL",
             strategy: "emaDowntrend",

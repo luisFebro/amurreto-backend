@@ -190,7 +190,7 @@ function detectSequenceStreaks(data) {
         timestamp: highestPrices[0].timestamp,
         closePrice: highestPrices[0].closePrice,
         diffCurrPrice: Number(
-            Number(currPrice - highestPrices[0].closePrice).toFixed(2)
+            Number(highestPrices[0].closePrice - currPrice).toFixed(2)
         ),
     };
     // END HIGHER WING

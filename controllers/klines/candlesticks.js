@@ -315,6 +315,7 @@ async function getCandlesticksData(payload = {}) {
         lastLiveCandle,
         candleReliability,
         lowerWing,
+        higherWing,
         sequenceStreaks,
         isContTrend,
     });

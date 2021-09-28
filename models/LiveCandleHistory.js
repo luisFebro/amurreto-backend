@@ -8,6 +8,7 @@ const mainData = {
     bullSidePerc: Number,
     bearSidePerc: Number,
     emaTrend: String,
+    emaBlockUptrend: Boolean,
     openPrice: Number,
     bodySize: String,
     lowerWing: Object, // { closePrice, timestamp, diffCurrPrice } so that we can detect buy opportunities in case of other strategies failed to detect.

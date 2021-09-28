@@ -1,46 +1,46 @@
+const blockEmaUptrend = require("../ema/blockEmaUptrend");
 const MAX_STOP_LOSS_PERC = 0.2;
 
 async function getProfitTrackerSignal({
     profitTracker = {},
     liveCandle,
     lastLiveCandle,
-    isContTrend,
+    higherWing,
+    // isContTrend,
 }) {
     const {
         watching,
         atrLimit,
-        atrUpperLimit,
-        maxCurrPrice,
         maxPerc,
+        // atrUpperLimit,
+        // maxCurrPrice,
         // atrLowerLimit,
     } = profitTracker;
     if (!watching || !atrLimit)
         return { signal: null, whichStrategy: "tracker" };
 
-    const contTrendSignal = getContTrendStrategy({
-        profitTracker,
-        isContTrend,
-    });
-    if (contTrendSignal) return contTrendSignal;
-
-    const livePrice = liveCandle.close;
     const currEmaTrend = liveCandle.emaTrend;
+    // block uptrend in order to be prevented more than once in the same trend.
+    const condBlockUptrend = maxPerc >= 3 && currEmaTrend === "uptrend";
+    if (condBlockUptrend) await blockEmaUptrend("toggle", true);
+    // const contTrendSignal = getContTrendStrategy({
+    //     profitTracker,
+    //     isContTrend,
+    // });
+    // if (contTrendSignal) return contTrendSignal;
 
-    const hasPassedAtrUpperLimit = maxCurrPrice >= atrUpperLimit;
-    const atrTrends = ["uptrend"];
+    // const livePrice = liveCandle.close;
 
-    const condAtr =
-        maxPerc >= 2 &&
-        !hasPassedAtrUpperLimit &&
-        atrTrends.includes(currEmaTrend);
+    // const hasPassedAtrUpperLimit = maxCurrPrice >= atrUpperLimit;
+    // const atrTrends = ["uptrend"];
+    // const condAtr = maxPerc >= 3 && atrTrends.includes(currEmaTrend);
+    // const whichStrategy = condAtr ? "atr" : "tracker";
 
-    const whichStrategy = condAtr ? "atr" : "tracker";
-
-    if (whichStrategy === "atr")
-        return {
-            whichStrategy: "atr",
-            ...getAtrStrategy({ ...profitTracker, livePrice }),
-        };
+    // if (whichStrategy === "atr")
+    //     return {
+    //         whichStrategy: "atr",
+    //         ...getAtrStrategy({ ...profitTracker, livePrice }),
+    //     };
 
     return {
         whichStrategy: "tracker",
@@ -48,32 +48,33 @@ async function getProfitTrackerSignal({
             ...profitTracker,
             lastLiveCandle,
             currEmaTrend,
-            hasPassedAtrUpperLimit,
             liveCandle,
+            higherWing,
+            hasPassedNextLevel: condBlockUptrend,
         }),
     };
 }
 
 // PROFIT STRATEGIES
-function getContTrendStrategy({ profitTracker, isContTrend }) {
-    if (!isContTrend) return false;
-    const DOWN_RANGE_DIFF = 0.2;
+// function getContTrendStrategy({ profitTracker, isContTrend }) {
+//     if (!isContTrend) return false;
+//     const DOWN_RANGE_DIFF = 0.2;
 
-    const { maxPerc, netPerc } = profitTracker;
+//     const { maxPerc, netPerc } = profitTracker;
 
-    const nextProfitGoalPerc = Math.round(maxPerc);
-    const limitDown = nextProfitGoalPerc - DOWN_RANGE_DIFF;
-    const finalRange = limitDown <= netPerc && netPerc <= nextProfitGoalPerc;
-    const isGoSignal = finalRange && nextProfitGoalPerc >= 3;
-    if (!isGoSignal) return false;
+//     const nextProfitGoalPerc = Math.round(maxPerc);
+//     const limitDown = nextProfitGoalPerc - DOWN_RANGE_DIFF;
+//     const finalRange = limitDown <= netPerc && netPerc <= nextProfitGoalPerc;
+//     const isGoSignal = finalRange && nextProfitGoalPerc >= 3;
+//     if (!isGoSignal) return false;
 
-    return {
-        whichStrategy: "contTrend",
-        signal: "SELL",
-        strategy: `contTrendLevel${nextProfitGoalPerc}`,
-        transactionPerc: 100,
-    };
-}
+//     return {
+//         whichStrategy: "contTrend",
+//         signal: "SELL",
+//         strategy: `contTrendLevel${nextProfitGoalPerc}`,
+//         transactionPerc: 100,
+//     };
+// }
 
 // tracker is automatically activate in downtrend, bullReversal and bearReversal
 function getTrackerStrategy(data) {
@@ -81,14 +82,15 @@ function getTrackerStrategy(data) {
         maxPerc,
         diffMax,
         netPerc,
-        // minPerc,
-        hasPassedAtrUpperLimit,
         liveCandle,
         lastLiveCandle,
+        higherWing,
+        // minPerc,
+        hasPassedNextLevel,
     } = data;
     // const emaTrend = liveCandle.emaTrend;
 
-    const nextLevel = hasPassedAtrUpperLimit ? "AfterAtr" : "";
+    const nextLevel = hasPassedNextLevel ? "NextLevel" : "";
 
     // EXCEPTIONS FOR START PROFIT
     // resistence asv
@@ -105,7 +107,19 @@ function getTrackerStrategy(data) {
         lastLiveCandle.lowest - BELOW_CANDLE_SPAN < liveCandle.close &&
         !skipExceptionBySize; //   lastLiveCandle.isBullish
 
-    // MAX STOP LOSS
+    // MAX
+    const overboughtZone = higherWing.diffCurrPrice;
+    const SELL_ZONE_LIMIT = 1000;
+    const maxProfitHigherWing = nextLevel && overboughtZone <= SELL_ZONE_LIMIT;
+
+    if (maxProfitHigherWing) {
+        return {
+            signal: "SELL",
+            strategy: "maxProfitHigherWing",
+            transactionPerc: 100,
+        };
+    }
+
     const maxProfitStopLoss = netPerc <= Number(`-${MAX_STOP_LOSS_PERC}`);
     if (!exceptionResistence && maxProfitStopLoss) {
         return {
@@ -114,7 +128,7 @@ function getTrackerStrategy(data) {
             transactionPerc: 100,
         };
     }
-    // END MAX STOP LOSS
+    // END MAX
 
     const handleMaxDiffZones = () => {
         // the minimum profit is 0.4 to trigger a sell signal.
@@ -166,28 +180,28 @@ function getTrackerStrategy(data) {
 // automatically activate in an uptrend
 // as long as the current transaction comes from downtrend.
 // That's because when reaching uptrend and no transaction, the algo automatically buy and sell only when a downtrend signal pops up
-function getAtrStrategy(data) {
-    const {
-        atrLowerLimit,
-        livePrice,
-        maxPerc,
-        // netPerc,
-        // atrLimit,
-    } = data;
-    const minRangeForSellNetPerc = maxPerc >= MAX_STOP_LOSS_PERC;
-    const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
+// function getAtrStrategy(data) {
+//     const {
+//         atrLowerLimit,
+//         livePrice,
+//         maxPerc,
+//         // netPerc,
+//         // atrLimit,
+//     } = data;
+//     const minRangeForSellNetPerc = maxPerc >= MAX_STOP_LOSS_PERC;
+//     const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
 
-    if (atrSellCond) {
-        return {
-            signal: "SELL",
-            strategy: "atrProfitStopLoss",
-            transactionPerc: 100,
-        };
-    }
+//     if (atrSellCond) {
+//         return {
+//             signal: "SELL",
+//             strategy: "atrProfitStopLoss",
+//             transactionPerc: 100,
+//         };
+//     }
 
-    // empty signal handle with strategiesManager
-    return { signal: null };
-}
+//     // empty signal handle with strategiesManager
+//     return { signal: null };
+// }
 // END PROFIT STRATEGIES
 
 module.exports = getProfitTrackerSignal;
