@@ -4,6 +4,8 @@ const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSign
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
 const getEmaSignal = require("./ema/getEmaSignal");
 const { checkCondLimitOrder } = require("../fees");
+const { getOrdersList } = require("../orders/orders");
+
 // end strategy types
 
 // this is where all strategies we be analysed and decide when to buy and sell
@@ -51,28 +53,33 @@ async function watchStrategies(options = {}) {
     const profitStrategy = allStrategySignals[1].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
-    const essentialData = {
-        signal: "SELL",
-        strategy: "teste",
-        transactionPerc: 100,
-    };
-    // const essentialData = strategiesHandler(allStrategySignals, {
-    //     candleReliability,
-    //     sequenceStreaks,
-    //     liveCandle,
-    //     profitTracker,
-    //     profitStrategy,
-    //     signalStrategy,
-    //     // lowerWing20,
-    // });
+    const essentialData = strategiesHandler(allStrategySignals, {
+        candleReliability,
+        sequenceStreaks,
+        liveCandle,
+        profitTracker,
+        profitStrategy,
+        signalStrategy,
+        // lowerWing20,
+    });
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
-    const needLimitType = true;
-    // const needLimitType = checkCondLimitOrder({
-    //     signal: essentialData && essentialData.signal,
-    //     currCandleSize,
-    // });
+
+    const dataLastOrder = await getOrdersList({
+        symbol: "BTC/BRL",
+        mostRecent: true,
+    });
+    // for buy the exchange will not allow small values and does not require a cond in the first place, but to avoid set LIMIT to values below R$ 100 because the algo will not be able to sell if less than R$25.
+    const isEnoughMoneyForSelling =
+        dataLastOrder &&
+        dataLastOrder.side === "BUY" &&
+        Number(dataLastOrder.filledValue) >= 100;
+    const needLimitType = checkCondLimitOrder({
+        signal: essentialData && essentialData.signal,
+        currCandleSize,
+        isEnoughMoneyForSelling,
+    });
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
     const offsetPrice = needLimitType ? 100 : 0;

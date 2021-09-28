@@ -40,8 +40,11 @@ function getTransactionFees(options = {}) {
 function checkCondLimitOrder({
     signal = "BUY",
     currCandleSize = "huge",
+    isEnoughMoneyForSelling,
     // isCurrBullish = true,
 }) {
+    if (signal === "SELL" && !isEnoughMoneyForSelling) return false;
+
     const disableBearSizes = ["big", "huge"];
     const isBleedableCandle =
         signal === "SELL" && disableBearSizes.includes(currCandleSize);

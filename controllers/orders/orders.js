@@ -633,6 +633,7 @@ async function checkOpeningOrderNotDoneExchange({
 module.exports = {
     createOrderBySignal,
     createOrderBack,
+    getOrdersList,
 };
 
 /* n1
