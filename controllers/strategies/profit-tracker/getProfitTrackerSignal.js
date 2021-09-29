@@ -6,6 +6,7 @@ async function getProfitTrackerSignal({
     liveCandle,
     lastLiveCandle,
     higherWing,
+    stoplossGrandCandle,
     // isContTrend,
 }) {
     const {
@@ -16,8 +17,8 @@ async function getProfitTrackerSignal({
         // maxCurrPrice,
         // atrLowerLimit,
     } = profitTracker;
-    if (!watching || !atrLimit)
-        return { signal: null, whichStrategy: "tracker" };
+    // if (!watching || !atrLimit)
+    //     return { signal: null, whichStrategy: "tracker" };
 
     const currEmaTrend = liveCandle.emaTrend;
     // block uptrend in order to be prevented more than once in the same trend.
@@ -50,6 +51,7 @@ async function getProfitTrackerSignal({
             currEmaTrend,
             liveCandle,
             higherWing,
+            stoplossGrandCandle,
             hasPassedNextLevel: condBlockUptrend,
         }),
     };
@@ -87,6 +89,7 @@ function getTrackerStrategy(data) {
         higherWing,
         // minPerc,
         hasPassedNextLevel,
+        stoplossGrandCandle,
     } = data;
     // const emaTrend = liveCandle.emaTrend;
 
@@ -103,8 +106,14 @@ function getTrackerStrategy(data) {
 
     const BELOW_CANDLE_SPAN = 500;
 
+    // grandcandle is a fixed big/huge candle used as stoploss instead of the last one. it is null where none is found
+    const needGrandCandle = stoplossGrandCandle; // netProfit >= 1;
+    const targetLowest = needGrandCandle
+        ? needGrandCandle.lowest
+        : lastLiveCandle.lowest;
+
     const exceptionResistence =
-        lastLiveCandle.lowest - BELOW_CANDLE_SPAN < liveCandle.close &&
+        targetLowest - BELOW_CANDLE_SPAN < liveCandle.close &&
         !skipExceptionBySize; //   lastLiveCandle.isBullish
 
     // MAX
@@ -164,6 +173,7 @@ function getTrackerStrategy(data) {
         diffMax >= MAX_DIFF_LONG_PROFIT &&
         `longProfit${nextLevel}`;
     const profitRange = isStartProfit || isMidProfit || isLongProfit;
+    console.log("profitRange", profitRange);
 
     if (profitRange) {
         return {

@@ -32,9 +32,11 @@ function detectSequenceStreaks(data) {
 
     const readyData = data.map((each) => {
         return {
+            candleSize: each.candleBodySize,
             timestamp: each.timestamp,
             side: each.isBullish ? "bull" : "bear",
             closePrice: each.close,
+            lowestPrice: each.lowest,
         };
     });
 
@@ -195,10 +197,38 @@ function detectSequenceStreaks(data) {
     };
     // END HIGHER WING
 
+    // BIG and HUGE candles for stoploss reference
+    let stoplossBigCandles = [];
+    readyData.forEach((c) => {
+        const allowedCandleSizes = ["big", "huge"];
+        const isBullish = c.side === "bull";
+        const isLowThanCurrPrice = c.lowestPrice < currPrice;
+        if (
+            !isLowThanCurrPrice ||
+            !isBullish ||
+            !allowedCandleSizes.includes(c.candleSize)
+        )
+            return null;
+
+        return stoplossBigCandles.push({
+            timestamp: c.timestamp,
+            lowest: c.lowestPrice,
+            candleSize: c.candleSize,
+        });
+    });
+
+    stoplossBigCandles = sortDates(stoplossBigCandles, {
+        sortBy: "latest",
+        target: "timestamp",
+    });
+
     return {
         sequenceStreaks,
         lowerWing,
         higherWing,
+        stoplossGrandCandle: stoplossBigCandles.length
+            ? stoplossBigCandles[0]
+            : null,
     };
 }
 

@@ -39,7 +39,7 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-09-07T13:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 250, // default 250 last candles
+        sinceCount: 100, // default 250 last candles
         noList: true, // default true
         reverseData: false,
     }).then(console.log);
@@ -274,9 +274,6 @@ async function getCandlesticksData(payload = {}) {
     const dataForSequenceStreak = candlestickData.slice(
         `-${MAX_CANDLES_SEQUENCE}`
     );
-    const { sequenceStreaks, lowerWing, higherWing } = detectSequenceStreaks(
-        dataForSequenceStreak
-    );
 
     // continuation trend
     const MAX_CONT_TREND = 4;
@@ -298,6 +295,9 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
+    const { sequenceStreaks, lowerWing, higherWing, stoplossGrandCandle } =
+        detectSequenceStreaks(dataForSequenceStreak);
+
     const { isBlock: isCircuitBreakerBlock, circuitBreakerData } =
         await needCircuitBreaker({ emaTrend: lastEmaTrend });
     const candleReliability = await setHistoricalLiveCandle({
@@ -316,6 +316,7 @@ async function getCandlesticksData(payload = {}) {
         candleReliability,
         lowerWing,
         higherWing,
+        stoplossGrandCandle,
         sequenceStreaks,
         isContTrend,
     });
@@ -332,6 +333,7 @@ async function getCandlesticksData(payload = {}) {
         isContTrend,
         atr: lastAtr && lastAtr.atr,
         lowerWing,
+        stoplossGrandCandle,
         // ema9: lastEma9,
         // ema20: lastEma20,
         // ema50: lastEma50,

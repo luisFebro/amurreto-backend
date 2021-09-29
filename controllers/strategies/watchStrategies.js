@@ -19,6 +19,7 @@ async function watchStrategies(options = {}) {
         candleReliability,
         lowerWing,
         higherWing,
+        stoplossGrandCandle,
         sequenceStreaks,
         isContTrend,
     } = options;
@@ -40,6 +41,7 @@ async function watchStrategies(options = {}) {
             liveCandle,
             higherWing,
             lastLiveCandle,
+            stoplossGrandCandle,
             isContTrend,
         }),
         getCandlePatternsSignal({
@@ -51,15 +53,20 @@ async function watchStrategies(options = {}) {
     const profitStrategy = allStrategySignals[1].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
-    const essentialData = strategiesHandler(allStrategySignals, {
-        candleReliability,
-        sequenceStreaks,
-        liveCandle,
-        profitTracker,
-        profitStrategy,
-        signalStrategy,
-        lowerWing,
-    });
+    const essentialData = {
+        signal: "BUY",
+        strategy: "teste",
+        transactionPerc: 100,
+    };
+    // const essentialData = strategiesHandler(allStrategySignals, {
+    //     candleReliability,
+    //     sequenceStreaks,
+    //     liveCandle,
+    //     profitTracker,
+    //     profitStrategy,
+    //     signalStrategy,
+    //     lowerWing,
+    // });
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
@@ -73,11 +80,12 @@ async function watchStrategies(options = {}) {
         dataLastOrder &&
         dataLastOrder.side === "BUY" &&
         Number(dataLastOrder.filledValue) >= 100;
-    const needLimitType = checkCondLimitOrder({
-        signal: essentialData && essentialData.signal,
-        currCandleSize,
-        isEnoughMoneyForSelling,
-    });
+    const needLimitType = true;
+    // const needLimitType = checkCondLimitOrder({
+    //     signal: essentialData && essentialData.signal,
+    //     currCandleSize,
+    //     isEnoughMoneyForSelling,
+    // });
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
     const offsetPrice = needLimitType ? 100 : 0;
@@ -108,6 +116,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
     const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
     const maxProfit = profitTracker && profitTracker.maxPerc;
+    const netProfit = profitTracker && profitTracker.netPerc;
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
@@ -185,6 +194,14 @@ function strategiesHandler(allSignals = [], options = {}) {
     // allow only profit strategy with enough profit already taken
     const isEnoughProfitForFreefall = maxProfit >= 4;
     const reachedMaxStopLossForFreefall = foundStrategy === "maxProfitStopLoss";
+
+    if (isFreeFall && netProfit <= -2) {
+        return {
+            signal: "SELL",
+            strategy: "maxStopLossFreeFall",
+            transactionPerc: 100,
+        };
+    }
 
     if (
         isFreeFall &&
