@@ -21,8 +21,12 @@ async function getProfitTrackerSignal({
     //     return { signal: null, whichStrategy: "tracker" };
 
     const currEmaTrend = liveCandle.emaTrend;
+    const currStrategy = profitTracker.strategy;
     // block uptrend in order to be prevented more than once in the same trend.
-    const condBlockUptrend = maxPerc >= 3 && currEmaTrend === "uptrend";
+    const condBlockUptrend =
+        currStrategy === "emaUptrend" &&
+        maxPerc >= 3 &&
+        currEmaTrend === "uptrend";
     if (condBlockUptrend) await blockEmaUptrend("toggle", true);
     // const contTrendSignal = getContTrendStrategy({
     //     profitTracker,
