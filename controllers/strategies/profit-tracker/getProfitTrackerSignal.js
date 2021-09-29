@@ -107,7 +107,7 @@ function getTrackerStrategy(data) {
     const BELOW_CANDLE_SPAN = 500;
 
     // grandcandle is a fixed big/huge candle used as stoploss instead of the last one. it is null where none is found
-    const needGrandCandle = stoplossGrandCandle; // netProfit >= 1;
+    const needGrandCandle = stoplossGrandCandle; // netPerc >= 1;
     const targetLowest = needGrandCandle
         ? needGrandCandle.lowest
         : lastLiveCandle.lowest;

@@ -53,20 +53,15 @@ async function watchStrategies(options = {}) {
     const profitStrategy = allStrategySignals[1].whichStrategy;
     console.log("profitStrategy", profitStrategy);
 
-    const essentialData = {
-        signal: "BUY",
-        strategy: "teste",
-        transactionPerc: 100,
-    };
-    // const essentialData = strategiesHandler(allStrategySignals, {
-    //     candleReliability,
-    //     sequenceStreaks,
-    //     liveCandle,
-    //     profitTracker,
-    //     profitStrategy,
-    //     signalStrategy,
-    //     lowerWing,
-    // });
+    const essentialData = strategiesHandler(allStrategySignals, {
+        candleReliability,
+        sequenceStreaks,
+        liveCandle,
+        profitTracker,
+        profitStrategy,
+        signalStrategy,
+        lowerWing,
+    });
 
     // TYPE ORDER HANDLING
     const currCandleSize = liveCandle.candleBodySize;
@@ -80,12 +75,11 @@ async function watchStrategies(options = {}) {
         dataLastOrder &&
         dataLastOrder.side === "BUY" &&
         Number(dataLastOrder.filledValue) >= 100;
-    const needLimitType = true;
-    // const needLimitType = checkCondLimitOrder({
-    //     signal: essentialData && essentialData.signal,
-    //     currCandleSize,
-    //     isEnoughMoneyForSelling,
-    // });
+    const needLimitType = checkCondLimitOrder({
+        signal: essentialData && essentialData.signal,
+        currCandleSize,
+        isEnoughMoneyForSelling,
+    });
 
     const orderType = needLimitType ? "LIMIT" : "MARKET";
     const offsetPrice = needLimitType ? 100 : 0;
