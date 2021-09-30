@@ -119,7 +119,7 @@ function getTrackerStrategy(data) {
 
     // MAX
     const overboughtZone = higherWing.diffCurrPrice;
-    const SELL_ZONE_LIMIT = 2500; // 1000
+    const SELL_ZONE_LIMIT = 1000; // 1000
     const maxProfitHigherWing = nextLevel && overboughtZone <= SELL_ZONE_LIMIT;
 
     if (maxProfitHigherWing) {
