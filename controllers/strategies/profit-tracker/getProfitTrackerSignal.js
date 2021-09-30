@@ -21,12 +21,9 @@ async function getProfitTrackerSignal({
     //     return { signal: null, whichStrategy: "tracker" };
 
     const currEmaTrend = liveCandle.emaTrend;
-    const currStrategy = profitTracker.strategy;
+    // const currStrategy = profitTracker.strategy;
     // block uptrend in order to be prevented more than once in the same trend.
-    const condBlockUptrend =
-        currStrategy === "emaUptrend" &&
-        maxPerc >= 3 &&
-        currEmaTrend === "uptrend";
+    const condBlockUptrend = maxPerc >= 3 && currEmaTrend === "uptrend";
     if (condBlockUptrend) await blockEmaUptrend("toggle", true);
     // const contTrendSignal = getContTrendStrategy({
     //     profitTracker,
@@ -122,7 +119,7 @@ function getTrackerStrategy(data) {
 
     // MAX
     const overboughtZone = higherWing.diffCurrPrice;
-    const SELL_ZONE_LIMIT = 1000;
+    const SELL_ZONE_LIMIT = 2500; // 1000
     const maxProfitHigherWing = nextLevel && overboughtZone <= SELL_ZONE_LIMIT;
 
     if (maxProfitHigherWing) {

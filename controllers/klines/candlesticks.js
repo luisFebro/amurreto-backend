@@ -270,7 +270,7 @@ async function getCandlesticksData(payload = {}) {
         return secondCheckData;
     });
 
-    const MAX_CANDLES_SEQUENCE = 72; // last 3 days
+    const MAX_CANDLES_SEQUENCE = 96; // last 4 days
     const dataForSequenceStreak = candlestickData.slice(
         `-${MAX_CANDLES_SEQUENCE}`
     );
@@ -333,6 +333,7 @@ async function getCandlesticksData(payload = {}) {
         isContTrend,
         atr: lastAtr && lastAtr.atr,
         lowerWing,
+        higherWing,
         stoplossGrandCandle,
         // ema9: lastEma9,
         // ema20: lastEma20,
