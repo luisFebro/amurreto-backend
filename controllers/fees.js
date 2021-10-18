@@ -4,8 +4,8 @@ const { getConvertedPrice } = require("./helpers/convertors");
 // renewals are every monthly
 // novawards pro fees
 // https://www.novadax.com.br/novawards
-const TAKER_MARKET_FEE = 0.3; // basic is 0.5
-const MAKER_LIMIT_FEE = 0.1; // basic is 0.3
+const TAKER_MARKET_FEE = 0.45; // basic is 0.5
+const MAKER_LIMIT_FEE = 0.21; // basic is 0.25
 
 // feeAmount if buy is in base currency price which is the cryptocurrency
 // e.g 0,00000044 BTC (0.10%)
