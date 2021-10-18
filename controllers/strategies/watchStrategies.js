@@ -141,10 +141,15 @@ function strategiesHandler(allSignals = [], options = {}) {
     if (isSellSignal && !isAcceptSellCond) return DEFAULT_WAIT_SIGNAL;
 
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
+    const allowedProfitNextLevel = ["maxProfitHigherWing", "longProfit"];
+    const profitabilityException =
+        allowedProfitNextLevel.includes(foundStrategy);
+    const isUptrendStrategy = profitStrategy === "atr";
     if (
         isSellSignal &&
-        signalStrategy === "emaUptrend" &&
-        foundStrategy !== "emaDowntrend"
+        isUptrendStrategy &&
+        foundStrategy !== "emaDowntrend" &&
+        !profitabilityException
     )
         return DEFAULT_WAIT_SIGNAL;
     //  END SELL - DOWNTREND MIN PROFIT AND COND
@@ -166,7 +171,6 @@ function strategiesHandler(allSignals = [], options = {}) {
     // BUY - END ZONE VERIFICATION FOR ENTRY
 
     // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
-    const isUptrendStrategy = profitStrategy === "atr";
     const exceptionUptrendPatterns = ["emaDowntrend", "emaUptrend"].includes(
         foundStrategy
     );
@@ -229,7 +233,7 @@ function handleUnreliableBuySignal({
     const isCurrReliable = candleReliability.status;
     const reliableReason = candleReliability.reason;
 
-    const exceptionToReliability = ["atrProfitStopLoss", "freeFall"];
+    const exceptionToReliability = ["freeFall"];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
 

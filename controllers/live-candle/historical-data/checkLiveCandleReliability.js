@@ -47,7 +47,7 @@ function checkLiveCandleReliability({
 
     // cond 2 - min 40 minutes from candle duration to be reliable
     const keepReliable40Min = totalSides >= 4 && isCurrBullish;
-    const cond2BodySizes = ["small", "tiny"];
+    const cond2BodySizes = ["medium", "small", "tiny"];
     const isLast3SidesReliable = sidesStreak
         .slice(0, 3)
         .every((side) => side === currSide);

@@ -1,5 +1,5 @@
 const blockEmaUptrend = require("../ema/blockEmaUptrend");
-const MAX_STOP_LOSS_PERC = 0.2;
+const MAX_STOP_LOSS_PERC = 1;
 
 async function getProfitTrackerSignal({
     profitTracker = {},
@@ -20,9 +20,13 @@ async function getProfitTrackerSignal({
     if (!watching) return { signal: null, whichStrategy: "tracker" };
 
     const currEmaTrend = liveCandle.emaTrend;
-    // const currStrategy = profitTracker.strategy;
+    const currStrategy = profitTracker.strategy;
     // block uptrend in order to be prevented more than once in the same trend.
-    const condBlockUptrend = maxPerc >= 4 && currEmaTrend === "uptrend";
+    // if started off with other strategy, then allow only one more emaUptrend to be detected.
+    const condBlockUptrend =
+        maxPerc >= 3 &&
+        currStrategy === "emaUptrend" &&
+        currEmaTrend === "uptrend";
     if (condBlockUptrend) await blockEmaUptrend("toggle", true);
     // const contTrendSignal = getContTrendStrategy({
     //     profitTracker,
@@ -95,31 +99,26 @@ function getTrackerStrategy(data) {
 
     const nextLevel = hasPassedNextLevel ? "NextLevel" : "";
 
-    // EXCEPTIONS FOR START PROFIT
-    // resistence asv
-    // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
-    // to avoid losing all profit more than expecting due to prior candle is big or huge size
-    const isBearish = !liveCandle.isBullish;
-    const skipBearishCandles = ["big", "huge"];
-    const skipExceptionBySize =
-        isBearish && skipBearishCandles.includes(liveCandle.candleBodySize);
-
     const BELOW_CANDLE_SPAN = 500;
 
     // grandcandle is a fixed big/huge candle used as stoploss instead of the last one. it is null where none is found
     const needGrandCandle = stoplossGrandCandle; // netPerc >= 1;
-    const targetLowest = needGrandCandle
-        ? needGrandCandle.lowest
-        : lastLiveCandle.lowest;
 
-    const exceptionResistence =
-        targetLowest - BELOW_CANDLE_SPAN < liveCandle.close &&
-        !skipExceptionBySize; //   lastLiveCandle.isBullish
+    const isBelowGrandcandleStoploss =
+        needGrandCandle &&
+        liveCandle.close < needGrandCandle.lowest - BELOW_CANDLE_SPAN;
+    const isBelowLastLiveCandle =
+        liveCandle.close < lastLiveCandle.lowest - BELOW_CANDLE_SPAN;
+
+    const isBelowStoploss = needGrandCandle
+        ? isBelowGrandcandleStoploss
+        : isBelowLastLiveCandle;
 
     // MAX
     const overboughtZone = higherWing.diffCurrPrice;
-    const SELL_ZONE_LIMIT = 1000; // 1000
-    const maxProfitHigherWing = nextLevel && overboughtZone <= SELL_ZONE_LIMIT;
+    const SELL_ZONE_LIMIT = 2000;
+    const maxProfitHigherWing =
+        nextLevel && isBelowLastLiveCandle && overboughtZone <= SELL_ZONE_LIMIT;
 
     if (maxProfitHigherWing) {
         return {
@@ -130,7 +129,7 @@ function getTrackerStrategy(data) {
     }
 
     const maxProfitStopLoss = netPerc <= Number(`-${MAX_STOP_LOSS_PERC}`);
-    if (!exceptionResistence && maxProfitStopLoss) {
+    if (isBelowStoploss && maxProfitStopLoss) {
         return {
             signal: "SELL",
             strategy: "maxProfitStopLoss",
@@ -150,30 +149,26 @@ function getTrackerStrategy(data) {
 
     const MAX_DIFF_START_PROFIT = handleMaxDiffZones();
     const MAX_DIFF_MID_PROFIT = 0; //emaTrend === "uptrend" ? 1 : 0.5;
-    const MAX_DIFF_LONG_PROFIT = 0; // 0.5
+    // const MAX_DIFF_LONG_PROFIT = 0; // 0.5
     // using maxPerc instead of netPerc so that it can be not change when price went back down and keep profit.
     const startProfitRange = maxPerc >= 0 && maxPerc < 1.5;
     const midProfitRange = maxPerc >= 1.5 && maxPerc < 4;
-    const longProfitRange = maxPerc >= 4;
+    const longProfitRange = maxPerc >= 10;
 
     // EXCEPTIONS FOR START PROFIT
     const isStartProfit =
-        !exceptionResistence &&
+        isBelowStoploss &&
         startProfitRange &&
         diffMax >= MAX_DIFF_START_PROFIT &&
         `startProfit${nextLevel}`;
     const isMidProfit =
-        !exceptionResistence &&
+        isBelowStoploss &&
         midProfitRange &&
         diffMax >= MAX_DIFF_MID_PROFIT &&
         `midProfit${nextLevel}`;
     const isLongProfit =
-        !exceptionResistence &&
-        longProfitRange &&
-        diffMax >= MAX_DIFF_LONG_PROFIT &&
-        `longProfit${nextLevel}`;
+        nextLevel && isBelowLastLiveCandle && longProfitRange && `longProfit`;
     const profitRange = isStartProfit || isMidProfit || isLongProfit;
-    console.log("profitRange", profitRange);
 
     if (profitRange) {
         return {
@@ -230,6 +225,13 @@ module.exports = getProfitTrackerSignal;
  */
 
 /* ARCHIVES
+
+// exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
+// to avoid losing all profit more than expecting due to prior candle is big or huge size
+const isBearish = !liveCandle.isBullish;
+const skipBearishCandles = ["huge"];
+const skipExceptionBySize =
+    isBearish && skipBearishCandles.includes(lastLiveCandle.candleBodySize);
 
 // MIN AND MAX DOWNTREND PROFIT
 const allowedTrends = ["downtrend", "bullReversal", "bearReversal"];
