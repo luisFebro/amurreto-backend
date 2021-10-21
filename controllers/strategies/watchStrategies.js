@@ -22,6 +22,7 @@ async function watchStrategies(options = {}) {
         stoplossGrandCandle,
         sequenceStreaks,
         isContTrend,
+        lastProfitRow,
     } = options;
 
     // watchProfitTracker is the highest priority to track pending transaction.
@@ -43,6 +44,7 @@ async function watchStrategies(options = {}) {
             lastLiveCandle,
             stoplossGrandCandle,
             isContTrend,
+            lastProfitRow,
         }),
         getCandlePatternsSignal({
             liveCandle,

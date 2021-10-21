@@ -39,7 +39,7 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-09-07T13:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 250, // default 250 last candles
+        sinceCount: 150, // default 250 last candles
         noList: true, // default true
         reverseData: false,
     }).then(console.log);
@@ -281,7 +281,7 @@ async function getCandlesticksData(payload = {}) {
     const isContTrend = isContinuationTrend(contTrendData);
     // end continuation trend
 
-    const liveCandle = candlestickData.slice(-1)[0] || {};
+    let liveCandle = candlestickData.slice(-1)[0] || {};
     const lastLiveCandle = candlestickData.slice(-2)[0] || {};
     const lastEma9 = dataEma9.slice(-1)[0];
     const lastEma20 = dataEma20.slice(-1)[0];
@@ -298,10 +298,17 @@ async function getCandlesticksData(payload = {}) {
     const { sequenceStreaks, lowerWing, higherWing, stoplossGrandCandle } =
         detectSequenceStreaks(dataForSequenceStreak);
 
-    const { isBlock: isCircuitBreakerBlock, circuitBreakerData } =
-        await needCircuitBreaker({ emaTrend: lastEmaTrend });
+    const {
+        isBlock: isCircuitBreakerBlock,
+        circuitBreakerData,
+        lastProfitRow,
+    } = await needCircuitBreaker({ emaTrend: lastEmaTrend });
     const candleReliability = await setHistoricalLiveCandle({
-        liveCandle,
+        // somehow the loop last emaTrend is having different wrongly results comparing to lastEmaTrend
+        liveCandle: {
+            ...liveCandle,
+            emaTrend: lastEmaTrend,
+        },
         emaTrend: lastEmaTrend,
         lowerWing,
         higherWing,
@@ -311,7 +318,10 @@ async function getCandlesticksData(payload = {}) {
     });
 
     const finalSignalData = await watchStrategies({
-        liveCandle,
+        liveCandle: {
+            ...liveCandle,
+            emaTrend: lastEmaTrend,
+        },
         lastLiveCandle,
         candleReliability,
         lowerWing,
@@ -319,6 +329,7 @@ async function getCandlesticksData(payload = {}) {
         stoplossGrandCandle,
         sequenceStreaks,
         isContTrend,
+        lastProfitRow,
     });
 
     // now all orders registration to exchange and db is by default only executed in PRODUCTION

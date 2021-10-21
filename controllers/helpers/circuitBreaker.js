@@ -1,6 +1,7 @@
 const getLivePrice = require("../live-candle/getLivePrice");
 const AmurretoOrders = require("../../models/Orders");
 const { getDiffInMinutes } = require("../../utils/dates/dateFnsBack");
+const getLastProfitStatus = require("../strategies/profit-tracker/getLastProfitStatus");
 
 /*
 The goal with circuit breaker in the algo is to prevent buy multiple times when there is a continuous price fluctuation going up and down right in the spot when the algo decide to buy/sell causing undesired multiple transactions with loss.
@@ -12,11 +13,17 @@ only applicable for buy order since if we block selling the current transaction 
  */
 
 async function needCircuitBreaker({ emaTrend }) {
+    const [livePrice, lastProfitRow] = await Promise.all([
+        getLivePrice("BTC/BRL"),
+        getLastProfitStatus(),
+    ]);
+
     // for trading with higher volatility, the gap is lower for circuit breaker to get best deals in the dip
     const MIN_PRICE_DIFF = emaTrend === "downtrend" ? 100 : 3000;
-    const MIN_TIME_AFTER_LAST_TRANS = emaTrend === "downtrend" ? 30 : 60; // in minute
-
-    const livePrice = await getLivePrice("BTC/BRL");
+    const MIN_TIME_AFTER_LAST_TRANS = handleBreakerTimer({
+        lastProfitRow,
+        emaTrend,
+    }); // in minute
 
     const lastTransactionData = await AmurretoOrders.aggregate([
         {
@@ -68,7 +75,35 @@ async function needCircuitBreaker({ emaTrend }) {
     return {
         isBlock: isBlockedForPrice || isBlockedForTime,
         circuitBreakerData,
+        lastProfitRow,
     };
 }
 
 module.exports = needCircuitBreaker;
+
+// HELPERS
+function handleBreakerTimer({ lastProfitRow, emaTrend }) {
+    const timerByLoss = checkProfitCountAndBreaker((lastProfitRow = []));
+    if (timerByLoss) return timerByLoss;
+
+    return emaTrend === "downtrend" ? 30 : 60; // in minute
+}
+
+function checkProfitCountAndBreaker(lastProfitRow = []) {
+    if (!lastProfitRow.length) return null;
+
+    let profitCount = 0;
+    lastProfitRow.forEach((b) => {
+        if (b === true) ++profitCount;
+    });
+
+    // if the last two are profitable, then the timer is not defined here
+    // if the last two are losses, then the circuit breaker span is bigger.
+    if (profitCount === 2) return null;
+    if (profitCount === 1) return 600; // 10 hours
+    if (profitCount === 0) return 900; // 15 hours
+
+    return null;
+}
+
+// END HELPERS

@@ -7,6 +7,7 @@ async function getProfitTrackerSignal({
     lastLiveCandle,
     higherWing,
     stoplossGrandCandle,
+    lastProfitRow,
     // isContTrend,
 }) {
     const {
@@ -23,10 +24,12 @@ async function getProfitTrackerSignal({
     const currStrategy = profitTracker.strategy;
     // block uptrend in order to be prevented more than once in the same trend.
     // if started off with other strategy, then allow only one more emaUptrend to be detected.
+    const areLastProfit = lastProfitRow.every((p) => p === true);
     const condBlockUptrend =
         maxPerc >= 3 &&
         currStrategy === "emaUptrend" &&
-        currEmaTrend === "uptrend";
+        currEmaTrend === "uptrend" &&
+        !areLastProfit;
     if (condBlockUptrend) await blockEmaUptrend("toggle", true);
     // const contTrendSignal = getContTrendStrategy({
     //     profitTracker,
