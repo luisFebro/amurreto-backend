@@ -32,7 +32,7 @@ async function getCandlesFor(tradingSymbol) {
         symbol: tradingSymbol,
         sinceType: "count", // defaut: count / count, date
         customDate: "2021-07-20T20:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 150, // default: last 250 candles
+        sinceCount: 250, // default: last 250 candles
         noList: true, // default: true,
         reverseData: false,
         onlyBuySignals: false,

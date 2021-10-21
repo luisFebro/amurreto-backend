@@ -140,6 +140,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const isAcceptSellCond =
         (candleSide === "bear" && (isMinProfit || isExceptionSellSignal)) ||
         (candleSide === "bull" && candleBodySize === "huge");
+
     if (isSellSignal && !isAcceptSellCond) return DEFAULT_WAIT_SIGNAL;
 
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
@@ -187,7 +188,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // CHECK FREE FALL (only exception to buy in a bear market)
     const isFreeFall = signalStrategy === "freeFall";
     // deny because volatility is high and probability favors losses since it is an downtrend.
-    const denyBuySignalDisableAtr = !isFreeFall && disableATR;
+    const denyBuySignalDisableAtr = isBuySignal && !isFreeFall && disableATR;
     if (denyBuySignalDisableAtr) return DEFAULT_WAIT_SIGNAL;
 
     // if freeFall, then disable candle patterns and max profit takers so that we can take as much we can from this trade.
