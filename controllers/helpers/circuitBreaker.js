@@ -24,6 +24,7 @@ async function needCircuitBreaker({ emaTrend }) {
         lastProfitRow,
         emaTrend,
     }); // in minute
+    console.log("MIN_TIME_AFTER_LAST_TRANS", MIN_TIME_AFTER_LAST_TRANS);
 
     const lastTransactionData = await AmurretoOrders.aggregate([
         {
@@ -83,7 +84,7 @@ module.exports = needCircuitBreaker;
 
 // HELPERS
 function handleBreakerTimer({ lastProfitRow, emaTrend }) {
-    const timerByLoss = checkProfitCountAndBreaker((lastProfitRow = []));
+    const timerByLoss = checkProfitCountAndBreaker(lastProfitRow);
     if (timerByLoss) return timerByLoss;
 
     return emaTrend === "downtrend" ? 30 : 60; // in minute
@@ -94,7 +95,7 @@ function checkProfitCountAndBreaker(lastProfitRow = []) {
 
     let profitCount = 0;
     lastProfitRow.forEach((b) => {
-        if (b === true) ++profitCount;
+        if (b === true) profitCount += 1;
     });
 
     // if the last two are profitable, then the timer is not defined here
