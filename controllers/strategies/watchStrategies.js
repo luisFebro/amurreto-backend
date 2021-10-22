@@ -236,7 +236,7 @@ function handleUnreliableBuySignal({
     const isCurrReliable = candleReliability.status;
     const reliableReason = candleReliability.reason;
 
-    const exceptionToReliability = ["freeFall"];
+    const exceptionToReliability = ["emaDowntrend", "freeFall"];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
     if (isProfitLimitSignal || isPatternException) return false;
 
