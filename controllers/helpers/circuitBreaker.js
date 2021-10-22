@@ -24,7 +24,6 @@ async function needCircuitBreaker({ emaTrend }) {
         lastProfitRow,
         emaTrend,
     }); // in minute
-    console.log("MIN_TIME_AFTER_LAST_TRANS", MIN_TIME_AFTER_LAST_TRANS);
 
     const lastTransactionData = await AmurretoOrders.aggregate([
         {
