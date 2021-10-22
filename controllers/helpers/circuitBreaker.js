@@ -101,7 +101,7 @@ function checkProfitCountAndBreaker(lastProfitRow = []) {
     // if the last two are losses, then the circuit breaker span is bigger.
     if (profitCount === 2) return null;
     if (profitCount === 1) return 600; // 10 hours
-    if (profitCount === 0) return 900; // 15 hours
+    if (profitCount === 0) return 1200; // 20 hours
 
     return null;
 }
