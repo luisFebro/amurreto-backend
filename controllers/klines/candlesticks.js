@@ -1,4 +1,5 @@
 const novadax = require("../exchangeAPI");
+const watchProfitTracker = require("../strategies/profit-tracker/profitTracker");
 const { addDays, addHours } = require("../../utils/dates/dateFnsBack");
 const getWickVolume = require("./algo/getWickVolume");
 const getPercentage = require("../../utils/number/perc/getPercentage");
@@ -295,8 +296,13 @@ async function getCandlesticksData(payload = {}) {
         ema50: lastEma50,
     });
 
+    // watchProfitTracker is the highest priority to track pending transaction.
+    const profitTracker = await watchProfitTracker({ liveCandle });
+    const maxPerc = profitTracker ? profitTracker.maxPerc : null;
+    console.log("profitTracker", profitTracker);
+
     const { sequenceStreaks, lowerWing, higherWing, stoplossGrandCandle } =
-        detectSequenceStreaks(dataForSequenceStreak);
+        detectSequenceStreaks(dataForSequenceStreak, { maxPerc });
 
     const {
         isBlock: isCircuitBreakerBlock,
@@ -318,6 +324,7 @@ async function getCandlesticksData(payload = {}) {
     });
 
     const finalSignalData = await watchStrategies({
+        profitTracker,
         liveCandle: {
             ...liveCandle,
             emaTrend: lastEmaTrend,

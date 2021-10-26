@@ -1,4 +1,3 @@
-const watchProfitTracker = require("./profit-tracker/profitTracker");
 // strategy types
 const getCandlePatternsSignal = require("./candle-patterns/getCandlePatternsSignal");
 const getProfitTrackerSignal = require("./profit-tracker/getProfitTrackerSignal");
@@ -14,6 +13,7 @@ const DEFAULT_WAIT_SIGNAL = {
 
 async function watchStrategies(options = {}) {
     const {
+        profitTracker,
         liveCandle,
         lastLiveCandle,
         candleReliability,
@@ -25,9 +25,6 @@ async function watchStrategies(options = {}) {
         lastProfitRow,
     } = options;
 
-    // watchProfitTracker is the highest priority to track pending transaction.
-    const profitTracker = await watchProfitTracker({ liveCandle });
-    console.log("profitTracker", profitTracker);
     const signalStrategy = (profitTracker && profitTracker.strategy) || null;
 
     // manage all strategies. changing in the order can effect the algo. So do not change unless is ultimately necessary. the top inserted here got more priority than the ones close to the bottom

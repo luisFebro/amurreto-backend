@@ -27,8 +27,9 @@ also can be used to determine the support of the current market
 
 // returns { sequenceStreaks, lowerWingPrice }
 
-function detectSequenceStreaks(data) {
+function detectSequenceStreaks(data, options = {}) {
     if (!data) return {};
+    const { maxPerc } = options;
 
     const readyData = data.map((each) => {
         return {
@@ -200,7 +201,11 @@ function detectSequenceStreaks(data) {
     // BIG and HUGE candles for stoploss reference
     let stoplossBigCandles = [];
     readyData.forEach((c) => {
-        const allowedCandleSizes = ["big", "huge"];
+        // set medium candle sizes to be detected to be more sensible to downtrend change
+        const enoughProfit = maxPerc >= 3;
+        const allowedCandleSizes = enoughProfit
+            ? ["big", "huge", "medium"]
+            : ["big", "huge"];
         const isBullish = c.side === "bull";
         const isLowThanCurrPrice = c.lowestPrice < currPrice;
         if (
