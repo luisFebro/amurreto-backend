@@ -389,6 +389,7 @@ async function getOrdersList(payload = {}) {
                     fallbackPrice;
                 const base = Number(info.filledAmount) || Number(info.amount); // just to handle LIMIT order which is null for filled Data
                 const quote =
+                    Number(info.quote) ||
                     Number(info.filledValue) ||
                     Number(info.value) ||
                     fallbackQuote;
@@ -440,7 +441,7 @@ async function getOrdersList(payload = {}) {
 // getOrdersList({
 //     symbol: "BTC/BRL",
 //     type: "closed",
-//     limit: 4,
+//     limit: 3,
 // }).then(console.log);
 // getOrdersList({ symbol: "BTC/BRL", mostRecent: true, })
 // .then(console.log)
