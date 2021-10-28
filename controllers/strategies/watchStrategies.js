@@ -49,15 +49,14 @@ async function watchStrategies(options = {}) {
         }),
     ]);
 
-    const profitStrategy = allStrategySignals[1].whichStrategy;
-    console.log("profitStrategy", profitStrategy);
+    // const profitStrategy = allStrategySignals[1].whichStrategy;
+    // console.log("profitStrategy", profitStrategy);
 
     const essentialData = strategiesHandler(allStrategySignals, {
         candleReliability,
         sequenceStreaks,
         liveCandle,
         profitTracker,
-        profitStrategy,
         signalStrategy,
         lowerWing,
     });
@@ -101,7 +100,6 @@ function strategiesHandler(allSignals = [], options = {}) {
         candleReliability,
         liveCandle = {},
         profitTracker,
-        profitStrategy,
         signalStrategy,
         lowerWing,
     } = options;
@@ -114,7 +112,6 @@ function strategiesHandler(allSignals = [], options = {}) {
     const firstFoundValidStrategy = allSignals.find(
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
     );
-
     console.log("firstFoundValidStrategy", firstFoundValidStrategy);
     if (!firstFoundValidStrategy) return DEFAULT_WAIT_SIGNAL;
     const foundStrategy = firstFoundValidStrategy.strategy;
@@ -144,10 +141,10 @@ function strategiesHandler(allSignals = [], options = {}) {
     const allowedProfitNextLevel = ["maxProfitHigherWing", "longProfit"];
     const profitabilityException =
         allowedProfitNextLevel.includes(foundStrategy);
-    const isUptrendStrategy = profitStrategy === "atr";
+    const isCurrEmaUptrendStrat = signalStrategy === "emaUptrend";
     if (
         isSellSignal &&
-        isUptrendStrategy &&
+        isCurrEmaUptrendStrat &&
         foundStrategy !== "emaDowntrend" &&
         !profitabilityException
     )
@@ -169,18 +166,6 @@ function strategiesHandler(allSignals = [], options = {}) {
     if (isBuySignal && !allowBuySignalsByZone && !isExceptionBuySignal)
         return DEFAULT_WAIT_SIGNAL;
     // BUY - END ZONE VERIFICATION FOR ENTRY
-
-    // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
-    const exceptionUptrendPatterns = ["emaDowntrend", "emaUptrend"].includes(
-        foundStrategy
-    );
-
-    const allowedSignals =
-        isBuySignal ||
-        (isSellSignal && isProfitLimitSignal) ||
-        exceptionUptrendPatterns;
-    if (isUptrendStrategy && !allowedSignals) return DEFAULT_WAIT_SIGNAL;
-    // END CHECK PROFIT STRATAGY
 
     // CHECK FREE FALL (only exception to buy in a bear market)
     const isFreeFall = signalStrategy === "freeFall";
@@ -245,7 +230,19 @@ function handleUnreliableBuySignal({
 
 module.exports = watchStrategies;
 
-/*
+/* ARCHIVES
+// CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
+    const exceptionUptrendPatterns = ["emaDowntrend", "emaUptrend"].includes(
+        foundStrategy
+    );
+
+    const allowedSignals =
+        isBuySignal ||
+        (isSellSignal && isProfitLimitSignal) ||
+        exceptionUptrendPatterns;
+    if (isUptrendStrategy && !allowedSignals) return DEFAULT_WAIT_SIGNAL;
+    // END CHECK PROFIT STRATAGY
+
 SIGNALS
 BUY, SELL, WAIT, ? (unknown)
 // HOLD not being using in this +v1.15

@@ -139,6 +139,14 @@ function getTrackerStrategy(data) {
             transactionPerc: 100,
         };
     }
+
+    if (isBelowStoploss) {
+        return {
+            signal: "SELL",
+            strategy: "grandStopLossProfit",
+            transactionPerc: 100,
+        };
+    }
     // END MAX
 
     const handleMaxDiffZones = () => {
