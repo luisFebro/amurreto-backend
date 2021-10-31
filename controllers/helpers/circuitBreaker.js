@@ -67,9 +67,13 @@ async function needCircuitBreaker({ emaTrend }) {
     const isBlockedForTime =
         getDiffInMinutes(lastTransactionSellDate) <= MIN_TIME_AFTER_LAST_TRANS;
 
+    const timeLeft =
+        MIN_TIME_AFTER_LAST_TRANS - getDiffInMinutes(lastTransactionSellDate);
     const circuitBreakerData = {
         diffPriceLastTransaction,
         diffMinutesLastTransaction: getDiffInMinutes(lastTransactionSellDate),
+        timeLeft: timeLeft > 0 ? timeLeft : 0,
+        totalDuration: MIN_TIME_AFTER_LAST_TRANS,
     };
 
     return {

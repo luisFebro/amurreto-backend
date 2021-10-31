@@ -9,8 +9,8 @@ const { IS_DEV } = require("../../config");
 const setHistoricalLiveCandle = require("../live-candle/historical-data/setHistoricalLiveCandle");
 const findCandleBodySize = require("./candle-patterns/helpers/findCandleBodySize");
 const detectSequenceStreaks = require("./algo/candle/detectSequenceStreaks");
-const isContinuationTrend = require("./algo/candle/isContinuationTrend");
 const needCircuitBreaker = require("../helpers/circuitBreaker");
+// const isContinuationTrend = require("./algo/candle/isContinuationTrend");
 // indicators
 const { calculateEMA, analyseEmaTrend } = require("../indicators/ema");
 const calculateATR = require("../indicators/atr");
@@ -40,7 +40,7 @@ if (IS_DEV) {
         limit: LIMIT, // undefined, num ATTENTION: need to be at least the double of sinceCount or at least 100 candles for date's tyep
         sinceType: "count", // count, date
         customDate: "2021-09-07T13:00:00.000Z", // if hour less than 9, put 0 in front
-        sinceCount: 50, // default 250 last candles
+        sinceCount: 250, // default 250 last candles
         noList: true, // default true
         reverseData: false,
     }).then(console.log);
@@ -252,13 +252,6 @@ async function getCandlesticksData(payload = {}) {
         const secondCheckData = {
             ...candle,
             emaTrend, // do not remove it
-            atr, // do not remove it
-            atrLimits: setAtrBoundaries({ atr, close: candle.close }),
-            atrLimitsJson: setAtrBoundaries({
-                json: true,
-                atr,
-                close: candle.close,
-            }),
             // finalSignal: null,
             // incAtr: atrData && atrData.incVolat,
             // isMaxAtr9: maxAtr9 === (atrData && atrData.atr),
@@ -279,7 +272,7 @@ async function getCandlesticksData(payload = {}) {
     // continuation trend
     const MAX_CONT_TREND = 4;
     const contTrendData = candlestickData.slice(`-${MAX_CONT_TREND}`);
-    const isContTrend = isContinuationTrend(contTrendData);
+    // const isContTrend = isContinuationTrend(contTrendData);
     // end continuation trend
 
     let liveCandle = candlestickData.slice(-1)[0] || {};
@@ -335,7 +328,7 @@ async function getCandlesticksData(payload = {}) {
         higherWing,
         stoplossGrandCandle,
         sequenceStreaks,
-        isContTrend,
+        isContTrend: false,
         lastProfitRow,
     });
 
@@ -348,11 +341,11 @@ async function getCandlesticksData(payload = {}) {
     // const lastIsOverbought = lastRsi >= 70;
     const indicators = {
         emaTrend: lastEmaTrend,
-        isContTrend,
         atr: lastAtr && lastAtr.atr,
         lowerWing,
         higherWing,
         stoplossGrandCandle,
+        // isContTrend,
         // ema9: lastEma9,
         // ema20: lastEma20,
         // ema50: lastEma50,
@@ -380,30 +373,17 @@ async function getCandlesticksData(payload = {}) {
             threeCandleType: liveCandle.threeCandleType,
             // incPrice: lastIncPrice,
         },
-        isCircuitBreakerBlock,
+        circuitBreaker: {
+            isBlock: isCircuitBreakerBlock,
+            timeLeft: circuitBreakerData && circuitBreakerData.timeLeft, // in min
+            totalTime: circuitBreakerData && circuitBreakerData.totalDuration,
+        },
         indicators,
         list: handleListData(candlestickData, {
             noList,
             reverseData,
         }),
     };
-}
-
-// HELPERS
-function setAtrBoundaries({ json = false, close, atr }) {
-    const MULTIPLIER = 2;
-    const atrDefaultBoundary = atr * MULTIPLIER;
-    const disableATR = atr >= 4000; // 4000
-
-    const data = {
-        atrUpperLimit: Number((close + atrDefaultBoundary).toFixed(2)),
-        atrLowerLimit: Number((close - atrDefaultBoundary).toFixed(2)),
-        atrLimit: Number(atrDefaultBoundary.toFixed(2)),
-        disableATR,
-    };
-
-    if (!json) return data;
-    return JSON.stringify(data);
 }
 
 function handleListData(list, { noList, reverseData }) {
@@ -495,6 +475,31 @@ The list of candles is returned sorted in ascending (historical/chronological) o
  */
 
 /* ARCHIVES
+// HELPERS
+atr,
+atrLimits: setAtrBoundaries({ atr, close: candle.close }),
+atrLimitsJson: setAtrBoundaries({
+    json: true,
+    atr,
+    close: candle.close,
+}),
+
+function setAtrBoundaries({ json = false, close, atr }) {
+    const MULTIPLIER = 2;
+    const atrDefaultBoundary = atr * MULTIPLIER;
+    const disableATR = atr >= 4000; // 4000
+
+    const data = {
+        atrUppedsarLimit: Number((close + atrDefaultBoundary).toFixed(2)),
+        atrLowedarLimit: Number((close - atrDefaultBoundary).toFixed(2)),
+        atrLidasmit: Number(atrDefaultBoundary.toFixed(2)),
+        disableATR,
+    };
+
+    if (!json) return data;
+    return JSON.stringify(data);
+}
+
 
 if (onlyBuySignals)
 list = list.filter(

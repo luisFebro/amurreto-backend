@@ -13,10 +13,7 @@ async function getProfitTrackerSignal({
     const {
         watching,
         maxPerc,
-        // atrUpperLimit,
         // maxCurrPrice,
-        // atrLowerLimit,
-        // atrLimit,
     } = profitTracker;
     if (!watching) return { signal: null, whichStrategy: "tracker" };
 
@@ -31,24 +28,6 @@ async function getProfitTrackerSignal({
         currEmaTrend === "uptrend" &&
         !areLastProfit;
     if (condBlockUptrend) await blockEmaUptrend("toggle", true);
-    // const contTrendSignal = getContTrendStrategy({
-    //     profitTracker,
-    //     isContTrend,
-    // });
-    // if (contTrendSignal) return contTrendSignal;
-
-    // const livePrice = liveCandle.close;
-
-    // const hasPassedAtrUpperLimit = maxCurrPrice >= atrUpperLimit;
-    // const atrTrends = ["uptrend"];
-    // const condAtr = maxPerc >= 3 && atrTrends.includes(currEmaTrend);
-    // const whichStrategy = condAtr ? "atr" : "tracker";
-
-    // if (whichStrategy === "atr")
-    //     return {
-    //         whichStrategy: "atr",
-    //         ...getAtrStrategy({ ...profitTracker, livePrice }),
-    //     };
 
     return {
         whichStrategy: "tracker",
@@ -101,17 +80,20 @@ function getTrackerStrategy(data) {
     // const emaTrend = liveCandle.emaTrend;
 
     const nextLevel = hasPassedNextLevel ? "NextLevel" : "";
+    const livePrice = liveCandle.close;
 
     const BELOW_CANDLE_SPAN = 500;
 
-    // grandcandle is a fixed big/huge candle used as stoploss instead of the last one. it is null where none is found
-    const needGrandCandle = stoplossGrandCandle; // netPerc >= 1;
+    // grandcandle is a fixed big/huge candle used as stoploss instead of the last one.
+    // if the lowest from grandcandle is below curr price, then isBelowLastLiveCandle is activate
+    const needGrandCandle =
+        stoplossGrandCandle && stoplossGrandCandle.lowest < livePrice; // netPerc >= 1;
 
     const isBelowGrandcandleStoploss =
         needGrandCandle &&
-        liveCandle.close < needGrandCandle.lowest - BELOW_CANDLE_SPAN;
+        livePrice < stoplossGrandCandle.lowest - BELOW_CANDLE_SPAN;
     const isBelowLastLiveCandle =
-        liveCandle.close < lastLiveCandle.lowest - BELOW_CANDLE_SPAN;
+        livePrice < lastLiveCandle.lowest - BELOW_CANDLE_SPAN;
 
     const isBelowStoploss = needGrandCandle
         ? isBelowGrandcandleStoploss
@@ -198,14 +180,14 @@ function getTrackerStrategy(data) {
 // That's because when reaching uptrend and no transaction, the algo automatically buy and sell only when a downtrend signal pops up
 // function getAtrStrategy(data) {
 //     const {
-//         atrLowerLimit,
+//         atrLowedsadsarLimit,
 //         livePrice,
 //         maxPerc,
 //         // netPerc,
 //         // atrLimit,
 //     } = data;
 //     const minRangeForSellNetPerc = maxPerc >= MAX_STOP_LOSS_PERC;
-//     const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowerLimit;
+//     const atrSellCond = minRangeForSellNetPerc || livePrice <= atrLowedsadsarLimit;
 
 //     if (atrSellCond) {
 //         return {
@@ -236,6 +218,26 @@ module.exports = getProfitTrackerSignal;
  */
 
 /* ARCHIVES
+
+const contTrendSignal = getContTrendStrategy({
+    profitTracker,
+    isContTrend,
+});
+if (contTrendSignal) return contTrendSignal;
+
+const livePrice = liveCandle.close;
+
+const hasPassedAtrUppefsdrLimit = maxCurrPrice >= atrUpdadsdperLimit;
+const atrTrends = ["uptrend"];
+const condAtr = maxPerc >= 3 && atrTrends.includes(currEmaTrend);
+const whichStrategy = condAtr ? "atr" : "tracker";
+
+if (whichStrategy === "atr")
+    return {
+        whichStrategy: "atr",
+        ...getAtrStrategy({ ...profitTracker, livePrice }),
+    };
+
 
 // exception resistence when there is a bearish candle, but not reached the bottom (lowest) of the last candle with potential to a sudden reversal to upside.
 // to avoid losing all profit more than expecting due to prior candle is big or huge size

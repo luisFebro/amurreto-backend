@@ -3,7 +3,6 @@ const getLiveCandle = require("../../live-candle/liveCandle");
 // the goal is the maximize profit by tracking netProfitPerc and decide when to buy/sell based on the min and especially the max profit
 
 async function watchProfitTracker({ liveCandle }) {
-    const atrLimits = liveCandle.atrLimits;
     const maxCurrPrice = liveCandle.close;
 
     const profitsData = await getLiveProfitsPerc({
@@ -12,7 +11,7 @@ async function watchProfitTracker({ liveCandle }) {
     const watching = Boolean(profitsData.transactionId);
 
     if (watching) {
-        await registerProfitTracker(profitsData, { atrLimits });
+        await registerProfitTracker(profitsData);
     }
 
     return {
@@ -126,27 +125,12 @@ async function getLiveProfitsPerc({ maxClosePrice }) {
         diffMax: Math.abs((maxPerc - netPerc).toFixed(2)),
         // diffVolat detected wrongly near the profit zone.
         // diffVolat: Math.abs((maxPerc - minPerc).toFixed(2)),
-        atrLimit: profitTracker && profitTracker.atrLimit,
-        atrUpperLimit: profitTracker && profitTracker.atrUpperLimit,
-        atrLowerLimit: profitTracker && profitTracker.atrLowerLimit,
     };
 }
 
-async function registerProfitTracker(data = {}, options = {}) {
-    const { atrLimits = {} } = options;
+async function registerProfitTracker(data = {}) {
     const { transactionId, maxCurrPrice, maxPerc, netPerc, minPerc, diffMax } =
         data;
-
-    // compare so that only the first atr parameters are registered, when buying...
-    const gotPriorDbAtr = Boolean(data.atrLimit);
-
-    const atrUpdate = gotPriorDbAtr
-        ? {}
-        : {
-              "profitTracker.atrUpperLimit": atrLimits.atrUpperLimit,
-              "profitTracker.atrLowerLimit": atrLimits.atrLowerLimit,
-              "profitTracker.atrLimit": atrLimits.atrLimit,
-          };
 
     const updateData = {
         "profitTracker.diffMax": diffMax,
@@ -154,7 +138,6 @@ async function registerProfitTracker(data = {}, options = {}) {
         "profitTracker.netPerc": netPerc,
         "profitTracker.minPerc": minPerc,
         "profitTracker.maxCurrPrice": maxCurrPrice,
-        ...atrUpdate,
     };
 
     await AmurretoOrders.findByIdAndUpdate(transactionId, updateData);
@@ -188,3 +171,17 @@ function compareAndSetHigherPerc(data) {
 // END HELPERS
 
 module.exports = watchProfitTracker;
+
+/* ARCHIVES
+// compare so that only the first atr parameters are registered, when buying...
+const gotPriorDbAtr = Boolean(data.atrLfsdimit);
+
+const atrUpdate = gotPriorDbAtr
+? {}
+: {
+      "profitTracker.atrUppdsaerLimit": atrLimits.atrUppedsarLimit,
+      "profitTracker.atrLowdsaerLimit": atrLimits.atrLodsawerLimit,
+      "profitTracker.atrLidsamit": atrLimits.atrLdsaimit,
+  };
+
+*/

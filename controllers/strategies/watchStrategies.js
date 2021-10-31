@@ -105,9 +105,9 @@ function strategiesHandler(allSignals = [], options = {}) {
     } = options;
     const candleBodySize = liveCandle && liveCandle.candleBodySize;
     const candleSide = liveCandle && liveCandle.isBullish ? "bull" : "bear";
-    const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
     const maxProfit = profitTracker && profitTracker.maxPerc;
     const netProfit = profitTracker && profitTracker.netPerc;
+
     // the first array to be looked over got more priority over the last ones
     const firstFoundValidStrategy = allSignals.find(
         (strategy) => strategy.signal === "BUY" || strategy.signal === "SELL"
@@ -158,7 +158,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     // BUY - ZONE VERIFICATION FOR ENTRY
     // allow all candles to be buyable only the price drops for a better change of profit. Otherwise, the algo will want to buy when price is higher with high change of bearish reversal
     const oversoldZone = lowerWing.diffCurrPrice;
-    const BUY_ZONE_LIMIT = 2500; // 2500
+    const BUY_ZONE_LIMIT = 3000; // 3000
     const allowBuySignalsByZone = oversoldZone <= BUY_ZONE_LIMIT;
     const isExceptionBuySignal = ["emaUptrend", "freeFall"].includes(
         foundStrategy
@@ -169,10 +169,6 @@ function strategiesHandler(allSignals = [], options = {}) {
 
     // CHECK FREE FALL (only exception to buy in a bear market)
     const isFreeFall = signalStrategy === "freeFall";
-    // deny because volatility is high and probability favors losses since it is an downtrend.
-    const denyBuySignalDisableAtr = isBuySignal && !isFreeFall && disableATR;
-    if (denyBuySignalDisableAtr) return DEFAULT_WAIT_SIGNAL;
-
     // if freeFall, then disable candle patterns and max profit takers so that we can take as much we can from this trade.
     // allow only profit strategy with enough profit already taken
     const isEnoughProfitForFreefall = maxProfit >= 4;
@@ -231,6 +227,11 @@ function handleUnreliableBuySignal({
 module.exports = watchStrategies;
 
 /* ARCHIVES
+const disableATR = liveCandle && liveCandle.atrLimits.disableATR;
+// deny because volatility is high and probability favors losses since it is an downtrend.
+const denyBuySignalDisableAtr = isBuySignal && !isFreeFall && disableATR;
+if (denyBuySignalDisableAtr) return DEFAULT_WAIT_SIGNAL;
+
 // CHECK PROFIT STRATEGY - the strategy changes according to EMA automatically
     const exceptionUptrendPatterns = ["emaDowntrend", "emaUptrend"].includes(
         foundStrategy
