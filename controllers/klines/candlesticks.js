@@ -377,6 +377,7 @@ async function getCandlesticksData(payload = {}) {
             isBlock: isCircuitBreakerBlock,
             timeLeft: circuitBreakerData && circuitBreakerData.timeLeft, // in min
             totalTime: circuitBreakerData && circuitBreakerData.totalDuration,
+            lastProfitRow,
         },
         indicators,
         list: handleListData(candlestickData, {
