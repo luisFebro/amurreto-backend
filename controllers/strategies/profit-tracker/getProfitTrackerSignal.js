@@ -85,15 +85,21 @@ function getTrackerStrategy(data) {
     const BELOW_CANDLE_SPAN = 500;
 
     // grandcandle is a fixed big/huge candle used as stoploss instead of the last one.
-    // if the lowest from grandcandle is below curr price, then isBelowLastLiveCandle is activate
-    const needGrandCandle =
-        stoplossGrandCandle && stoplossGrandCandle.lowest < livePrice; // netPerc >= 1;
+    // red zone is for still detect a grand candle. Otherwise, it will be ignored.
+    const lowestGrandCandleAllowed =
+        stoplossGrandCandle.lowest - BELOW_CANDLE_SPAN;
+    const redZoneGrandCandleDetect = Math.abs(
+        livePrice - lowestGrandCandleAllowed
+    );
+    const RED_ZONE_LIMIT = 1000;
+    const needGrandCandle = redZoneGrandCandleDetect <= RED_ZONE_LIMIT;
 
     const isBelowGrandcandleStoploss =
-        needGrandCandle &&
-        livePrice < stoplossGrandCandle.lowest - BELOW_CANDLE_SPAN;
+        needGrandCandle && livePrice < lowestGrandCandleAllowed;
     const isBelowLastLiveCandle =
         livePrice < lastLiveCandle.lowest - BELOW_CANDLE_SPAN;
+    console.log("isBelowGrandcandleStoploss", isBelowGrandcandleStoploss);
+    console.log("isBelowLastLiveCandle", isBelowLastLiveCandle);
 
     const isBelowStoploss = needGrandCandle
         ? isBelowGrandcandleStoploss

@@ -294,14 +294,18 @@ async function getCandlesticksData(payload = {}) {
     const maxPerc = profitTracker ? profitTracker.maxPerc : null;
     console.log("profitTracker", profitTracker);
 
-    const { sequenceStreaks, lowerWing, higherWing, stoplossGrandCandle } =
-        detectSequenceStreaks(dataForSequenceStreak, { maxPerc });
-
     const {
         isBlock: isCircuitBreakerBlock,
         circuitBreakerData,
         lastProfitRow,
     } = await needCircuitBreaker({ emaTrend: lastEmaTrend });
+
+    const { sequenceStreaks, lowerWing, higherWing, stoplossGrandCandle } =
+        detectSequenceStreaks(dataForSequenceStreak, {
+            maxPerc,
+            lastProfitRow,
+        });
+
     const candleReliability = await setHistoricalLiveCandle({
         // somehow the loop last emaTrend is having different wrongly results comparing to lastEmaTrend
         liveCandle: {

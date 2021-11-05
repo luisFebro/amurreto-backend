@@ -29,7 +29,7 @@ also can be used to determine the support of the current market
 
 function detectSequenceStreaks(data, options = {}) {
     if (!data) return {};
-    const { maxPerc } = options;
+    const { maxPerc, lastProfitRow } = options;
 
     const readyData = data.map((each) => {
         return {
@@ -202,7 +202,10 @@ function detectSequenceStreaks(data, options = {}) {
     let stoplossBigCandles = [];
     readyData.forEach((c) => {
         // set medium candle sizes to be detected to be more sensible to downtrend change
-        const enoughProfit = maxPerc >= 3;
+        const lossesSequence = lastProfitRow.every((t) => t === false);
+        const goalProfit = lossesSequence ? 1 : 3;
+
+        const enoughProfit = maxPerc >= goalProfit;
         const allowedCandleSizes = enoughProfit
             ? ["big", "huge", "medium"]
             : ["big", "huge"];
