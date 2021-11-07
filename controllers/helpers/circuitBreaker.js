@@ -19,7 +19,7 @@ async function needCircuitBreaker({ emaTrend }) {
     ]);
 
     // for trading with higher volatility, the gap is lower for circuit breaker to get best deals in the dip
-    const MIN_PRICE_DIFF = emaTrend === "downtrend" ? 100 : 3000;
+    const MIN_PRICE_DIFF = emaTrend === "downtrend" ? 1000 : 2000;
     const MIN_TIME_AFTER_LAST_TRANS = handleBreakerTimer({
         lastProfitRow,
         emaTrend,
@@ -72,6 +72,7 @@ async function needCircuitBreaker({ emaTrend }) {
     const circuitBreakerData = {
         diffPriceLastTransaction,
         diffMinutesLastTransaction: getDiffInMinutes(lastTransactionSellDate),
+        diffPrice: diffPriceLastTransaction,
         timeLeft: timeLeft > 0 ? timeLeft : 0,
         totalDuration: MIN_TIME_AFTER_LAST_TRANS,
     };
