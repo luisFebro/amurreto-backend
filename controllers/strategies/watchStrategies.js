@@ -123,6 +123,7 @@ function strategiesHandler(allSignals = [], options = {}) {
     const MIN_PROFIT_NET_PERC = 2;
     const isMinProfit = maxProfit >= MIN_PROFIT_NET_PERC;
     const isExceptionSellSignal = [
+        "safeguardEmatrend",
         "maxProfitStopLoss",
         "startProfitNextLevel",
         "midProfitNextLevel",
@@ -213,12 +214,15 @@ function handleUnreliableBuySignal({
     // this currCandleReliable is to verify if the BUY/SELL SIGNAL is reliable based on the time sidesStreak which verify how many times in every 10 minutes the candle was actually bullish/bearish
     const isCurrReliable = candleReliability.status;
     const reliableReason = candleReliability.reason;
+    const isBearishReliable = reliableReason === "40minBearishReliable";
 
     const exceptionToReliability = ["emaDowntrend", "freeFall"];
     const isPatternException = exceptionToReliability.includes(foundStrategy);
+    // buy only if freefall stay longer enough in the bearish ready to reverse back...
+    if (foundStrategy === "freeFall" && !isBearishReliable) return true;
     if (isProfitLimitSignal || isPatternException) return false;
 
-    if (isBuySignal && reliableReason === "40minBearishReliable") return true;
+    if (isBuySignal && isBearishReliable) return true;
 
     return !isCurrReliable;
 }

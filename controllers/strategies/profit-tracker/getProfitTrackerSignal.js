@@ -35,6 +35,7 @@ async function getProfitTrackerSignal({
             ...profitTracker,
             lastLiveCandle,
             currEmaTrend,
+            currStrategy,
             liveCandle,
             higherWing,
             stoplossGrandCandle,
@@ -73,6 +74,7 @@ function getTrackerStrategy(data) {
         liveCandle,
         lastLiveCandle,
         higherWing,
+        currStrategy,
         // minPerc,
         hasPassedNextLevel,
         stoplossGrandCandle,
@@ -115,6 +117,21 @@ function getTrackerStrategy(data) {
         return {
             signal: "SELL",
             strategy: "maxProfitHigherWing",
+            transactionPerc: 100,
+        };
+    }
+
+    // safeguard emaTrend entry (e.g 2021-11-10T14:39:32.867+00:00) where the entry can be a higher with a steep bearish plummet
+    const isEmaTrend = currStrategy === "emaUptrend";
+    let isSafeguardEmaTrend =
+        isEmaTrend &&
+        ((maxPerc < 1 && isBelowLastLiveCandle) ||
+            (maxPerc >= 1 && maxPerc < 2 && isBelowGrandcandleStoploss));
+
+    if (isSafeguardEmaTrend) {
+        return {
+            signal: "SELL",
+            strategy: "safeguardEmatrend",
             transactionPerc: 100,
         };
     }
