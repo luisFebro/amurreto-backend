@@ -365,6 +365,7 @@ async function getCandlesticksData(payload = {}) {
 
     return {
         symbol,
+        livePrice: liveCandle.close,
         timestamp: candlestickData[0] && candlestickData[0].timestamp,
         candles: {
             candleReliability: JSON.stringify(candleReliability),
