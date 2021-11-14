@@ -139,7 +139,11 @@ function strategiesHandler(allSignals = [], options = {}) {
     if (isSellSignal && !isAcceptSellCond) return DEFAULT_WAIT_SIGNAL;
 
     // only sell a curr emaUptrend strategy matches a emaDowntrend selling signal
-    const allowedProfitNextLevel = ["maxProfitHigherWing", "longProfit"];
+    const allowedProfitNextLevel = [
+        "safeguardEmatrend",
+        "maxProfitHigherWing",
+        "longProfit",
+    ];
     const profitabilityException =
         allowedProfitNextLevel.includes(foundStrategy);
     const isCurrEmaUptrendStrat = signalStrategy === "emaUptrend";
