@@ -54,7 +54,12 @@ async function needCircuitBreaker({ emaTrend }) {
     ]);
 
     const data = lastTransactionData[0] && lastTransactionData[0].list;
-    if (!data) return false;
+    if (!data)
+        return {
+            isBlock: false,
+            circuitBreakerData: {},
+            lastProfitRow: [],
+        };
 
     const lastSellData = data.sellPrices.slice(-1)[0];
     const lastTransactionSellDate = new Date(lastSellData.timestamp);
