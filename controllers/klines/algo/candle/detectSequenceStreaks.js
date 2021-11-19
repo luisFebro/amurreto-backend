@@ -213,7 +213,7 @@ function detectSequenceStreaks(data, options = {}) {
             : ["big", "huge"];
         const isBullish = c.side === "bull";
         // this isLowThanCurrPrice prevents upper detected candles to be detected and thus making the stop loss useless
-        // const isLowThanCurrPrice = c.lowestPrice < currPrice;
+        const isLowThanCurrPrice = c.lowestPrice < currPrice;
         if (!isBullish || !allowedCandleSizes.includes(c.candleSize))
             return null;
 
@@ -221,6 +221,7 @@ function detectSequenceStreaks(data, options = {}) {
             timestamp: c.timestamp,
             lowest: c.lowestPrice,
             candleSize: c.candleSize,
+            isLowThanCurrPrice,
         });
     });
 

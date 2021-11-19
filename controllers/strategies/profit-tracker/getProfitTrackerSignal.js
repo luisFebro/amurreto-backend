@@ -15,7 +15,7 @@ async function getProfitTrackerSignal({
         maxPerc,
         // maxCurrPrice,
     } = profitTracker;
-    if (!watching) return { signal: null, whichStrategy: "tracker" };
+    // if (!watching) return { signal: null, whichStrategy: "tracker" };
 
     const currEmaTrend = liveCandle.emaTrend;
     const currStrategy = profitTracker.strategy;
@@ -79,6 +79,7 @@ function getTrackerStrategy(data) {
         hasPassedNextLevel,
         stoplossGrandCandle,
     } = data;
+    console.log("stoplossGrandCandle", stoplossGrandCandle);
     // const emaTrend = liveCandle.emaTrend;
 
     const nextLevel = hasPassedNextLevel ? "NextLevel" : "";
@@ -94,14 +95,14 @@ function getTrackerStrategy(data) {
         livePrice - lowestGrandCandleAllowed
     );
     const RED_ZONE_LIMIT = 1000;
-    const needGrandCandle = redZoneGrandCandleDetect <= RED_ZONE_LIMIT;
+    const needGrandCandle =
+        stoplossGrandCandle.isLowThanCurrPrice ||
+        redZoneGrandCandleDetect <= RED_ZONE_LIMIT;
 
     const isBelowGrandcandleStoploss =
         needGrandCandle && livePrice < lowestGrandCandleAllowed;
     const isBelowLastLiveCandle =
         livePrice < lastLiveCandle.lowest - BELOW_CANDLE_SPAN;
-    console.log("isBelowGrandcandleStoploss", isBelowGrandcandleStoploss);
-    console.log("isBelowLastLiveCandle", isBelowLastLiveCandle);
 
     const isBelowStoploss = needGrandCandle
         ? isBelowGrandcandleStoploss
@@ -125,8 +126,9 @@ function getTrackerStrategy(data) {
     const isEmaTrend = currStrategy === "emaUptrend";
     let isSafeguardEmaTrend =
         isEmaTrend &&
-        ((maxPerc < 1 && isBelowLastLiveCandle) ||
-            (maxPerc >= 1 && maxPerc < 2 && isBelowGrandcandleStoploss));
+        maxPerc >= 1 &&
+        maxPerc < 2 &&
+        (isBelowLastLiveCandle || isBelowGrandcandleStoploss);
 
     if (isSafeguardEmaTrend) {
         return {
