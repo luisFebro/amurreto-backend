@@ -15,7 +15,7 @@ async function getProfitTrackerSignal({
         maxPerc,
         // maxCurrPrice,
     } = profitTracker;
-    // if (!watching) return { signal: null, whichStrategy: "tracker" };
+    if (!watching) return { signal: null, whichStrategy: "tracker" };
 
     const currEmaTrend = liveCandle.emaTrend;
     const currStrategy = profitTracker.strategy;
@@ -79,7 +79,6 @@ function getTrackerStrategy(data) {
         hasPassedNextLevel,
         stoplossGrandCandle,
     } = data;
-    console.log("stoplossGrandCandle", stoplossGrandCandle);
     // const emaTrend = liveCandle.emaTrend;
 
     const nextLevel = hasPassedNextLevel ? "NextLevel" : "";
